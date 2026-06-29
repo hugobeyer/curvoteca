@@ -25,12 +25,12 @@
     @property --card-row-h-min {
         syntax: "<length>";
         inherits: true;
-        initial-value: 130px;
+        initial-value: 160px;
     }
     @property --card-row-h-max {
         syntax: "<length>";
         inherits: true;
-        initial-value: 270px;
+        initial-value: 220px;
     }
     @property --card-wheel-step {
         syntax: "<length>";

@@ -35,7 +35,7 @@
     display: grid;
     grid-template-columns: var(--grid-cols);
     grid-auto-rows: var(--card-row-h);
-    gap: 8px;
+    gap: 6px;
     align-content: start;
 }
 
@@ -988,7 +988,9 @@
     cursor: pointer;
     display: grid;
     place-items: center;
-    transition: background 0.1s ease, color 0.1s ease;
+    transition:
+        background 0.1s ease,
+        color 0.1s ease;
 }
 .view-overlay-close:hover {
     background: color-mix(in srgb, var(--accent) 20%, transparent);
@@ -1330,7 +1332,9 @@
     letter-spacing: var(--letter-spacing-mid);
     text-transform: var(--text-transform-uppercase);
     cursor: pointer;
-    transition: background 0.1s, color 0.1s;
+    transition:
+        background 0.1s,
+        color 0.1s;
 }
 .detail-tab:hover {
     background: color-mix(in srgb, var(--accent) 14%, transparent);
@@ -1367,7 +1371,9 @@
     cursor: pointer;
     display: grid;
     place-items: center;
-    transition: background 0.12s ease, color 0.12s ease;
+    transition:
+        background 0.12s ease,
+        color 0.12s ease;
 }
 .detail-code-copy:hover {
     background: color-mix(in srgb, var(--white) 8%, transparent);
@@ -1439,7 +1445,11 @@
     height: var(--pill-height);
     padding: 0 var(--chip-padding-x);
     border-radius: var(--pill-radius);
-    background: color-mix(in srgb, var(--white) var(--pill-bg-alpha), transparent);
+    background: color-mix(
+        in srgb,
+        var(--white) var(--pill-bg-alpha),
+        transparent
+    );
     color: var(--muted);
     display: inline-flex;
     align-items: center;

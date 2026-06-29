@@ -27,9 +27,9 @@ import sponsorsData from "../data/sponsors.json";
 const { about: aboutContent, sponsor: sponsorContent } = popupContent;
 const popupAdSlot = sponsorsData.slots?.popup;
 const popupAdSponsor = popupAdSlot?.sponsorId
-    ? sponsorsData.sponsors.find(
+    ? (sponsorsData.sponsors.find(
           (s) => s.id === popupAdSlot.sponsorId && s.active,
-      ) ?? null
+      ) ?? null)
     : null;
 import { PAGER } from "../lib/curveViewportMath";
 import {
@@ -145,19 +145,43 @@ import "../styles/gallery.css";
         <div id="view-overlay" data-view-overlay aria-hidden="true">
             <div class="view-overlay-backdrop" data-overlay-close></div>
             <div class="view-overlay-box" role="dialog" aria-modal="true">
-                <button class="icon view-overlay-close" type="button" data-overlay-close aria-label="Close">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="12px" viewBox="0 -960 960 960" width="12px" fill="currentColor" aria-hidden="true">
-                        <path d="M480-440 288-248l-88-88 192-192-192-192 88-88 192 192 192-192 88 88-192 192 192 192-88 88-192-192Z"/>
+                <button
+                    class="icon view-overlay-close"
+                    type="button"
+                    data-overlay-close
+                    aria-label="Close"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="12px"
+                        viewBox="0 -960 960 960"
+                        width="12px"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M480-440 288-248l-88-88 192-192-192-192 88-88 192 192 192-192 88 88-192 192 192 192-88 88-192-192Z"
+                        ></path>
                     </svg>
                 </button>
-                <div class="view-overlay-content" data-overlay-content="sponsor" aria-hidden="true">
+                <div
+                    class="view-overlay-content"
+                    data-overlay-content="sponsor"
+                    aria-hidden="true"
+                >
                     <h2>{sponsorContent.title}</h2>
                     <div class="sponsor-layout">
                         <section class="sponsor-panel sponsor-support">
                             <p>{sponsorContent.intro}</p>
-                            <p class="section-label">{sponsorContent.sectionLabel}</p>
+                            <p class="section-label">
+                                {sponsorContent.sectionLabel}
+                            </p>
                             <ul class="sponsor-list">
-                                {sponsorContent.items.map((item) => <li>{item}</li>)}
+                                {
+                                    sponsorContent.items.map((item) => (
+                                        <li>{item}</li>
+                                    ))
+                                }
                             </ul>
                             <SponsorSlot />
                             <div class="pix-qr-wrap">
@@ -170,7 +194,14 @@ import "../styles/gallery.css";
                                     height="200"
                                     hidden
                                 />
-                                <a class="qr-link" data-qr-for="buyme" href="https://buymeacoffee.com/curvoteca" target="_blank" rel="noopener noreferrer" hidden>buymeacoffee.com/curvoteca</a>
+                                <a
+                                    class="qr-link"
+                                    data-qr-for="buyme"
+                                    href="https://buymeacoffee.com/curvoteca"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    hidden>buymeacoffee.com/curvoteca</a
+                                >
                                 <img
                                     class="pix-qr"
                                     data-qr-for="pix"
@@ -188,44 +219,63 @@ import "../styles/gallery.css";
                             <p>{sponsorContent.sponsorIntro}</p>
                             <p class="section-label">Available placements</p>
                             <ul class="sponsor-list">
-                                {sponsorContent.sponsorPlacements.map((item) => <li>{item}</li>)}
+                                {
+                                    sponsorContent.sponsorPlacements.map(
+                                        (item) => <li>{item}</li>,
+                                    )
+                                }
                             </ul>
                             <p class="section-label">Pricing</p>
                             <ul class="sponsor-pricing">
-                                {sponsorContent.sponsorPricing.map((p) => (
-                                    <li class="pricing-row">
-                                        <span class="pricing-slot">{p.slot}</span>
-                                        <span class="pricing-price">{p.price}</span>
-                                    </li>
-                                ))}
+                                {
+                                    sponsorContent.sponsorPricing.map((p) => (
+                                        <li class="pricing-row">
+                                            <span class="pricing-slot">
+                                                {p.slot}
+                                            </span>
+                                            <span class="pricing-price">
+                                                {p.price}
+                                            </span>
+                                        </li>
+                                    ))
+                                }
                             </ul>
                             <p class="section-label">Best fit</p>
                             <ul class="sponsor-list">
-                                {sponsorContent.bestFit.map((item) => <li>{item}</li>)}
+                                {
+                                    sponsorContent.bestFit.map((item) => (
+                                        <li>{item}</li>
+                                    ))
+                                }
                             </ul>
                             <p class="micro note">
-                                Contact: <a href="mailto:{sponsorContent.contactEmail}?subject=Sponsor Curvoteca">{sponsorContent.contactEmail}</a>
+                                Contact: <a
+                                    href="mailto:{sponsorContent.contactEmail}?subject=Sponsor Curvoteca"
+                                    >{sponsorContent.contactEmail}</a
+                                >
                             </p>
                         </section>
                     </div>
                     <SponsorAdCard
-                        sponsor={
-                            popupAdSlot?.enabled
-                                ? popupAdSponsor
-                                    ? {
-                                          id: popupAdSponsor.id,
-                                          name: popupAdSponsor.name,
-                                          label: popupAdSponsor.label,
-                                          description: popupAdSponsor.description,
-                                          url: popupAdSponsor.url,
-                                          active: popupAdSponsor.active,
-                                      }
-                                    : null
+                        sponsor={popupAdSlot?.enabled
+                            ? popupAdSponsor
+                                ? {
+                                      id: popupAdSponsor.id,
+                                      name: popupAdSponsor.name,
+                                      label: popupAdSponsor.label,
+                                      description: popupAdSponsor.description,
+                                      url: popupAdSponsor.url,
+                                      active: popupAdSponsor.active,
+                                  }
                                 : null
-                        }
+                            : null}
                     />
                 </div>
-                <div class="view-overlay-content" data-overlay-content="about" aria-hidden="true">
+                <div
+                    class="view-overlay-content"
+                    data-overlay-content="about"
+                    aria-hidden="true"
+                >
                     <h2>{aboutContent.title}</h2>
                     <p>{aboutContent.body}</p>
                     <ul class="lang-list">
@@ -233,36 +283,75 @@ import "../styles/gallery.css";
                     </ul>
                     <p>{aboutContent.closing}</p>
                     <p class="micro note">
-                        Contact: <a href="mailto:hello@curvoteca.com">{aboutContent.contact}</a>
+                        Contact: <a href="mailto:hello@curvoteca.com"
+                            >{aboutContent.contact}</a
+                        >
                     </p>
                 </div>
-                <div class="view-overlay-content" data-overlay-content="detail" aria-hidden="true">
+                <div
+                    class="view-overlay-content"
+                    data-overlay-content="detail"
+                    aria-hidden="true"
+                >
                     <div class="detail-dragbar" data-detail-drag-handle>
                         <h2 id="detail-overlay-name"></h2>
                     </div>
                     <div class="detail-main">
                         <div class="detail-viewport-wrap">
-                            <div class="detail-viewport-col" id="detail-overlay-viewport"></div>
+                            <div
+                                class="detail-viewport-col"
+                                id="detail-overlay-viewport"
+                            >
+                            </div>
                             <div class="detail-controls">
-                                <button class="link-toggle detail-control" type="button" id="detail-wrap-toggle" aria-pressed="false" title="cycle wrap mode">
-                                    wrap <span id="detail-wrap-toggle-state">clamp</span>
+                                <button
+                                    class="link-toggle detail-control"
+                                    type="button"
+                                    id="detail-wrap-toggle"
+                                    aria-pressed="false"
+                                    title="cycle wrap mode"
+                                >
+                                    wrap <span id="detail-wrap-toggle-state"
+                                        >clamp</span
+                                    >
                                 </button>
-                                <button class="link-toggle detail-control" type="button" id="detail-view-toggle" disabled title="view modes coming soon">
+                                <button
+                                    class="link-toggle detail-control"
+                                    type="button"
+                                    id="detail-view-toggle"
+                                    disabled
+                                    title="view modes coming soon"
+                                >
                                     view <span>graph</span>
                                 </button>
                             </div>
                         </div>
                         <div class="detail-info-col">
-                            <p class="detail-overlay-summary" id="detail-overlay-summary"></p>
+                            <p
+                                class="detail-overlay-summary"
+                                id="detail-overlay-summary"
+                            >
+                            </p>
                         </div>
                     </div>
                     <div class="detail-tabs-row" id="detail-overlay-tabs"></div>
                     <div class="detail-code-panel">
-                        <button class="icon copy-btn detail-code-copy" id="detail-overlay-copy" data-copy="" title="Copy" type="button">
-                            <span class="copy-icon-wrap"><CopyIcon size={14} /></span>
+                        <button
+                            class="icon copy-btn detail-code-copy"
+                            id="detail-overlay-copy"
+                            data-copy=""
+                            title="Copy"
+                            type="button"
+                        >
+                            <span class="copy-icon-wrap"
+                                ><CopyIcon size={14} /></span
+                            >
                             <span class="copy-feedback">Copied!</span>
                         </button>
-                        <pre class="detail-overlay-code" id="detail-overlay-code"></pre>
+                        <pre
+                            class="detail-overlay-code"
+                            id="detail-overlay-code">
+                        </pre>
                     </div>
                     <SnippetOptionBar />
                 </div>
@@ -344,7 +433,9 @@ import "../styles/gallery.css";
                         class="is-compare"
                         aria-hidden="true"
                     >
-                        <path d="M480-144 144-408l58-46 278 218 278-218 58 46-336 264Zm0-192L144-600l336-264 336 264-336 264Zm0-258Zm0 166 219-172-219-172-219 172 219 172Z" />
+                        <path
+                            d="M480-144 144-408l58-46 278 218 278-218 58 46-336 264Zm0-192L144-600l336-264 336 264-336 264Zm0-258Zm0 166 219-172-219-172-219 172 219 172Z"
+                        ></path>
                     </svg>
                     <span class="link-toggle-state">workbench</span>
                 </button>
@@ -422,17 +513,31 @@ import "../styles/gallery.css";
                 if (!overlay) return;
 
                 const openOverlay = function (view) {
-                    const contents = overlay.querySelectorAll("[data-overlay-content]");
+                    const contents = overlay.querySelectorAll(
+                        "[data-overlay-content]",
+                    );
                     contents.forEach(function (c) {
-                        c.setAttribute("aria-hidden", c.getAttribute("data-overlay-content") !== view ? "true" : "false");
+                        c.setAttribute(
+                            "aria-hidden",
+                            c.getAttribute("data-overlay-content") !== view
+                                ? "true"
+                                : "false",
+                        );
                     });
                     overlay.setAttribute("aria-hidden", "false");
                     overlay.classList.toggle("is-detail", view === "detail");
                     try {
-                        window.dispatchEvent(new CustomEvent("curvoteca:detail-overlay", { detail: { open: view === "detail" } }));
+                        window.dispatchEvent(
+                            new CustomEvent("curvoteca:detail-overlay", {
+                                detail: { open: view === "detail" },
+                            }),
+                        );
                     } catch (e) {}
                     railBtns.forEach(function (b) {
-                        b.classList.toggle("active", b.getAttribute("data-rail-view") === view);
+                        b.classList.toggle(
+                            "active",
+                            b.getAttribute("data-rail-view") === view,
+                        );
                     });
                 };
 
@@ -442,13 +547,19 @@ import "../styles/gallery.css";
                         b.classList.remove("active");
                     });
                     try {
-                        window.dispatchEvent(new CustomEvent("curvoteca:detail-overlay", { detail: { open: false } }));
+                        window.dispatchEvent(
+                            new CustomEvent("curvoteca:detail-overlay", {
+                                detail: { open: false },
+                            }),
+                        );
                     } catch (e) {}
                 };
 
                 (function () {
                     var box = overlay.querySelector(".view-overlay-box");
-                    var handle = overlay.querySelector("[data-detail-drag-handle]");
+                    var handle = overlay.querySelector(
+                        "[data-detail-drag-handle]",
+                    );
                     if (!box || !handle) return;
                     var drag = null;
                     handle.addEventListener("pointerdown", function (e) {
@@ -465,19 +576,37 @@ import "../styles/gallery.css";
                         box.style.left = drag.left + "px";
                         box.style.top = drag.top + "px";
                         box.style.margin = "0";
-                        try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+                        try {
+                            handle.setPointerCapture(e.pointerId);
+                        } catch (err) {}
                     });
                     handle.addEventListener("pointermove", function (e) {
                         if (!drag) return;
                         var nextLeft = drag.left + e.clientX - drag.x;
                         var nextTop = drag.top + e.clientY - drag.y;
-                        box.style.left = Math.max(4, Math.min(window.innerWidth - box.offsetWidth - 4, nextLeft)) + "px";
-                        box.style.top = Math.max(4, Math.min(window.innerHeight - box.offsetHeight - 4, nextTop)) + "px";
+                        box.style.left =
+                            Math.max(
+                                4,
+                                Math.min(
+                                    window.innerWidth - box.offsetWidth - 4,
+                                    nextLeft,
+                                ),
+                            ) + "px";
+                        box.style.top =
+                            Math.max(
+                                4,
+                                Math.min(
+                                    window.innerHeight - box.offsetHeight - 4,
+                                    nextTop,
+                                ),
+                            ) + "px";
                     });
                     handle.addEventListener("pointerup", function (e) {
                         drag = null;
                         box.classList.remove("is-dragging");
-                        try { handle.releasePointerCapture(e.pointerId); } catch (err) {}
+                        try {
+                            handle.releasePointerCapture(e.pointerId);
+                        } catch (err) {}
                     });
                 })();
 
@@ -513,28 +642,47 @@ import "../styles/gallery.css";
                         var wall = document.getElementById("curve-wall");
                         if (!wall) return;
                         try {
-                            var registry = JSON.parse(wall.getAttribute("data-curves") || "[]");
+                            var registry = JSON.parse(
+                                wall.getAttribute("data-curves") || "[]",
+                            );
                             var entry = null;
                             for (var i = 0; i < registry.length; i++) {
-                                if (registry[i].id === id) { entry = registry[i]; break; }
+                                if (registry[i].id === id) {
+                                    entry = registry[i];
+                                    break;
+                                }
                             }
                             if (!entry) return;
-                            var nameEl = document.getElementById("detail-overlay-name");
-                            var summaryEl = document.getElementById("detail-overlay-summary");
+                            var nameEl = document.getElementById(
+                                "detail-overlay-name",
+                            );
+                            var summaryEl = document.getElementById(
+                                "detail-overlay-summary",
+                            );
                             if (nameEl) nameEl.textContent = entry.name;
-                            if (summaryEl) summaryEl.textContent = entry.summary || "";
+                            if (summaryEl)
+                                summaryEl.textContent = entry.summary || "";
 
-                            var vpEl = document.getElementById("detail-overlay-viewport");
+                            var vpEl = document.getElementById(
+                                "detail-overlay-viewport",
+                            );
                             if (vpEl) {
                                 vpEl.innerHTML = "";
                                 var wrap = document.createElement("div");
-                                wrap.className = "graph curve-view detail-curve-view";
+                                wrap.className =
+                                    "graph curve-view detail-curve-view";
                                 wrap.setAttribute("data-curve-view", "");
                                 wrap.setAttribute("data-curve-id", entry.id);
-                                wrap.setAttribute("data-curve-view-default", "0 0 252 128");
+                                wrap.setAttribute(
+                                    "data-curve-view-default",
+                                    "0 0 252 128",
+                                );
                                 var pts = entry.previewPoints;
                                 if (pts && pts.length) {
-                                    wrap.setAttribute("data-curve-points", JSON.stringify(pts));
+                                    wrap.setAttribute(
+                                        "data-curve-points",
+                                        JSON.stringify(pts),
+                                    );
                                 }
                                 // Canvas
                                 var canvas = document.createElement("canvas");
@@ -557,9 +705,13 @@ import "../styles/gallery.css";
                                 ry.textContent = "100%";
                                 var fitIcon = document.createElement("svg");
                                 fitIcon.className = "curve-view-fit-icon";
-                                fitIcon.setAttribute("viewBox", "0 -960 960 960");
+                                fitIcon.setAttribute(
+                                    "viewBox",
+                                    "0 -960 960 960",
+                                );
                                 fitIcon.setAttribute("fill", "currentColor");
-                                fitIcon.innerHTML = '<path d="M227-227v-266h98v168h168v98H227Zm408-240v-168H467v-98h266v266h-98Z"/>';
+                                fitIcon.innerHTML =
+                                    '<path d="M227-227v-266h98v168h168v98H227Zm408-240v-168H467v-98h266v266h-98Z"/>';
                                 readout.appendChild(rx);
                                 readout.appendChild(rsep);
                                 readout.appendChild(ry);
@@ -586,24 +738,34 @@ import "../styles/gallery.css";
                                 wrap.appendChild(pr);
                                 // Screen probes (crosshairs)
                                 var spv = document.createElement("div");
-                                spv.className = "curve-view-screen-probe curve-view-screen-probe--v";
-                                spv.setAttribute("data-curve-view-screen-probe-v", "");
+                                spv.className =
+                                    "curve-view-screen-probe curve-view-screen-probe--v";
+                                spv.setAttribute(
+                                    "data-curve-view-screen-probe-v",
+                                    "",
+                                );
                                 spv.setAttribute("aria-hidden", "true");
                                 wrap.appendChild(spv);
                                 var sph = document.createElement("div");
-                                sph.className = "curve-view-screen-probe curve-view-screen-probe--h";
-                                sph.setAttribute("data-curve-view-screen-probe-h", "");
+                                sph.className =
+                                    "curve-view-screen-probe curve-view-screen-probe--h";
+                                sph.setAttribute(
+                                    "data-curve-view-screen-probe-h",
+                                    "",
+                                );
                                 sph.setAttribute("aria-hidden", "true");
                                 wrap.appendChild(sph);
                                 // Axis labels
                                 var lx = document.createElement("div");
-                                lx.className = "curve-view-axis-label curve-view-axis-label--x";
+                                lx.className =
+                                    "curve-view-axis-label curve-view-axis-label--x";
                                 lx.setAttribute("data-curve-view-label-x", "");
                                 lx.setAttribute("aria-hidden", "true");
                                 lx.textContent = "x 0.00";
                                 wrap.appendChild(lx);
                                 var ly = document.createElement("div");
-                                ly.className = "curve-view-axis-label curve-view-axis-label--y";
+                                ly.className =
+                                    "curve-view-axis-label curve-view-axis-label--y";
                                 ly.setAttribute("data-curve-view-label-y", "");
                                 ly.setAttribute("aria-hidden", "true");
                                 ly.textContent = "y 0.00";
@@ -612,21 +774,35 @@ import "../styles/gallery.css";
                             }
 
                             // Use modules for tabs + code
-                            var codeEl = document.getElementById("detail-overlay-code");
-                            var copyEl = document.getElementById("detail-overlay-copy");
-                            var tabsEl = document.getElementById("detail-overlay-tabs");
+                            var codeEl = document.getElementById(
+                                "detail-overlay-code",
+                            );
+                            var copyEl = document.getElementById(
+                                "detail-overlay-copy",
+                            );
+                            var tabsEl = document.getElementById(
+                                "detail-overlay-tabs",
+                            );
                             var ov = window.__detailOverlay;
                             if (ov && tabsEl && codeEl && copyEl) {
-                                ov.buildSnippetTabs(tabsEl, entry, function (_, code) {
-                                    ov.showCode(codeEl, copyEl, code);
-                                });
+                                ov.buildSnippetTabs(
+                                    tabsEl,
+                                    entry,
+                                    function (_, code) {
+                                        ov.showCode(codeEl, copyEl, code);
+                                    },
+                                );
                                 ov.showCode(codeEl, copyEl, entry.equation);
                             }
 
                             openOverlay("detail");
                             setTimeout(function () {
                                 try {
-                                    document.dispatchEvent(new CustomEvent("curvoteca:views-changed"));
+                                    document.dispatchEvent(
+                                        new CustomEvent(
+                                            "curvoteca:views-changed",
+                                        ),
+                                    );
                                 } catch (err) {}
                             }, 0);
                         } catch (err) {}
@@ -639,7 +815,9 @@ import "../styles/gallery.css";
                     if (!pixBtn) return;
                     e.preventDefault();
                     const key = pixBtn.getAttribute("data-toggle-qr");
-                    const els = document.querySelectorAll("[data-qr-for=\"" + key + "\"]");
+                    const els = document.querySelectorAll(
+                        '[data-qr-for="' + key + '"]',
+                    );
                     if (!els.length) return;
                     const wasHidden = els[0].hasAttribute("hidden");
                     els.forEach(function (el) {
@@ -661,9 +839,11 @@ import "../styles/gallery.css";
                     if (!code) return;
                     var ov = window.__detailOverlay;
                     if (ov) {
-                        ov.copyDetailCode(code).then(function () {
-                            ov.flashCopied(copyBtn);
-                        }).catch(function () {});
+                        ov.copyDetailCode(code)
+                            .then(function () {
+                                ov.flashCopied(copyBtn);
+                            })
+                            .catch(function () {});
                     }
                 });
             })();
@@ -1214,7 +1394,9 @@ import "../styles/gallery.css";
                             btn.setAttribute("data-label", on ? "on" : "off");
                             btn.setAttribute(
                                 "title",
-                                on ? "Remove from workbench" : "Add to workbench",
+                                on
+                                    ? "Remove from workbench"
+                                    : "Add to workbench",
                             );
                         });
                 };
@@ -1547,8 +1729,8 @@ import "../styles/gallery.css";
                         ),
                     };
                 };
-                const COLS_MIN = 1;
-                const COLS_MAX = 8;
+                const COLS_MIN = 3;
+                const COLS_MAX = 9;
 
                 let mode: Mode = "browse";
                 let prevMode: Mode = "browse";
@@ -1800,12 +1982,13 @@ import "../styles/gallery.css";
                     // when the card is small.
                     grid.setAttribute("data-cols", String(currentCols));
                     // Position the sponsor card at top-right based on column count.
-                    // 1-5 cols: single card at last column, row 1.
-                    // 6+ cols: 2x2 block spanning last two columns, rows 1-2.
-                    var sponsorCard = grid.querySelector(".is-sponsor") as HTMLElement | null;
+                    var sponsorCard = grid.querySelector(
+                        ".is-sponsor",
+                    ) as HTMLElement | null;
                     if (sponsorCard) {
                         if (currentCols >= 6) {
-                            sponsorCard.style.gridColumn = (currentCols - 1) + " / " + (currentCols + 1);
+                            sponsorCard.style.gridColumn =
+                                currentCols - 1 + " / " + (currentCols + 1);
                             sponsorCard.style.gridRow = "1 / 3";
                         } else {
                             sponsorCard.style.gridColumn = String(currentCols);
@@ -1947,7 +2130,8 @@ import "../styles/gallery.css";
                 };
                 applyWrapUI();
                 if (wrapBtn) wrapBtn.addEventListener("click", cycleWrap);
-                if (detailWrapBtn) detailWrapBtn.addEventListener("click", cycleWrap);
+                if (detailWrapBtn)
+                    detailWrapBtn.addEventListener("click", cycleWrap);
                 const visibleViews = function (): NodeListOf<HTMLElement> {
                     return document.querySelectorAll(
                         "#wall-grid .card:not(.is-hidden) [data-curve-view], #compare-tray [data-curve-view], #detail-overlay-viewport [data-curve-view]",
@@ -2025,15 +2209,20 @@ import "../styles/gallery.css";
                             }
                             const inWall = !!view.closest("#wall-grid");
                             const visible = inWall
-                                ? view.getAttribute("data-curve-view-in-viewport") === "true"
+                                ? view.getAttribute(
+                                      "data-curve-view-in-viewport",
+                                  ) === "true"
                                 : true;
                             renderer.setViewportVisible(visible);
                         });
                 };
-                window.addEventListener("curvoteca:detail-overlay", function (e) {
-                    const detail = (e as CustomEvent).detail;
-                    setBackgroundViewsFrozen(!!(detail && detail.open));
-                });
+                window.addEventListener(
+                    "curvoteca:detail-overlay",
+                    function (e) {
+                        const detail = (e as CustomEvent).detail;
+                        setBackgroundViewsFrozen(!!(detail && detail.open));
+                    },
+                );
                 const fitStateFor = function (
                     view: HTMLElement,
                 ): CurveViewportState {
@@ -2458,29 +2647,34 @@ import "../styles/gallery.css";
                     }
                 });
                 // Overlay viewport drag (zoom/pan)
-                const overlayVpEl = document.getElementById("detail-overlay-viewport");
+                const overlayVpEl = document.getElementById(
+                    "detail-overlay-viewport",
+                );
                 if (overlayVpEl) {
-                    overlayVpEl.addEventListener("mousedown", function (e: MouseEvent) {
-                        if (e.button !== 0) return;
-                        const v = findView(e.target);
-                        if (!v) return;
-                        const id = v.getAttribute("data-curve-id") || "";
-                        const st = readView();
-                        activeView = v;
-                        const isPan = e.shiftKey || e.altKey;
-                        drag = {
-                            kind: isPan ? "pan-view" : "zoom-view",
-                            view: v,
-                            id: id,
-                            x: e.clientX,
-                            y: e.clientY,
-                            zx0: st.zoomX,
-                            zy0: st.zoomY,
-                            cx0: st.centerX,
-                            cy0: st.centerY,
-                            moved: false,
-                        };
-                    });
+                    overlayVpEl.addEventListener(
+                        "mousedown",
+                        function (e: MouseEvent) {
+                            if (e.button !== 0) return;
+                            const v = findView(e.target);
+                            if (!v) return;
+                            const id = v.getAttribute("data-curve-id") || "";
+                            const st = readView();
+                            activeView = v;
+                            const isPan = e.shiftKey || e.altKey;
+                            drag = {
+                                kind: isPan ? "pan-view" : "zoom-view",
+                                view: v,
+                                id: id,
+                                x: e.clientX,
+                                y: e.clientY,
+                                zx0: st.zoomX,
+                                zy0: st.zoomY,
+                                cx0: st.centerX,
+                                cy0: st.centerY,
+                                moved: false,
+                            };
+                        },
+                    );
                 }
                 window.addEventListener("mousemove", function (e: MouseEvent) {
                     if (!drag) return;
@@ -2685,26 +2879,38 @@ import "../styles/gallery.css";
                 wall.addEventListener("mouseleave", clearProbeState);
 
                 // Overlay viewport probe
-                const detailCol = document.getElementById("detail-overlay-viewport");
+                const detailCol = document.getElementById(
+                    "detail-overlay-viewport",
+                );
                 if (detailCol) {
-                    detailCol.addEventListener("mousemove", function (e: MouseEvent) {
-                        const v = findView(e.target);
-                        if (!v) return;
-                        if (v !== hoveredView) {
-                            if (hoveredView) {
-                                const prev = canvasRenderers.get(hoveredView);
-                                if (prev) prev.clearProbe();
-                                hoveredView.classList.remove("has-probe", "is-probe-near");
+                    detailCol.addEventListener(
+                        "mousemove",
+                        function (e: MouseEvent) {
+                            const v = findView(e.target);
+                            if (!v) return;
+                            if (v !== hoveredView) {
+                                if (hoveredView) {
+                                    const prev =
+                                        canvasRenderers.get(hoveredView);
+                                    if (prev) prev.clearProbe();
+                                    hoveredView.classList.remove(
+                                        "has-probe",
+                                        "is-probe-near",
+                                    );
+                                }
+                                hoveredView = v;
                             }
-                            hoveredView = v;
-                        }
-                        updateProbe(v, e.clientX, e.clientY);
-                    });
+                            updateProbe(v, e.clientX, e.clientY);
+                        },
+                    );
                     detailCol.addEventListener("mouseleave", function () {
                         if (hoveredView && detailCol.contains(hoveredView)) {
                             const r = canvasRenderers.get(hoveredView);
                             if (r) r.clearProbe();
-                            hoveredView.classList.remove("has-probe", "is-probe-near");
+                            hoveredView.classList.remove(
+                                "has-probe",
+                                "is-probe-near",
+                            );
                             hoveredView = null;
                         }
                     });
@@ -2731,8 +2937,17 @@ import "../styles/gallery.css";
 
         <script>
             import { buildSnippetTabs } from "../lib/detailSnippetTabs";
-            import { showCode, copyDetailCode, flashCopied } from "../lib/detailCodeField";
-            window.__detailOverlay = { buildSnippetTabs, showCode, copyDetailCode, flashCopied };
+            import {
+                showCode,
+                copyDetailCode,
+                flashCopied,
+            } from "../lib/detailCodeField";
+            window.__detailOverlay = {
+                buildSnippetTabs,
+                showCode,
+                copyDetailCode,
+                flashCopied,
+            };
         </script>
     </body>
 </html>
