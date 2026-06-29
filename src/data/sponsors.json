@@ -1,0 +1,29 @@
+{
+    "active": true,
+    "emptyState": {
+        "label": "Sponsor",
+        "title": "Sponsor Curvoteca",
+        "description": "Reach procedural artists, creative coders, and technical artists.",
+        "action": "open-popup"
+    },
+    "slots": {
+        "topbar": {
+            "enabled": true,
+            "sponsorId": null
+        },
+        "popup": {
+            "enabled": true,
+            "sponsorId": null
+        },
+        "gallery": {
+            "enabled": true,
+            "sponsorId": null
+        },
+        "about": {
+            "enabled": true,
+            "sponsorId": null
+        }
+    },
+    "sponsors": [],
+    "ads": []
+}

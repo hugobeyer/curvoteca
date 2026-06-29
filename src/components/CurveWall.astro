@@ -1,7 +1,9 @@
 ---
 import CurveCard from "./CurveCard.astro";
+import SponsorCard from "./SponsorCard.astro";
 import StarIcon from "./StarIcon.astro";
 import type { CurveDefinition } from "../data/curves";
+import sponsorsData from "../data/sponsors.json";
 import { projectToViewBox, sampleKernel } from "../lib/curveMath";
 
 interface Props {
@@ -58,6 +60,14 @@ const curveIndex = curves.map((c) => {
         snippets: c.snippets ?? {},
     };
 });
+
+const gallerySponsor = sponsorsData.slots?.gallery;
+const showSponsorCard = gallerySponsor?.enabled;
+const sponsorInsertIndex = 11;
+const sponsorCardProps = {
+    sponsorId: gallerySponsor?.sponsorId ?? null,
+    sponsors: sponsorsData.sponsors,
+};
 ---
 
 <section class="wall-area" id="wall-area">
@@ -164,7 +174,16 @@ const curveIndex = curves.map((c) => {
         data-curves={JSON.stringify(curveIndex)}
     >
         <div class="grid" id="wall-grid">
-            {curves.map((curve) => <CurveCard curve={curve} />)}
+            {
+                curves.map((curve, index) => (
+                    <Fragment>
+                        <CurveCard curve={curve} />
+                        {showSponsorCard && index === sponsorInsertIndex && (
+                            <SponsorCard {...sponsorCardProps} />
+                        )}
+                    </Fragment>
+                ))
+            }
         </div>
         <p class="micro wall-empty is-hidden" id="wall-empty">
             no curve matches the current filter

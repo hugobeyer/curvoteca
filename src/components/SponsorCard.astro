@@ -1,0 +1,153 @@
+---
+export interface Sponsor {
+    id: string;
+    name: string;
+    label: string;
+    description: string;
+    url: string;
+    logo: string;
+    paid: boolean;
+    active: boolean;
+}
+
+interface Props {
+    sponsorId: string | null;
+    sponsors: Sponsor[];
+}
+
+const { sponsorId, sponsors } = Astro.props as Props;
+
+const activeSponsor = sponsorId
+    ? sponsors.find((s) => s.id === sponsorId && s.active) ?? null
+    : null;
+
+const headLabel = activeSponsor ? activeSponsor.label : "Sponsor";
+const bodyTitle = activeSponsor ? activeSponsor.name : "Sponsor Curvoteca";
+const bodyDescription = activeSponsor
+    ? activeSponsor.description
+    : "Reach procedural artists, creative coders, and technical artists.";
+---
+
+<article
+    class="card is-sponsor"
+    data-sponsor-card
+    data-family="sponsor"
+    data-search={`${headLabel} ${bodyTitle} ${bodyDescription} sponsor support ad placement`}
+>
+    <header class="card-head">
+        <span class="card-title sponsor-head-title">{headLabel}</span>
+    </header>
+    <div class="sponsor-body">
+        {
+            activeSponsor ? (
+                <a
+                    class="sponsor-link"
+                    href={activeSponsor.url}
+                    target="_blank"
+                    rel="sponsored nofollow"
+                >
+                    {bodyTitle}
+                </a>
+            ) : (
+                <div class="sponsor-cta">
+                    <span class="sponsor-title">{bodyTitle}</span>
+                    <span class="sponsor-desc">{bodyDescription}</span>
+                    <button
+                        class="sponsor-btn"
+                        type="button"
+                        data-rail-view="sponsor"
+                    >
+                        Sponsor this slot
+                    </button>
+                </div>
+            )
+        }
+    </div>
+</article>
+
+<style>
+    .card.is-sponsor {
+        --layer-head: radial-gradient(
+            ellipse 80% 130% at 50% 100%,
+            color-mix(in srgb, var(--accent) 14%, transparent) 0%,
+            color-mix(in srgb, var(--accent) 8%, transparent) 25%,
+            color-mix(in srgb, var(--accent) 3%, transparent) 60%,
+            transparent 100%
+        );
+    }
+    .card.is-sponsor:hover {
+        --layer-head: radial-gradient(
+            ellipse 80% 130% at 50% 100%,
+            color-mix(in srgb, var(--accent2) 10%, transparent) 0%,
+            color-mix(in srgb, var(--accent2) 5%, transparent) 25%,
+            color-mix(in srgb, var(--accent2) 2%, transparent) 60%,
+            transparent 100%
+        );
+    }
+    .sponsor-head-title {
+        padding: 0 8px;
+        font-size: var(--font-size-xs);
+        letter-spacing: var(--letter-spacing-wide);
+        text-transform: var(--text-transform-uppercase);
+        color: var(--muted);
+        opacity: 0.6;
+    }
+    .sponsor-body {
+        display: grid;
+        place-items: center;
+        align-content: center;
+        gap: 8px;
+        padding: 12px;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .sponsor-cta {
+        display: grid;
+        gap: 6px;
+        text-align: center;
+        max-width: 100%;
+    }
+    .sponsor-title {
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        letter-spacing: var(--letter-spacing-normal);
+        color: var(--text-soft);
+        line-height: 1.2;
+    }
+    .sponsor-desc {
+        font-size: var(--font-size-xs);
+        letter-spacing: var(--letter-spacing-tight);
+        color: var(--muted);
+        line-height: 1.3;
+    }
+    .sponsor-btn {
+        justify-self: center;
+        height: 26px;
+        padding: 0 10px;
+        border: 0;
+        border-radius: var(--pill-radius);
+        background: color-mix(in srgb, var(--white) 6%, transparent);
+        color: var(--muted);
+        font-family: var(--font-family);
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-medium);
+        letter-spacing: var(--letter-spacing-mid);
+        text-transform: var(--text-transform-uppercase);
+        cursor: pointer;
+        transition: background 0.12s ease, color 0.12s ease;
+    }
+    .sponsor-btn:hover {
+        background: color-mix(in srgb, var(--accent) 18%, transparent);
+        color: var(--white);
+    }
+    .sponsor-link {
+        color: var(--accent);
+        font-size: var(--font-size-sm);
+        letter-spacing: var(--letter-spacing-normal);
+        text-decoration: underline;
+        text-align: center;
+    }
+    .sponsor-link:hover {
+        color: var(--white);
+    }
+</style>

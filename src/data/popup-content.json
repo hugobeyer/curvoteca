@@ -16,6 +16,28 @@
             "Expanding the equation library across more languages",
             "Keeping everything free and open for everyone"
         ],
-        "footnote": "No payment logic lives inside this app. Transactions happen entirely on the provider sites."
+        "footnote": "No payment logic lives inside this app. Transactions happen entirely on the provider sites.",
+        "sponsorTitle": "Sponsor Curvoteca",
+        "sponsorIntro": "Sponsor a small native slot inside Curvoteca and reach procedural artists, creative coders, shader developers, and technical artists.",
+        "sponsorPlacements": [
+            "Gallery sponsor card — inserted naturally among curve cards",
+            "Top-right sponsor badge — always visible",
+            "About popup mention",
+            "Vertical rail banner"
+        ],
+        "sponsorPricing": [
+            { "slot": "Gallery sponsor card", "price": "$250/month" },
+            { "slot": "Top-right badge", "price": "$100/month" },
+            { "slot": "Monthly exclusive (all slots)", "price": "$400/month" }
+        ],
+        "bestFit": [
+            "Creative coding tools and courses",
+            "Shader / WebGL / Three.js resources",
+            "Houdini and procedural art education",
+            "Game development plugins and assets",
+            "Technical art tools and pipelines",
+            "Graphics and math books"
+        ],
+        "contactEmail": "hello@curvoteca.com"
     }
 }

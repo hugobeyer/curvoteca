@@ -1,3 +1,15 @@
+---
+import sponsorsData from "../data/sponsors.json";
+
+const topbarSlot = sponsorsData.slots?.topbar;
+const topbarSponsor = topbarSlot?.sponsorId
+    ? sponsorsData.sponsors.find(
+          (s) => s.id === topbarSlot.sponsorId && s.active,
+      ) ?? null
+    : null;
+const showTopbarSponsor = topbarSlot?.enabled;
+---
+
 <header class="bar" id="curve-bar">
     <a class="brand" href="/" aria-label="Curvoteca home">
         <img
@@ -9,5 +21,59 @@
         />
         <h1>curvoteca</h1>
     </a>
-    <div class="tools"></div>
+    <div class="tools">
+        {
+            showTopbarSponsor &&
+                (topbarSponsor ? (
+                    <a
+                        class="sponsor-badge"
+                        href={topbarSponsor.url}
+                        target="_blank"
+                        rel="sponsored nofollow noopener noreferrer"
+                        title={topbarSponsor.description}
+                    >
+                        Supported by {topbarSponsor.name}
+                    </a>
+                ) : (
+                    <button
+                        class="sponsor-badge"
+                        type="button"
+                        data-rail-view="sponsor"
+                    >
+                        Sponsor this slot
+                    </button>
+                ))
+        }
+    </div>
 </header>
+
+<style>
+    .sponsor-badge {
+        height: 22px;
+        max-width: min(38vw, 220px);
+        padding: 0 8px;
+        border: 0;
+        border-radius: var(--pill-radius);
+        background: color-mix(in srgb, var(--white) 4%, transparent);
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        font-family: var(--font-family);
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-medium);
+        letter-spacing: var(--letter-spacing-mid);
+        line-height: 1;
+        text-decoration: none;
+        text-overflow: ellipsis;
+        text-transform: var(--text-transform-uppercase);
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background 0.12s ease, color 0.12s ease;
+    }
+    .sponsor-badge:hover {
+        background: color-mix(in srgb, var(--accent) 18%, transparent);
+        color: var(--white);
+    }
+</style>
