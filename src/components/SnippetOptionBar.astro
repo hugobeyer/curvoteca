@@ -1,0 +1,26 @@
+---
+const options = [
+    "constants",
+    "clamp",
+    "fit",
+    "function",
+    "comments",
+    "uniforms",
+] as const;
+---
+
+<div class="chips snippet-option-bar" aria-label="Snippet options">
+    {
+        options.map((option) => (
+            <button
+                class="chip snippet-option"
+                type="button"
+                disabled
+                aria-disabled="true"
+                title={`${option} option coming soon`}
+            >
+                {option}
+            </button>
+        ))
+    }
+</div>
