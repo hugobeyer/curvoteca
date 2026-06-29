@@ -1,4 +1,6 @@
 # Curvoteca
+![Curvoteca screenshot](public/curvoteca_sshot.png)
+
 Visual curve reference, workbench, and snippet library.
 
 ## About
