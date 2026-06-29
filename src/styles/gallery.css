@@ -280,7 +280,7 @@
     justify-content: center;
     height: 100%;
     aspect-ratio: 1;
-    padding: 3px;
+    padding: 2px;
 }
 
 /* Dense grid: at 4+ columns the card header is smaller, so the
@@ -303,15 +303,15 @@
    because the cells are still square and the icons inherit
    the smaller head height. */
 .grid[data-cols="4"] .actions .action {
-    padding: 2.4px;
+    padding: 1.8px;
 }
 .grid[data-cols="5"] .actions .action,
 .grid[data-cols="6"] .actions .action {
-    padding: 1.8px;
+    padding: 1.4px;
 }
 .grid[data-cols="7"] .actions .action,
 .grid[data-cols="8"] .actions .action {
-    padding: 1.2px;
+    padding: 1px;
 }
 /* Title text: keep a readable size even at 4+ cols.
    Only the tracking adjusts; the size stays the same as the base
@@ -880,7 +880,7 @@
     opacity: 0.35;
     cursor: not-allowed;
 }
-/* Compare button reuses .link-toggle (same as .pager-wrap) so the
+/* Workbench button reuses .link-toggle (same as .pager-wrap) so the
    pager cluster has one chrome family for the labeled buttons. */
 .pager-compare {
     height: 26px;
@@ -1096,61 +1096,116 @@
     display: none;
 }
 #view-overlay.is-detail .view-overlay-box {
-    max-width: 75vw;
-    max-height: none;
+    max-width: min(92vw, 1180px);
+    max-height: 90vh;
     overflow: visible;
-    width: auto;
-    height: auto;
-    padding: 8px;
+    width: min(92vw, 1180px);
+    height: min(88vh, 840px);
+    padding: 6px;
 }
 .view-overlay-content[data-overlay-content="detail"] {
     display: grid;
-    gap: 10px;
+    grid-template-rows: 28px minmax(0, 1fr) 24px minmax(120px, 0.34fr) 24px;
+    gap: 6px;
     height: 100%;
 }
 .view-overlay-content[data-overlay-content="detail"][aria-hidden="true"] {
     display: none;
 }
-.detail-row1 {
+.detail-dragbar {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    height: 28px;
+    padding: 0 30px 0 6px;
+    cursor: grab;
+    user-select: none;
+}
+.view-overlay-box.is-dragging .detail-dragbar {
+    cursor: grabbing;
+}
+.detail-dragbar h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-wide);
+    line-height: 1;
+    text-transform: var(--text-transform-uppercase);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.detail-main {
     display: grid;
-    grid-template-columns: 1fr 240px;
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: 6px;
+    min-height: 0;
+}
+.detail-viewport-wrap {
+    position: relative;
+    min-width: 0;
     min-height: 0;
 }
 .detail-viewport-col {
     display: flex;
     flex-direction: column;
     min-height: 200px;
+    height: 100%;
 }
 .detail-curve-view {
     flex: 1;
     aspect-ratio: 16 / 9;
-    min-height: 420px;
-    max-height: 75vh;
+    min-height: 0;
+    max-height: none;
     width: 100%;
 }
-.detail-info-col h2 {
-    margin: 0 0 6px;
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-regular);
-    letter-spacing: var(--letter-spacing-wide);
-    text-transform: var(--text-transform-uppercase);
-    color: var(--text);
+.detail-info-col {
+    min-width: 0;
+    padding: 6px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--white) 3%, transparent);
+    box-shadow: inset 0 0 0 1px var(--line-soft);
 }
 .detail-overlay-summary {
     margin: 0;
     color: var(--text-soft);
     font-size: var(--font-size-sm);
-    line-height: 1.4;
+    line-height: 1.35;
+}
+.detail-controls {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    z-index: 6;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px;
+}
+.detail-control {
+    height: 24px;
+    padding: 0 6px;
+    gap: 4px;
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-mid);
+}
+.detail-control[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 .detail-tabs-row {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
+    justify-content: flex-start;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
 }
 .detail-tab {
-    height: 24px;
-    padding: 0 8px;
+    height: 22px;
+    padding: 0 6px;
     border: 0;
     border-radius: 3px;
     background: color-mix(in srgb, var(--white) 5%, transparent);
@@ -1171,16 +1226,26 @@
     background: color-mix(in srgb, var(--accent) 20%, transparent);
     color: var(--white);
 }
-.detail-code-row {
-    display: flex;
-    gap: 6px;
-    align-items: flex-start;
+.snippet-option-bar {
+    min-width: 0;
+    overflow: hidden;
+}
+.snippet-option[disabled] {
+    opacity: 0.42;
+    cursor: not-allowed;
+}
+.detail-code-panel {
+    position: relative;
+    display: grid;
+    min-height: 0;
 }
 .detail-code-copy {
-    flex-shrink: 0;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 2;
     width: 26px;
     height: 26px;
-    margin-top: 2px;
     border: 0;
     border-radius: 3px;
     background: transparent;
@@ -1189,7 +1254,6 @@
     display: grid;
     place-items: center;
     transition: background 0.12s ease, color 0.12s ease;
-    position: relative;
 }
 .detail-code-copy:hover {
     background: color-mix(in srgb, var(--white) 8%, transparent);
@@ -1227,10 +1291,10 @@
     display: inline;
 }
 .detail-overlay-code {
-    flex: 1;
     min-width: 0;
+    min-height: 0;
     margin: 0;
-    padding: 12px;
+    padding: 10px 38px 10px 10px;
     border: 0;
     border-radius: 3px;
     background: var(--bg-step-1);
@@ -1242,10 +1306,10 @@
     white-space: pre-wrap;
     word-break: break-word;
     overflow-y: auto;
-    max-height: 40vh;
+    max-height: none;
 }
 @media (max-width: 660px) {
-    .detail-overlay-body {
+    .detail-main {
         grid-template-columns: minmax(0, 1fr);
     }
 }

@@ -15,10 +15,14 @@
 import TopBar from "../components/TopBar.astro";
 import IconRail from "../components/IconRail.astro";
 import CurveWall from "../components/CurveWall.astro";
+import CompareTray from "../components/CompareTray.astro";
 import SponsorSlot from "../components/SponsorSlot.astro";
-import CombineIcon from "../components/CombineIcon.astro";
 import CopyIcon from "../components/CopyIcon.astro";
+import SnippetOptionBar from "../components/SnippetOptionBar.astro";
 import { curves } from "../data/curves";
+import popupContent from "../data/popup-content.json";
+
+const { about: aboutContent, sponsor: sponsorContent } = popupContent;
 import { PAGER } from "../lib/curveViewportMath";
 import {
     KEY_FAVORITES,
@@ -127,6 +131,7 @@ import "../styles/gallery.css";
             <TopBar />
             <IconRail />
             <CurveWall curves={curves} />
+            <CompareTray curves={curves} />
         </main>
 
         <div id="view-overlay" data-view-overlay aria-hidden="true">
@@ -138,19 +143,11 @@ import "../styles/gallery.css";
                     </svg>
                 </button>
                 <div class="view-overlay-content" data-overlay-content="sponsor" aria-hidden="true">
-                    <h2>Support</h2>
-                    <p>
-                        Curvoteca is a free, static reference — no accounts, no
-                        backends, no tracking. If the curves save you time or
-                        spark an idea, a small donation helps keep the project
-                        growing.
-                    </p>
-                    <p class="section-label">What donations fund</p>
+                    <h2>{sponsorContent.title}</h2>
+                    <p>{sponsorContent.intro}</p>
+                    <p class="section-label">{sponsorContent.sectionLabel}</p>
                     <ul class="sponsor-list">
-                        <li>Domain, hosting, and CDN costs</li>
-                        <li>Adding more curves, formats, and features</li>
-                        <li>Expanding the equation library across more languages</li>
-                        <li>Keeping everything free and open for everyone</li>
+                        {sponsorContent.items.map((item) => <li>{item}</li>)}
                     </ul>
                     <SponsorSlot />
                     <div class="pix-qr-wrap">
@@ -174,49 +171,48 @@ import "../styles/gallery.css";
                             hidden
                         />
                     </div>
-                    <p class="micro note">
-                        No payment logic lives inside this app. Transactions
-                        happen entirely on the provider sites.
-                    </p>
+                    <p class="micro note">{sponsorContent.footnote}</p>
                 </div>
                 <div class="view-overlay-content" data-overlay-content="about" aria-hidden="true">
-                    <h2>About</h2>
-                    <p>
-                        A visual reference for the curve-curious. Tuning
-                        animation timing? Crafting shader falloff? Building UI
-                        transitions? Curvoteca lets you browse, compare, and
-                        copy equations side by side.
-                    </p>
+                    <h2>{aboutContent.title}</h2>
+                    <p>{aboutContent.body}</p>
                     <ul class="lang-list">
-                        <li>JS</li><li>GLSL</li><li>VEX</li><li>Python</li><li>C#</li><li>Rust</li><li>C</li><li>C++</li><li>HLSL</li><li>OpenCL</li><li>Lua</li><li>Metal</li><li>WGSL</li><li>CUDA</li><li>Swift</li><li>Kotlin</li><li>TypeScript</li><li>TouchDesigner</li><li>Java</li><li>MATLAB</li><li>Dart</li><li>Julia</li><li>MEL</li><li>GDScript</li><li>Blueprint</li><li>After Effects</li><li>DCTL</li><li>CSS</li><li>Framer Motion</li><li>GSAP</li><li>Arduino</li><li>OSL</li><li>Max/MSP gen~</li><li>REAPER JSFX</li><li>Nuke</li><li>Csound</li><li>ChucK</li><li>JSON</li><li>SVG</li><li>Haskell</li><li>Fortran</li><li>R</li><li>Wolfram Language</li><li>and more</li>
+                        {aboutContent.languages.map((lang) => <li>{lang}</li>)}
                     </ul>
-                    <p>
-                        No accounts, no paywalls, no tracking. Just a tool made
-                        by someone who needed it, shared with anyone who does
-                        too. If it saves you time, donations are deeply
-                        appreciated. The intention is to keep scaling it — more
-                        curves, more formats, and always free.
-                    </p>
+                    <p>{aboutContent.closing}</p>
                     <p class="micro note">
-                        Contact: <a href="mailto:hello@curvoteca.com">hello@curvoteca.com</a>
+                        Contact: <a href="mailto:hello@curvoteca.com">{aboutContent.contact}</a>
                     </p>
                 </div>
                 <div class="view-overlay-content" data-overlay-content="detail" aria-hidden="true">
-                    <div class="detail-row1">
-                        <div class="detail-viewport-col" id="detail-overlay-viewport"></div>
+                    <div class="detail-dragbar" data-detail-drag-handle>
+                        <h2 id="detail-overlay-name"></h2>
+                    </div>
+                    <div class="detail-main">
+                        <div class="detail-viewport-wrap">
+                            <div class="detail-viewport-col" id="detail-overlay-viewport"></div>
+                            <div class="detail-controls">
+                                <button class="link-toggle detail-control" type="button" id="detail-wrap-toggle" aria-pressed="false" title="cycle wrap mode">
+                                    wrap <span id="detail-wrap-toggle-state">clamp</span>
+                                </button>
+                                <button class="link-toggle detail-control" type="button" id="detail-view-toggle" disabled title="view modes coming soon">
+                                    view <span>graph</span>
+                                </button>
+                            </div>
+                        </div>
                         <div class="detail-info-col">
-                            <h2 id="detail-overlay-name"></h2>
                             <p class="detail-overlay-summary" id="detail-overlay-summary"></p>
                         </div>
                     </div>
                     <div class="detail-tabs-row" id="detail-overlay-tabs"></div>
-                    <div class="detail-code-row">
-                        <pre class="detail-overlay-code" id="detail-overlay-code"></pre>
+                    <div class="detail-code-panel">
                         <button class="icon copy-btn detail-code-copy" id="detail-overlay-copy" data-copy="" title="Copy" type="button">
                             <span class="copy-icon-wrap"><CopyIcon size={14} /></span>
                             <span class="copy-feedback">Copied!</span>
                         </button>
+                        <pre class="detail-overlay-code" id="detail-overlay-code"></pre>
                     </div>
+                    <SnippetOptionBar />
                 </div>
             </div>
         </div>
@@ -283,13 +279,22 @@ import "../styles/gallery.css";
                     class="link-toggle pager-compare"
                     type="button"
                     id="rail-compare"
-                    disabled
-                    title="compare disabled"
-                    aria-label="Compare disabled"
+                    title="show workbench"
+                    aria-label="Show workbench"
                     aria-pressed="false"
                 >
-                    <CombineIcon size={14} class="is-compare" />
-                    <span class="link-toggle-state">compare</span>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="14px"
+                        viewBox="0 -960 960 960"
+                        width="14px"
+                        fill="currentColor"
+                        class="is-compare"
+                        aria-hidden="true"
+                    >
+                        <path d="M480-144 144-408l58-46 278 218 278-218 58 46-336 264Zm0-192L144-600l336-264 336 264-336 264Zm0-258Zm0 166 219-172-219-172-219 172 219 172Z" />
+                    </svg>
+                    <span class="link-toggle-state">workbench</span>
                 </button>
                 <button
                     class="link-toggle pager-wrap"
@@ -371,6 +376,9 @@ import "../styles/gallery.css";
                     });
                     overlay.setAttribute("aria-hidden", "false");
                     overlay.classList.toggle("is-detail", view === "detail");
+                    try {
+                        window.dispatchEvent(new CustomEvent("curvoteca:detail-overlay", { detail: { open: view === "detail" } }));
+                    } catch (e) {}
                     railBtns.forEach(function (b) {
                         b.classList.toggle("active", b.getAttribute("data-rail-view") === view);
                     });
@@ -381,7 +389,45 @@ import "../styles/gallery.css";
                     railBtns.forEach(function (b) {
                         b.classList.remove("active");
                     });
+                    try {
+                        window.dispatchEvent(new CustomEvent("curvoteca:detail-overlay", { detail: { open: false } }));
+                    } catch (e) {}
                 };
+
+                (function () {
+                    var box = overlay.querySelector(".view-overlay-box");
+                    var handle = overlay.querySelector("[data-detail-drag-handle]");
+                    if (!box || !handle) return;
+                    var drag = null;
+                    handle.addEventListener("pointerdown", function (e) {
+                        if (!overlay.classList.contains("is-detail")) return;
+                        if (e.target.closest("button, a")) return;
+                        drag = {
+                            x: e.clientX,
+                            y: e.clientY,
+                            left: box.offsetLeft,
+                            top: box.offsetTop,
+                        };
+                        box.classList.add("is-dragging");
+                        box.style.position = "fixed";
+                        box.style.left = drag.left + "px";
+                        box.style.top = drag.top + "px";
+                        box.style.margin = "0";
+                        try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+                    });
+                    handle.addEventListener("pointermove", function (e) {
+                        if (!drag) return;
+                        var nextLeft = drag.left + e.clientX - drag.x;
+                        var nextTop = drag.top + e.clientY - drag.y;
+                        box.style.left = Math.max(4, Math.min(window.innerWidth - box.offsetWidth - 4, nextLeft)) + "px";
+                        box.style.top = Math.max(4, Math.min(window.innerHeight - box.offsetHeight - 4, nextTop)) + "px";
+                    });
+                    handle.addEventListener("pointerup", function (e) {
+                        drag = null;
+                        box.classList.remove("is-dragging");
+                        try { handle.releasePointerCapture(e.pointerId); } catch (err) {}
+                    });
+                })();
 
                 var hashMap = { support: "sponsor", about: "about" };
                 var hashView = hashMap[window.location.hash.replace("#", "")];
@@ -1067,7 +1113,7 @@ import "../styles/gallery.css";
                     x.type = "button";
                     x.setAttribute("data-tray-remove", id);
                     x.setAttribute("data-label", "x");
-                    x.title = "Remove from compare";
+                    x.title = "Remove from workbench";
                     x.textContent = "x";
                     a.appendChild(label);
                     a.appendChild(wrap);
@@ -1111,7 +1157,7 @@ import "../styles/gallery.css";
                             btn.setAttribute("data-label", on ? "on" : "off");
                             btn.setAttribute(
                                 "title",
-                                on ? "Remove from compare" : "Add to compare",
+                                on ? "Remove from workbench" : "Add to workbench",
                             );
                         });
                 };
@@ -1161,8 +1207,8 @@ import "../styles/gallery.css";
                             collapsed ? "false" : "true",
                         );
                         railCompare.title = collapsed
-                            ? "show compare"
-                            : "hide compare";
+                            ? "show workbench"
+                            : "hide workbench";
                     }
                 };
 
@@ -1763,6 +1809,12 @@ import "../styles/gallery.css";
                 const wrapState = document.getElementById(
                     "wrap-toggle-state",
                 ) as HTMLElement | null;
+                const detailWrapBtn = document.getElementById(
+                    "detail-wrap-toggle",
+                ) as HTMLElement | null;
+                const detailWrapState = document.getElementById(
+                    "detail-wrap-toggle-state",
+                ) as HTMLElement | null;
                 try {
                     const w = localStorage.getItem(WRAP_KEY);
                     if (
@@ -1793,30 +1845,39 @@ import "../styles/gallery.css";
                     if (wrapState) {
                         wrapState.textContent = wrapLabel(wrapMode);
                     }
+                    if (detailWrapBtn) {
+                        detailWrapBtn.setAttribute(
+                            "aria-pressed",
+                            wrapMode === "clamp" ? "false" : "true",
+                        );
+                    }
+                    if (detailWrapState) {
+                        detailWrapState.textContent = wrapLabel(wrapMode);
+                    }
+                };
+                const cycleWrap = function () {
+                    wrapMode =
+                        wrapMode === "clamp"
+                            ? "repeat"
+                            : wrapMode === "repeat"
+                              ? "mirror"
+                              : wrapMode === "mirror"
+                                ? "loop"
+                                : "clamp";
+                    try {
+                        localStorage.setItem(WRAP_KEY, wrapMode);
+                    } catch (e) {}
+                    applyWrapUI();
+                    // Re-render wrap on all visible views.
+                    visibleViews().forEach(function (v) {
+                        const st = readView();
+                        st.wrapMode = wrapMode;
+                        applyView(v, st, { persist: false, flash: false });
+                    });
                 };
                 applyWrapUI();
-                if (wrapBtn) {
-                    wrapBtn.addEventListener("click", function () {
-                        wrapMode =
-                            wrapMode === "clamp"
-                                ? "repeat"
-                                : wrapMode === "repeat"
-                                  ? "mirror"
-                                  : wrapMode === "mirror"
-                                    ? "loop"
-                                    : "clamp";
-                        try {
-                            localStorage.setItem(WRAP_KEY, wrapMode);
-                        } catch (e) {}
-                        applyWrapUI();
-                        // Re-render wrap on all visible views.
-                        visibleViews().forEach(function (v) {
-                            const st = readView();
-                            st.wrapMode = wrapMode;
-                            applyView(v, st, { persist: false, flash: false });
-                        });
-                    });
-                }
+                if (wrapBtn) wrapBtn.addEventListener("click", cycleWrap);
+                if (detailWrapBtn) detailWrapBtn.addEventListener("click", cycleWrap);
                 const visibleViews = function (): NodeListOf<HTMLElement> {
                     return document.querySelectorAll(
                         "#wall-grid .card:not(.is-hidden) [data-curve-view], #compare-tray [data-curve-view], #detail-overlay-viewport [data-curve-view]",
@@ -1880,6 +1941,29 @@ import "../styles/gallery.css";
                     if (!opts || opts.persist !== false) writeViewStore(st);
                     if (view === activeView) setWallHeadScale(st);
                 };
+                const setBackgroundViewsFrozen = function (frozen: boolean) {
+                    document
+                        .querySelectorAll<HTMLElement>(
+                            "#wall-grid [data-curve-view], #compare-tray [data-curve-view]",
+                        )
+                        .forEach(function (view) {
+                            const renderer = canvasRenderers.get(view);
+                            if (!renderer) return;
+                            if (frozen) {
+                                renderer.setViewportVisible(false);
+                                return;
+                            }
+                            const inWall = !!view.closest("#wall-grid");
+                            const visible = inWall
+                                ? view.getAttribute("data-curve-view-in-viewport") === "true"
+                                : true;
+                            renderer.setViewportVisible(visible);
+                        });
+                };
+                window.addEventListener("curvoteca:detail-overlay", function (e) {
+                    const detail = (e as CustomEvent).detail;
+                    setBackgroundViewsFrozen(!!(detail && detail.open));
+                });
                 const fitStateFor = function (
                     view: HTMLElement,
                 ): CurveViewportState {

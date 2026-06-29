@@ -23,3 +23,6 @@ ref/
 
 # docs
 docs/
+lh.json
+lh.report.json
+scripts/read-lh.mjs
