@@ -15,9 +15,9 @@
 import TopBar from "../components/TopBar.astro";
 import IconRail from "../components/IconRail.astro";
 import CurveWall from "../components/CurveWall.astro";
-import CompareTray from "../components/CompareTray.astro";
 import SponsorSlot from "../components/SponsorSlot.astro";
 import CombineIcon from "../components/CombineIcon.astro";
+import CopyIcon from "../components/CopyIcon.astro";
 import { curves } from "../data/curves";
 import { PAGER } from "../lib/curveViewportMath";
 import {
@@ -127,14 +127,13 @@ import "../styles/gallery.css";
             <TopBar />
             <IconRail />
             <CurveWall curves={curves} />
-            <CompareTray curves={curves.slice(0, 5)} />
         </main>
 
         <div id="view-overlay" data-view-overlay aria-hidden="true">
             <div class="view-overlay-backdrop" data-overlay-close></div>
             <div class="view-overlay-box" role="dialog" aria-modal="true">
                 <button class="icon view-overlay-close" type="button" data-overlay-close aria-label="Close">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="12px" viewBox="0 -960 960 960" width="12px" fill="currentColor" aria-hidden="true">
                         <path d="M480-440 288-248l-88-88 192-192-192-192 88-88 192 192 192-192 88 88-192 192 192 192-88 88-192-192Z"/>
                     </svg>
                 </button>
@@ -202,6 +201,23 @@ import "../styles/gallery.css";
                         Contact: <a href="mailto:hello@curvoteca.com">hello@curvoteca.com</a>
                     </p>
                 </div>
+                <div class="view-overlay-content" data-overlay-content="detail" aria-hidden="true">
+                    <div class="detail-row1">
+                        <div class="detail-viewport-col" id="detail-overlay-viewport"></div>
+                        <div class="detail-info-col">
+                            <h2 id="detail-overlay-name"></h2>
+                            <p class="detail-overlay-summary" id="detail-overlay-summary"></p>
+                        </div>
+                    </div>
+                    <div class="detail-tabs-row" id="detail-overlay-tabs"></div>
+                    <div class="detail-code-row">
+                        <pre class="detail-overlay-code" id="detail-overlay-code"></pre>
+                        <button class="icon copy-btn detail-code-copy" id="detail-overlay-copy" data-copy="" title="Copy" type="button">
+                            <span class="copy-icon-wrap"><CopyIcon size={14} /></span>
+                            <span class="copy-feedback">Copied!</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -267,9 +283,10 @@ import "../styles/gallery.css";
                     class="link-toggle pager-compare"
                     type="button"
                     id="rail-compare"
-                    title="toggle compare tray"
-                    aria-label="Toggle compare tray"
-                    aria-pressed="true"
+                    disabled
+                    title="compare disabled"
+                    aria-label="Compare disabled"
+                    aria-pressed="false"
                 >
                     <CombineIcon size={14} class="is-compare" />
                     <span class="link-toggle-state">compare</span>
@@ -353,6 +370,7 @@ import "../styles/gallery.css";
                         c.setAttribute("aria-hidden", c.getAttribute("data-overlay-content") !== view ? "true" : "false");
                     });
                     overlay.setAttribute("aria-hidden", "false");
+                    overlay.classList.toggle("is-detail", view === "detail");
                     railBtns.forEach(function (b) {
                         b.classList.toggle("active", b.getAttribute("data-rail-view") === view);
                     });
@@ -377,14 +395,145 @@ import "../styles/gallery.css";
                         return;
                     }
                     const btn = e.target.closest("[data-rail-view]");
-                    if (!btn) return;
-                    e.preventDefault();
-                    const view = btn.getAttribute("data-rail-view");
-                    if (view === "gallery") {
-                        closeOverlay();
+                    if (btn) {
+                        e.preventDefault();
+                        const view = btn.getAttribute("data-rail-view");
+                        if (view === "gallery") {
+                            closeOverlay();
+                            return;
+                        }
+                        openOverlay(view);
                         return;
                     }
-                    openOverlay(view);
+                    const detail = e.target.closest("[data-open-detail]");
+                    if (detail) {
+                        if (e.target.closest("[data-tray-remove]")) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var id = detail.getAttribute("data-open-detail");
+                        if (!id) return;
+                        var wall = document.getElementById("curve-wall");
+                        if (!wall) return;
+                        try {
+                            var registry = JSON.parse(wall.getAttribute("data-curves") || "[]");
+                            var entry = null;
+                            for (var i = 0; i < registry.length; i++) {
+                                if (registry[i].id === id) { entry = registry[i]; break; }
+                            }
+                            if (!entry) return;
+                            var nameEl = document.getElementById("detail-overlay-name");
+                            var summaryEl = document.getElementById("detail-overlay-summary");
+                            if (nameEl) nameEl.textContent = entry.name;
+                            if (summaryEl) summaryEl.textContent = entry.summary || "";
+
+                            var vpEl = document.getElementById("detail-overlay-viewport");
+                            if (vpEl) {
+                                vpEl.innerHTML = "";
+                                var wrap = document.createElement("div");
+                                wrap.className = "graph curve-view detail-curve-view";
+                                wrap.setAttribute("data-curve-view", "");
+                                wrap.setAttribute("data-curve-id", entry.id);
+                                wrap.setAttribute("data-curve-view-default", "0 0 252 128");
+                                var pts = entry.previewPoints;
+                                if (pts && pts.length) {
+                                    wrap.setAttribute("data-curve-points", JSON.stringify(pts));
+                                }
+                                // Canvas
+                                var canvas = document.createElement("canvas");
+                                canvas.className = "curve-view-canvas";
+                                canvas.setAttribute("data-curve-canvas", "");
+                                canvas.setAttribute("aria-hidden", "true");
+                                wrap.appendChild(canvas);
+                                // Zoom readout (bottom-right)
+                                var readout = document.createElement("div");
+                                readout.className = "curve-view-readout";
+                                readout.setAttribute("aria-hidden", "true");
+                                var rx = document.createElement("span");
+                                rx.setAttribute("data-curve-view-x", "");
+                                rx.textContent = "100%";
+                                var rsep = document.createElement("span");
+                                rsep.className = "curve-view-sep";
+                                rsep.textContent = "|";
+                                var ry = document.createElement("span");
+                                ry.setAttribute("data-curve-view-y", "");
+                                ry.textContent = "100%";
+                                var fitIcon = document.createElement("svg");
+                                fitIcon.className = "curve-view-fit-icon";
+                                fitIcon.setAttribute("viewBox", "0 -960 960 960");
+                                fitIcon.setAttribute("fill", "currentColor");
+                                fitIcon.innerHTML = '<path d="M227-227v-266h98v168h168v98H227Zm408-240v-168H467v-98h266v266h-98Z"/>';
+                                readout.appendChild(rx);
+                                readout.appendChild(rsep);
+                                readout.appendChild(ry);
+                                readout.appendChild(fitIcon);
+                                wrap.appendChild(readout);
+                                // Probe readout (bottom-center)
+                                var pr = document.createElement("div");
+                                pr.className = "curve-view-probe-readout";
+                                pr.setAttribute("aria-hidden", "true");
+                                var px = document.createElement("span");
+                                px.className = "curve-view-probe-readout-x";
+                                px.setAttribute("data-curve-view-probe-x", "");
+                                px.textContent = "x 0.00";
+                                var psep = document.createElement("span");
+                                psep.className = "curve-view-probe-readout-sep";
+                                psep.textContent = "/";
+                                var py = document.createElement("span");
+                                py.className = "curve-view-probe-readout-y";
+                                py.setAttribute("data-curve-view-probe-y", "");
+                                py.textContent = "y 0.00";
+                                pr.appendChild(px);
+                                pr.appendChild(psep);
+                                pr.appendChild(py);
+                                wrap.appendChild(pr);
+                                // Screen probes (crosshairs)
+                                var spv = document.createElement("div");
+                                spv.className = "curve-view-screen-probe curve-view-screen-probe--v";
+                                spv.setAttribute("data-curve-view-screen-probe-v", "");
+                                spv.setAttribute("aria-hidden", "true");
+                                wrap.appendChild(spv);
+                                var sph = document.createElement("div");
+                                sph.className = "curve-view-screen-probe curve-view-screen-probe--h";
+                                sph.setAttribute("data-curve-view-screen-probe-h", "");
+                                sph.setAttribute("aria-hidden", "true");
+                                wrap.appendChild(sph);
+                                // Axis labels
+                                var lx = document.createElement("div");
+                                lx.className = "curve-view-axis-label curve-view-axis-label--x";
+                                lx.setAttribute("data-curve-view-label-x", "");
+                                lx.setAttribute("aria-hidden", "true");
+                                lx.textContent = "x 0.00";
+                                wrap.appendChild(lx);
+                                var ly = document.createElement("div");
+                                ly.className = "curve-view-axis-label curve-view-axis-label--y";
+                                ly.setAttribute("data-curve-view-label-y", "");
+                                ly.setAttribute("aria-hidden", "true");
+                                ly.textContent = "y 0.00";
+                                wrap.appendChild(ly);
+                                vpEl.appendChild(wrap);
+                            }
+
+                            // Use modules for tabs + code
+                            var codeEl = document.getElementById("detail-overlay-code");
+                            var copyEl = document.getElementById("detail-overlay-copy");
+                            var tabsEl = document.getElementById("detail-overlay-tabs");
+                            var ov = window.__detailOverlay;
+                            if (ov && tabsEl && codeEl && copyEl) {
+                                ov.buildSnippetTabs(tabsEl, entry, function (_, code) {
+                                    ov.showCode(codeEl, copyEl, code);
+                                });
+                                ov.showCode(codeEl, copyEl, entry.equation);
+                            }
+
+                            openOverlay("detail");
+                            setTimeout(function () {
+                                try {
+                                    document.dispatchEvent(new CustomEvent("curvoteca:views-changed"));
+                                } catch (err) {}
+                            }, 0);
+                        } catch (err) {}
+                        return;
+                    }
                 });
 
                 window.__appClickHandlers.push(function (e) {
@@ -402,6 +551,22 @@ import "../styles/gallery.css";
                             el.setAttribute("hidden", "");
                         }
                     });
+                });
+
+                window.__appClickHandlers.push(function (e) {
+                    var copyBtn = e.target.closest("[data-copy]");
+                    if (!copyBtn) return;
+                    if (copyBtn.closest("[data-copy-toggle]")) return;
+                    if (copyBtn.closest("#copy-popover")) return;
+                    e.preventDefault();
+                    var code = copyBtn.getAttribute("data-copy");
+                    if (!code) return;
+                    var ov = window.__detailOverlay;
+                    if (ov) {
+                        ov.copyDetailCode(code).then(function () {
+                            ov.flashCopied(copyBtn);
+                        }).catch(function () {});
+                    }
                 });
             })();
         </script>
@@ -873,9 +1038,10 @@ import "../styles/gallery.css";
                 const buildItem = function (id) {
                     const reg = byId[id];
                     if (!reg) return null;
-                    const a = document.createElement("a");
+                    const a = document.createElement("button");
                     a.className = "mini-card tray-item";
-                    a.href = "/curve/" + id;
+                    a.type = "button";
+                    a.setAttribute("data-open-detail", id);
                     a.setAttribute("data-tray-id", id);
                     a.setAttribute("data-tray-name", reg.name);
                     a.title = reg.name + (reg.family ? " / " + reg.family : "");
@@ -1653,7 +1819,7 @@ import "../styles/gallery.css";
                 }
                 const visibleViews = function (): NodeListOf<HTMLElement> {
                     return document.querySelectorAll(
-                        "#wall-grid .card:not(.is-hidden) [data-curve-view], #compare-tray [data-curve-view]",
+                        "#wall-grid .card:not(.is-hidden) [data-curve-view], #compare-tray [data-curve-view], #detail-overlay-viewport [data-curve-view]",
                     );
                 };
                 const broadcastView = function (
@@ -2137,6 +2303,31 @@ import "../styles/gallery.css";
                         }
                     }
                 });
+                // Overlay viewport drag (zoom/pan)
+                const overlayVpEl = document.getElementById("detail-overlay-viewport");
+                if (overlayVpEl) {
+                    overlayVpEl.addEventListener("mousedown", function (e: MouseEvent) {
+                        if (e.button !== 0) return;
+                        const v = findView(e.target);
+                        if (!v) return;
+                        const id = v.getAttribute("data-curve-id") || "";
+                        const st = readView();
+                        activeView = v;
+                        const isPan = e.shiftKey || e.altKey;
+                        drag = {
+                            kind: isPan ? "pan-view" : "zoom-view",
+                            view: v,
+                            id: id,
+                            x: e.clientX,
+                            y: e.clientY,
+                            zx0: st.zoomX,
+                            zy0: st.zoomY,
+                            cx0: st.centerX,
+                            cy0: st.centerY,
+                            moved: false,
+                        };
+                    });
+                }
                 window.addEventListener("mousemove", function (e: MouseEvent) {
                     if (!drag) return;
                     const dx = e.clientX - drag.x;
@@ -2339,6 +2530,32 @@ import "../styles/gallery.css";
                 });
                 wall.addEventListener("mouseleave", clearProbeState);
 
+                // Overlay viewport probe
+                const detailCol = document.getElementById("detail-overlay-viewport");
+                if (detailCol) {
+                    detailCol.addEventListener("mousemove", function (e: MouseEvent) {
+                        const v = findView(e.target);
+                        if (!v) return;
+                        if (v !== hoveredView) {
+                            if (hoveredView) {
+                                const prev = canvasRenderers.get(hoveredView);
+                                if (prev) prev.clearProbe();
+                                hoveredView.classList.remove("has-probe", "is-probe-near");
+                            }
+                            hoveredView = v;
+                        }
+                        updateProbe(v, e.clientX, e.clientY);
+                    });
+                    detailCol.addEventListener("mouseleave", function () {
+                        if (hoveredView && detailCol.contains(hoveredView)) {
+                            const r = canvasRenderers.get(hoveredView);
+                            if (r) r.clearProbe();
+                            hoveredView.classList.remove("has-probe", "is-probe-near");
+                            hoveredView = null;
+                        }
+                    });
+                }
+
                 // --- click to select --------------------------------------
                 grid.addEventListener("click", function (e: MouseEvent) {
                     const card = findCard(e.target);
@@ -2356,6 +2573,12 @@ import "../styles/gallery.css";
         <script>
             import { initSnippetPopover } from "../lib/snippetPopover";
             initSnippetPopover();
+        </script>
+
+        <script>
+            import { buildSnippetTabs } from "../lib/detailSnippetTabs";
+            import { showCode, copyDetailCode, flashCopied } from "../lib/detailCodeField";
+            window.__detailOverlay = { buildSnippetTabs, showCode, copyDetailCode, flashCopied };
         </script>
     </body>
 </html>

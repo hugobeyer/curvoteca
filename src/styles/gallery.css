@@ -787,6 +787,10 @@
 .card:focus-within .curve-view-readout {
     opacity: 1;
 }
+.detail-curve-view:hover .curve-view-readout,
+.detail-curve-view:focus-within .curve-view-readout {
+    opacity: 1;
+}
 
 /* Drag states on the wall. Border highlights removed — the cursor
    change is enough feedback; the inset ring on the main panel
@@ -973,10 +977,10 @@
 }
 .view-overlay-close {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 28px;
-    height: 28px;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
     border: 0;
     border-radius: 3px;
     background: color-mix(in srgb, var(--white) 6%, transparent);
@@ -1090,6 +1094,160 @@
 }
 .qr-link[hidden] {
     display: none;
+}
+#view-overlay.is-detail .view-overlay-box {
+    max-width: 75vw;
+    max-height: none;
+    overflow: visible;
+    width: auto;
+    height: auto;
+    padding: 8px;
+}
+.view-overlay-content[data-overlay-content="detail"] {
+    display: grid;
+    gap: 10px;
+    height: 100%;
+}
+.view-overlay-content[data-overlay-content="detail"][aria-hidden="true"] {
+    display: none;
+}
+.detail-row1 {
+    display: grid;
+    grid-template-columns: 1fr 240px;
+    gap: 10px;
+    min-height: 0;
+}
+.detail-viewport-col {
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+}
+.detail-curve-view {
+    flex: 1;
+    aspect-ratio: 16 / 9;
+    min-height: 420px;
+    max-height: 75vh;
+    width: 100%;
+}
+.detail-info-col h2 {
+    margin: 0 0 6px;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: var(--text-transform-uppercase);
+    color: var(--text);
+}
+.detail-overlay-summary {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+}
+.detail-tabs-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.detail-tab {
+    height: 24px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--white) 5%, transparent);
+    color: var(--muted);
+    font-family: var(--font-family);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-mid);
+    text-transform: var(--text-transform-uppercase);
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+}
+.detail-tab:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--white);
+}
+.detail-tab.active {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    color: var(--white);
+}
+.detail-code-row {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+}
+.detail-code-copy {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    margin-top: 2px;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background 0.12s ease, color 0.12s ease;
+    position: relative;
+}
+.detail-code-copy:hover {
+    background: color-mix(in srgb, var(--white) 8%, transparent);
+    color: var(--text);
+}
+.detail-code-copy:active {
+    background: color-mix(in srgb, var(--white) 14%, transparent);
+    color: var(--text);
+}
+.detail-code-copy:focus-visible {
+    outline: 2px solid var(--accent-soft);
+    outline-offset: 2px;
+}
+.detail-code-copy .copy-feedback {
+    display: none;
+    font-family: var(--font-family);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-mid);
+    white-space: nowrap;
+}
+.detail-code-copy.is-copied {
+    width: auto;
+    height: 26px;
+    padding: 0 8px;
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--accent);
+    border-radius: 3px;
+    pointer-events: none;
+}
+.detail-code-copy.is-copied .copy-icon-wrap {
+    display: none;
+}
+.detail-code-copy.is-copied .copy-feedback {
+    display: inline;
+}
+.detail-overlay-code {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 12px;
+    border: 0;
+    border-radius: 3px;
+    background: var(--bg-step-1);
+    box-shadow: inset 0 0 0 1px var(--line-soft);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--text-soft);
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-y: auto;
+    max-height: 40vh;
+}
+@media (max-width: 660px) {
+    .detail-overlay-body {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 .lang-list {
     display: flex;

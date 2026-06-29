@@ -2,7 +2,6 @@
 import CurveViewport from "./CurveViewport.astro";
 import TargetIcon from "./TargetIcon.astro";
 import StarIcon from "./StarIcon.astro";
-import CombineIcon from "./CombineIcon.astro";
 import CopyIcon from "./CopyIcon.astro";
 import ExpandIcon from "./ExpandIcon.astro";
 import { buildSearchHaystack } from "../lib/searchIndex";
@@ -50,17 +49,7 @@ const snippetsJson = JSON.stringify(curve.snippets ?? {});
                     <CopyIcon size={16} />
                 </button>
             </span>
-            <span class="action">
-                <button
-                    class="icon compare-btn"
-                    title="compare"
-                    type="button"
-                    data-compare-toggle={curve.id}
-                    data-label="on"
-                >
-                    <CombineIcon size={16} />
-                </button>
-            </span>
+
             <span class="action">
                 <button
                     class="icon fav-btn"
@@ -73,14 +62,15 @@ const snippetsJson = JSON.stringify(curve.snippets ?? {});
                 </button>
             </span>
             <span class="action">
-                <a
+                <button
                     class="icon info-btn"
-                    href={`/curve/${curve.id}`}
-                    title="Open detail page"
-                    aria-label={`Open ${curve.name} detail page`}
+                    type="button"
+                    data-open-detail={curve.id}
+                    title="Open detail"
+                    aria-label={`Open ${curve.name} detail`}
                 >
                     <ExpandIcon size={16} />
-                </a>
+                </button>
             </span>
         </div>
     </header>
