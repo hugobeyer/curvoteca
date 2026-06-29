@@ -1,0 +1,12 @@
+---
+// Build-time constants shared across components.
+// Import the named consts you need; this file renders no markup.
+
+// Standard viewBox dims used by every curve preview. Build-time sampling
+// projects onto this; runtime canvas re-uses the same proportions.
+export const VIEWBOX = { x: 0, y: 0, w: 252, h: 128 } as const;
+export const DEFAULT_VIEWBOX = "0 0 252 128" as const;
+
+// Material Symbols viewBox is 0 0 24 24.
+export const ICON_VIEWBOX_SIZE = 24;
+---

@@ -1,0 +1,2 @@
+# Placeholder for future ad network records.
+# Keep this file at site root for AdSense / sponsor verification later.

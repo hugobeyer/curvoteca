@@ -1,0 +1,88 @@
+---
+import type { CurveDefinition } from "../data/curves";
+import { projectToViewBox, sampleKernel } from "../lib/curveMath";
+
+interface Props {
+    curve: CurveDefinition;
+    variant?: "card" | "mini";
+    showReadout?: boolean;
+}
+
+const { curve, variant = "card", showReadout = false } = Astro.props as Props;
+
+const DEFAULT_VIEWBOX = "0 0 252 128";
+const VIEWBOX = { x: 0, y: 0, w: 252, h: 128 };
+
+const samples = sampleKernel(curve.kernel, curve.sampling);
+const projected = projectToViewBox(samples, VIEWBOX, curve.domain, curve.range);
+const pointsJson = JSON.stringify(
+    projected.map((p) => [p.x, p.y] as [number, number]),
+);
+---
+
+<div
+    class={variant === "mini" ? "mini-graph curve-view" : "graph curve-view"}
+    data-curve-view
+    data-curve-id={curve.id}
+    data-curve-view-default={DEFAULT_VIEWBOX}
+    data-curve-domain={JSON.stringify(curve.domain)}
+    data-curve-range={JSON.stringify(curve.range)}
+    data-curve-points={pointsJson}
+>
+    <canvas class="curve-view-canvas" data-curve-canvas aria-hidden="true"
+    ></canvas>
+    {
+        showReadout ? (
+            <div class="curve-view-readout" aria-hidden="true">
+                <span data-curve-view-x>100%</span>
+                <span class="curve-view-sep">|</span>
+                <span data-curve-view-y>100%</span>
+                <svg
+                    class="curve-view-fit-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 -960 960 960"
+                    fill="currentColor"
+                    aria-hidden="true"
+                >
+                    <path d="M227-227v-266h98v168h168v98H227Zm408-240v-168H467v-98h266v266h-98Z" />
+                </svg>
+            </div>
+        ) : null
+    }
+    <div class="curve-view-probe-readout" aria-hidden="true">
+        <span class="curve-view-probe-readout-x" data-curve-view-probe-x>
+            x 0.00
+        </span>
+        <span class="curve-view-probe-readout-sep">/</span>
+        <span class="curve-view-probe-readout-y" data-curve-view-probe-y>
+            y 0.00
+        </span>
+    </div>
+    <div
+        class="curve-view-screen-probe curve-view-screen-probe--v"
+        data-curve-view-screen-probe-v
+        aria-hidden="true"
+    >
+    </div>
+    <div
+        class="curve-view-screen-probe curve-view-screen-probe--h"
+        data-curve-view-screen-probe-h
+        aria-hidden="true"
+    >
+    </div>
+
+    <div
+        class="curve-view-axis-label curve-view-axis-label--x"
+        data-curve-view-label-x
+        aria-hidden="true"
+    >
+        x 0.00
+    </div>
+    <div
+        class="curve-view-axis-label curve-view-axis-label--y"
+        data-curve-view-label-y
+        aria-hidden="true"
+    >
+        y 0.00
+    </div>
+</div>

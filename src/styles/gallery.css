@@ -1,0 +1,1116 @@
+/* ---------------------------------------------------------------------------
+   gallery.css
+   Wall, grid, card layout, card layer system, meta, filter, layout-note.
+
+   Cascade dependency: this file must be imported AFTER globalfx.css.
+   .card base shadow + transition are defined in globalfx.css; the
+   per-state layer system (--layer-body / --layer-head / --layer-title)
+   is defined here and stacks on top.
+   --------------------------------------------------------------------------- */
+
+:root {
+    /* Text label inset offsets (used by absolute-positioned readouts
+       on the curve viewport and card meta). */
+    --text-label-inset-x: 12px;
+    --text-label-inset-y: 8px;
+    /* Card body gradient stack. Two static radial highlights (curve2
+       top-left + accent bottom-right) that give cards their depth.
+       Reused by the pager so the bottom bar picks up the same
+       treatment as the card panel. */
+    --card-bg-gradient:
+        radial-gradient(
+            circle at 18% 0%,
+            color-mix(in srgb, var(--curve2) 5%, transparent),
+            transparent 40%
+        ),
+        radial-gradient(
+            circle at 90% 115%,
+            color-mix(in srgb, var(--accent) 6%, transparent),
+            transparent 44%
+        );
+}
+
+/* Grid: drives card density via --card-min-w / --card-row-h. */
+.grid {
+    display: grid;
+    grid-template-columns: var(--grid-cols);
+    grid-auto-rows: var(--card-row-h);
+    gap: 8px;
+    align-content: start;
+}
+
+.card {
+    position: relative;
+    /* contain: layout isolates each card's reflow from the grid so a
+       .has-zoom toggle or attribute update inside one card doesn't
+       shift its siblings. DevTools CLS report flagged card-to-card
+       layout shifts during the wheel/zoom interaction. paint is added
+       so a card's painted output can't bleed into siblings either. */
+    contain: content;
+    border: 0;
+    border-radius: var(--card-radius);
+    background: var(--layer-body, none), var(--card-bg-gradient), var(--panel2);
+    display: grid;
+    grid-template-rows: var(--card-head-h) 1fr;
+    align-items: stretch;
+    gap: 0;
+    min-width: 0;
+    /* Reserve a minimum height so the card has a stable box before the
+       grid sets --card-row-h. Without this, the card can briefly
+       collapse to its intrinsic content height during the gap between
+       first paint and the JS that sets --card-row-h, causing CLS. */
+    min-height: var(--card-row-h);
+    overflow: hidden;
+    cursor: pointer;
+}
+
+/* ------------------------------------------------------------------
+   Card state tokens (additive, layered)
+   ------------------------------------------------------------------
+   Each state contributes its own gradient layer (or "none") to a
+   per-region custom property. The consumer rule stacks every layer
+   in the `background` shorthand. The browser composites translucent
+   layers additively (alpha-over).
+
+   Regions: --layer-body, --layer-head, --layer-title.
+   ------------------------------------------------------------------ */
+.card {
+    --layer-body: none;
+    --layer-head: none;
+    --layer-title: var(--text-card);
+}
+.card.is-fav {
+    /* Favorite indicator lives on the button itself, not the card body. */
+    --layer-title: color-mix(in srgb, var(--fav) 92%, transparent);
+    --layer-head: radial-gradient(
+        ellipse 80% 130% at 50% 100%,
+        color-mix(in srgb, var(--fav) 26%, transparent) 0%,
+        color-mix(in srgb, var(--fav) 18%, transparent) 18%,
+        color-mix(in srgb, var(--fav) 8%, transparent) 45%,
+        color-mix(in srgb, var(--fav) 3%, transparent) 70%,
+        transparent 100%
+    );
+}
+.card:has(.compare-btn.is-on) {
+    --layer-title: color-mix(in srgb, var(--accent3) 92%, transparent);
+    --layer-head: radial-gradient(
+        ellipse 80% 130% at 50% 100%,
+        color-mix(in srgb, var(--accent3) 26%, transparent) 0%,
+        color-mix(in srgb, var(--accent3) 18%, transparent) 18%,
+        color-mix(in srgb, var(--accent3) 8%, transparent) 45%,
+        color-mix(in srgb, var(--accent3) 3%, transparent) 70%,
+        transparent 100%
+    );
+}
+.card.is-fav:hover,
+.card.is-fav:focus-within,
+.card.is-fav.is-selected,
+.card.is-fav.is-selected:hover,
+.card.is-fav.is-selected:focus-within {
+    --layer-head:
+        radial-gradient(
+            ellipse 80% 130% at 50% 100%,
+            color-mix(in srgb, var(--accent2) 18%, transparent) 0%,
+            color-mix(in srgb, var(--accent2) 10%, transparent) 25%,
+            color-mix(in srgb, var(--accent2) 4%, transparent) 60%,
+            transparent 100%
+        ),
+        radial-gradient(
+            ellipse 80% 130% at 50% 100%,
+            color-mix(in srgb, var(--fav) 26%, transparent) 0%,
+            color-mix(in srgb, var(--fav) 18%, transparent) 18%,
+            color-mix(in srgb, var(--fav) 8%, transparent) 45%,
+            color-mix(in srgb, var(--fav) 3%, transparent) 70%,
+            transparent 100%
+        );
+}
+.card:has(.compare-btn.is-on):hover,
+.card:has(.compare-btn.is-on):focus-within,
+.card:has(.compare-btn.is-on).is-selected,
+.card:has(.compare-btn.is-on).is-selected:hover,
+.card:has(.compare-btn.is-on).is-selected:focus-within {
+    --layer-head:
+        radial-gradient(
+            ellipse 80% 130% at 50% 100%,
+            color-mix(in srgb, var(--accent2) 18%, transparent) 0%,
+            color-mix(in srgb, var(--accent2) 10%, transparent) 25%,
+            color-mix(in srgb, var(--accent2) 4%, transparent) 60%,
+            transparent 100%
+        ),
+        radial-gradient(
+            ellipse 80% 130% at 50% 100%,
+            color-mix(in srgb, var(--accent3) 26%, transparent) 0%,
+            color-mix(in srgb, var(--accent3) 18%, transparent) 18%,
+            color-mix(in srgb, var(--accent3) 8%, transparent) 45%,
+            color-mix(in srgb, var(--accent3) 3%, transparent) 70%,
+            transparent 100%
+        );
+}
+.card.is-selected:focus-within,
+.card.is-selected:hover {
+    --layer-head:
+        radial-gradient(
+            ellipse 80% 130% at 50% 100%,
+            color-mix(in srgb, var(--accent) 18%, transparent) 0%,
+            color-mix(in srgb, var(--accent) 10%, transparent) 25%,
+            color-mix(in srgb, var(--accent) 4%, transparent) 60%,
+            transparent 100%
+        ),
+        radial-gradient(
+            ellipse 80% 130% at 50% 100%,
+            color-mix(in srgb, var(--curve2) 22%, transparent) 0%,
+            color-mix(in srgb, var(--curve2) 14%, transparent) 18%,
+            color-mix(in srgb, var(--curve2) 6%, transparent) 45%,
+            color-mix(in srgb, var(--curve2) 2%, transparent) 70%,
+            transparent 100%
+        );
+}
+.card.is-selected {
+    --layer-body: radial-gradient(
+        ellipse 80% 130% at 50% 100%,
+        color-mix(in srgb, var(--curve2) 14%, transparent) 0%,
+        color-mix(in srgb, var(--curve2) 8%, transparent) 25%,
+        color-mix(in srgb, var(--curve2) 3%, transparent) 60%,
+        transparent 100%
+    );
+    --layer-head: radial-gradient(
+        ellipse 80% 130% at 50% 100%,
+        color-mix(in srgb, var(--curve2) 24%, transparent) 0%,
+        color-mix(in srgb, var(--curve2) 14%, transparent) 25%,
+        color-mix(in srgb, var(--curve2) 6%, transparent) 60%,
+        transparent 100%
+    );
+    --layer-title: var(--curve2);
+}
+.card.is-fav.is-selected {
+    --layer-title: color-mix(in srgb, var(--fav) 92%, transparent);
+}
+
+/* ------------------------------------------------------------------
+   Interaction layers (hover, focus, active)
+   ------------------------------------------------------------------ */
+.card:hover {
+    --layer-head: radial-gradient(
+        ellipse 80% 130% at 50% 100%,
+        color-mix(in srgb, var(--accent2) 10%, transparent) 0%,
+        color-mix(in srgb, var(--accent2) 5%, transparent) 25%,
+        color-mix(in srgb, var(--accent2) 2%, transparent) 60%,
+        transparent 100%
+    );
+}
+.actions .icon.is-on {
+    color: var(--fav);
+}
+.actions .icon.compare-btn.is-on {
+    color: var(--accent3);
+}
+.card.is-selected {
+    box-shadow: 0 0 var(--glow-blur-sm) var(--glow-spread)
+        color-mix(in srgb, var(--curve2) var(--fx-mid), transparent);
+}
+.card:focus-within {
+    --layer-body: radial-gradient(
+        ellipse 80% 130% at 50% 100%,
+        color-mix(in srgb, var(--curve2) 10%, transparent) 0%,
+        color-mix(in srgb, var(--curve2) 6%, transparent) 25%,
+        color-mix(in srgb, var(--curve2) 2%, transparent) 60%,
+        transparent 100%
+    );
+}
+.card:active {
+    --layer-head: radial-gradient(
+        ellipse 80% 130% at 50% 100%,
+        color-mix(in srgb, var(--black) 10%, transparent) 0%,
+        color-mix(in srgb, var(--black) 5%, transparent) 25%,
+        color-mix(in srgb, var(--black) 2%, transparent) 60%,
+        transparent 100%
+    );
+}
+
+.card-head {
+    z-index: 8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+    height: var(--card-head-h);
+    padding: 0;
+    min-width: 0;
+    flex: 0 0 auto;
+    background: var(--layer-head, none);
+}
+.card-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 2px 0 1px 8px;
+    color: var(--layer-title);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    /* Reserve space for the absolutely-positioned actions on the right
+       so the title doesn't overlap them. */
+    padding-right: 60px;
+}
+
+.card p {
+    display: inline;
+    margin-top: 0;
+    margin-left: 4px;
+    color: var(--muted);
+    font-size: var(--font-size-xs);
+    line-height: 1.1;
+    letter-spacing: var(--letter-spacing-tight);
+}
+
+.actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: var(--card-head-h);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0;
+    z-index: 9;
+}
+
+/* Cell: the 1:1 square that holds each action. Sized by the actions row. */
+.actions .action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    aspect-ratio: 1;
+    padding: 3px;
+}
+
+/* Dense grid: at 4+ columns the card header is smaller, so the
+   title bar and action icons recurse 20% smaller. The values
+   come from --card-head-h (22px) and the action padding (3px).
+   Scaling both by 0.8 keeps the action cells square at the new
+   size. The CSS variable override cascades into the icon's
+   aspect-ratio sizing automatically. */
+.grid[data-cols="4"] .card,
+.grid[data-cols="5"] .card,
+.grid[data-cols="6"] .card,
+.grid[data-cols="7"] .card,
+.grid[data-cols="8"] .card {
+    --card-head-h: 19.2px;
+}
+/* Action cells: inner padding recurses tighter at each column
+   step so icons pack closer horizontally. Each step reduces by
+   ~0.6px. At 8 cols the cell is 1.2px on each side (almost
+   touching the icon edge). The icons themselves stay readable
+   because the cells are still square and the icons inherit
+   the smaller head height. */
+.grid[data-cols="4"] .actions .action {
+    padding: 2.4px;
+}
+.grid[data-cols="5"] .actions .action,
+.grid[data-cols="6"] .actions .action {
+    padding: 1.8px;
+}
+.grid[data-cols="7"] .actions .action,
+.grid[data-cols="8"] .actions .action {
+    padding: 1.2px;
+}
+/* Title text: keep a readable size even at 4+ cols.
+   Only the tracking adjusts; the size stays the same as the base
+   .card-title so wheel-resize doesn't change font sizing. */
+.grid[data-cols="4"] .card-title,
+.grid[data-cols="5"] .card-title,
+.grid[data-cols="6"] .card-title,
+.grid[data-cols="7"] .card-title,
+.grid[data-cols="8"] .card-title {
+    letter-spacing: calc(var(--letter-spacing-normal) + 0.01em);
+}
+
+/* Button: fills the cell, transparent until hover/copied. */
+.actions .icon {
+    display: inline-grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0;
+    line-height: 0;
+    opacity: 0.3;
+    transition:
+        background 0.12s ease,
+        color 0.12s ease,
+        opacity 0.12s ease;
+}
+
+.card-head:hover .actions .icon,
+.card-head:focus-within .actions .icon,
+.card:hover .actions .icon,
+.card:focus-within .actions .icon {
+    opacity: 0.6;
+}
+
+.actions .action + .action {
+    border-left: 1px solid color-mix(in srgb, var(--white) 8%, transparent);
+}
+
+#copy-popover {
+    position: fixed;
+    z-index: 100;
+    display: none;
+    min-width: 120px;
+    padding: 4px;
+    border-radius: 4px;
+    background: var(--popover);
+    box-shadow:
+        0 8px 32px color-mix(in srgb, var(--black) 60%, transparent),
+        inset 0 0 0 1px color-mix(in srgb, var(--line3) 12%, transparent);
+}
+
+#copy-popover.is-open {
+    display: grid;
+    gap: 1px;
+}
+
+#copy-popover .copy-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: color-mix(in srgb, var(--text-soft) 70%, transparent);
+    font-family: inherit;
+    font-size: var(--font-size-md);
+    line-height: 1;
+    letter-spacing: var(--letter-spacing-tight);
+    text-transform: var(--text-transform-uppercase);
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+        background 0.1s ease,
+        color 0.1s ease;
+}
+
+#copy-popover .copy-item:hover {
+    background: color-mix(in srgb, var(--white) 8%, transparent);
+    color: var(--white);
+}
+
+.actions .icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.actions .icon:hover {
+    background: color-mix(in srgb, var(--white) 12%, transparent);
+    color: var(--text);
+}
+
+.actions .icon.is-copied {
+    opacity: 1;
+    color: var(--white);
+    background: color-mix(in srgb, var(--curve2) 22%, transparent);
+}
+
+.graph,
+.mini-graph {
+    border: 0;
+    border-radius: 3px 3px 4px 4px;
+    background: var(--bg);
+    overflow: hidden;
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    align-self: stretch;
+}
+
+.graph {
+    min-height: 62px;
+}
+
+.card > .graph {
+    margin: 0 2px 2px 2px;
+}
+
+.mini-graph {
+    margin-top: 4px;
+    height: 25px;
+    background: var(--mini-graph-bg);
+}
+
+.curve-view-screen-probe {
+    position: absolute;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0;
+}
+.curve-view-screen-probe--v {
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: color-mix(in srgb, var(--curve2) 42%, transparent);
+    transform: translateX(-0.5px);
+}
+.curve-view-screen-probe--h {
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: color-mix(in srgb, var(--curve2) 42%, transparent);
+    transform: translateY(-0.5px);
+}
+.curve-view.is-probe-near .curve-view-screen-probe {
+    opacity: 0.52;
+}
+.curve-view-probe-readout {
+    position: absolute;
+    left: 50%;
+    bottom: var(--text-label-inset-y);
+    z-index: 5;
+    color: var(--muted);
+    font-family: var(--font-family);
+    font-size: var(--font-size-tiny);
+    line-height: 1;
+    letter-spacing: var(--letter-spacing-normal);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(-50%);
+    transition: opacity 0.18s ease;
+}
+.curve-view-axis-label {
+    display: none;
+}
+.curve-view-axis-label--x {
+    bottom: 3px;
+}
+.curve-view-axis-label--y {
+    left: 3px;
+    transform: translate(0, -50%);
+}
+.curve-view-snap {
+    position: absolute;
+    right: var(--text-label-inset-x);
+    top: var(--text-label-inset-y);
+    z-index: 5;
+    color: var(--curve2);
+    font-family: var(--font-family);
+    font-size: var(--font-size-tiny);
+    line-height: 1;
+    letter-spacing: var(--letter-spacing-normal);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+.curve-view-snap-sep {
+    margin: 0 2px;
+    color: var(--soft);
+}
+.curve-view.has-probe .curve-view-probe-readout,
+.curve-view:hover .curve-view-snap,
+.curve-view.has-zoom .curve-view-snap,
+.curve-view.is-curve-drag .curve-view-snap {
+    opacity: 0.9;
+}
+.curve-view-probe-readout-sep {
+    margin: 0 2px;
+    color: var(--soft);
+}
+
+.meta {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    color: var(--soft);
+    font-size: var(--font-size-xs);
+    line-height: 1.1;
+    letter-spacing: var(--letter-spacing-normal);
+    text-transform: var(--text-transform-uppercase);
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.meta-summary {
+    position: absolute;
+    left: var(--text-label-inset-x);
+    bottom: var(--text-label-inset-y);
+    max-width: 58%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: color-mix(
+        in srgb,
+        var(--curve2) var(--text-label-alpha),
+        transparent
+    );
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+/* Curve name (bottom-left) only shows on card hover/focus, so the
+   gallery reads as just curves at rest. */
+.card:hover .meta-summary,
+.card:focus-within .meta-summary {
+    opacity: 1;
+    color: color-mix(
+        in srgb,
+        var(--curve2) var(--text-label-alpha),
+        transparent
+    );
+}
+
+.wall-empty {
+    margin-top: 4px;
+    color: var(--soft);
+}
+
+.wall-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 12px 4px 4px;
+    flex: 0 0 auto;
+}
+
+/* Search input lives in the wall-head. Flexes to fill the space
+   between the chips and the info bar. */
+.wall-head .search {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0 4px;
+}
+
+/* Wall-area wraps the wall-head (chips + status bar) and the wall itself.
+   The area occupies the same grid cell the wall used to; the head sits
+   on top of the wall in flex column order. */
+.wall-area {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.wall-head h2 {
+    display: inline;
+    font-size: var(--font-size-md);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: var(--text-transform-uppercase);
+    line-height: 1.05;
+}
+
+/* Wall-head status bar. Each .layout-status is its own pill,
+   separated by the flex gap on the parent .layout-note. */
+.layout-note {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    color: var(--soft);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    text-transform: var(--text-transform-none);
+}
+
+.layout-note .grid-mode.is-flash b {
+    color: var(--white);
+}
+
+/* Hide the browse/atlas/fit mode pill visually but keep the DOM node
+   intact so the mode system in index.astro (atlas/browse/focus,
+   keyboard shortcuts, focus mode) keeps working. */
+.layout-note .grid-mode {
+    display: none;
+}
+
+.filter-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--muted);
+    font-size: var(--font-size-sm);
+    padding: 3px 3px 3px 6px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    box-shadow: var(--fx-ring-accent);
+}
+
+.filter-state-key {
+    color: var(--soft);
+    letter-spacing: var(--letter-spacing-normal);
+    text-transform: var(--text-transform-uppercase);
+    font-size: var(--font-size-xs);
+}
+
+.filter-state-val {
+    color: var(--white);
+    font-weight: var(--font-weight-bold);
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.filter-state-clear {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    font-size: var(--font-size-xs);
+    background: color-mix(in srgb, var(--black) 25%, transparent);
+    color: var(--muted);
+}
+
+.filter-state-clear:hover {
+    color: var(--white);
+    background: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+/* Gallery modes: editor-style density + focus mode. */
+.wall .grid {
+    min-height: 100%;
+    transition: none;
+    --grid-cols: repeat(auto-fill, minmax(var(--card-min-w), 1fr));
+}
+.wall.is-mode-focus {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.wall.is-mode-focus .grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+}
+.wall .grid.is-mode-focus .card {
+    display: none;
+}
+.wall .grid.is-mode-focus .card.is-focus {
+    display: grid;
+    height: 100%;
+    min-height: 0;
+}
+.wall .grid.is-mode-focus .card.is-focus .graph {
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 0;
+}
+
+.wall.is-mode-focus .grid > * {
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.wall.is-mode-focus .grid.is-mode-focus .card.is-focus {
+    --layer-body: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--curve2) 10%, transparent),
+        color-mix(in srgb, var(--curve2) 1%, transparent)
+    );
+}
+
+/* Reusable curve view. Canvas 2D is the active renderer. */
+.curve-view {
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+    --curve-line-width: 1.45;
+    --viewport-quad-alpha: 0.35;
+    --tile-margin-factor: 0.25;
+    --dpr-min: 1;
+    --dpr-max: 2;
+    /* The following renderer-tokens are JS-owned (see
+   src/lib/renderer/tokens.ts JS_ONLY_KEYS) and intentionally have
+   no CSS declaration here:
+     --grid-line-width, --end-line-width, --zero-line-width,
+     --grid-line-alpha, --subgrid-line-alpha, --end-line-alpha,
+     --zero-line-alpha, --edge-fade, --edge-fade-inset,
+     --label-size, --label-inset-x, --label-inset-y, --label-alpha,
+     --label-min-gap, --label-zoom-*,
+     --cursor-size, --cursor-alpha, --cursor-tick-ratio,
+     --cursor-ring-ratio, --cursor-line-width,
+     --probe-dot-radius, --probe-near-alpha, --probe-far-alpha,
+     --probe-near-radius, --probe-fade-*, --line-mask-*
+   The probe dot radius in particular is fully controlled by
+   tokens.probeDotRadius (DEFAULTS in tokens.ts) — declaring it here
+   has no effect.
+
+   Effect tokens (--fade-center, --glow-blur, --vignette-*, etc.) are
+   also JS-owned. Effect colors live in colors.css
+   (--effect-glow-color, --effect-shadow-color, --effect-line-glow-color,
+   --effect-vignette-color) and are read by effects.ts readEffects().
+   A missing CSS variable is a CSS bug, not a JS fallback. */
+}
+.curve-view .curve-view-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+.curve-view-readout {
+    position: absolute;
+    right: var(--text-label-inset-x);
+    bottom: var(--text-label-inset-y);
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: color-mix(
+        in srgb,
+        var(--curve2) var(--text-label-alpha),
+        transparent
+    );
+    font-family: var(--font-family);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-normal);
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+.curve-view-fit-icon {
+    width: 10px;
+    height: 10px;
+    color: inherit;
+}
+/* Zoom readout (bottom-right) is a hover-only affordance. Replaces
+   the previous "show when zoom != 1" rule — the readout stays hidden
+   at rest regardless of zoom, so the gallery reads as just curves
+   until the user points at a card. */
+.card:hover .curve-view-readout,
+.card:focus-within .curve-view-readout {
+    opacity: 1;
+}
+
+/* Drag states on the wall. Border highlights removed — the cursor
+   change is enough feedback; the inset ring on the main panel
+   competed with the per-card drag visuals. */
+.wall.is-dragging {
+    cursor: grabbing;
+}
+.wall.is-dragging * {
+    cursor: grabbing !important;
+    pointer-events: none;
+}
+.wall.is-curve-drag .card,
+.wall.is-curve-drag .mini-card {
+    pointer-events: none;
+}
+.wall.is-curve-drag .card .curve-view,
+.wall.is-curve-drag .mini-card .curve-view {
+    pointer-events: auto;
+}
+
+/* Thin scrollbars on the wall. */
+.wall::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.wall::-webkit-scrollbar-track {
+    background: transparent;
+}
+.wall::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--line2) var(--fx-sml), transparent);
+    border-radius: 3px;
+}
+.wall::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--line2) var(--fx-lg), transparent);
+}
+.wall {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--line2) var(--fx-sml), transparent)
+        transparent;
+}
+
+/* ---------------------------------------------------------------------------
+   Wall pager (screen-glued layer)
+   Lives outside .wall, anchored to the viewport bottom. Mirrors the wall
+   grid horizontally so the pager appears under the gallery, not under the
+   rails. Matches the .chip / .icon tokens used by the wall-head status bar.
+   --------------------------------------------------------------------------- */
+.pager {
+    position: fixed;
+    /* Wall spans grid columns 2/4 (rail 1 + wall 2..3). Offset matches
+       the app's left rail + the wall's outer padding. */
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    z-index: 30;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+    border-radius: 5px;
+    background:
+        var(--card-bg-gradient),
+        color-mix(in srgb, var(--panel2) 94%, transparent);
+    box-shadow: var(--shadow-panel);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    user-select: none;
+}
+.pager-cluster {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.pager-btn {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    font-size: var(--font-size-xl);
+    line-height: 1;
+    color: var(--muted);
+}
+.pager-btn:hover:not([disabled]) {
+    color: var(--white);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.pager-btn[disabled] {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+/* Compare button reuses .link-toggle (same as .pager-wrap) so the
+   pager cluster has one chrome family for the labeled buttons. */
+.pager-compare {
+    height: 26px;
+    padding: 0 8px;
+}
+.pager-compare[aria-pressed="true"] {
+    color: var(--white);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.pager-state {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 4px;
+    color: var(--muted);
+    justify-content: center;
+    font-family: var(--font-family);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.2;
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: var(--text-transform-uppercase);
+}
+.pager-state b {
+    color: inherit;
+    font-weight: inherit;
+}
+.pager-sep {
+    color: inherit;
+    opacity: 0.55;
+    margin: 0 3px;
+}
+.pager-size {
+    height: 26px;
+    padding: 0 8px;
+    gap: 4px;
+    font-family: var(--font-family);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.2;
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: var(--text-transform-uppercase);
+}
+.pager-wrap {
+    /* Re-uses .link-toggle from global.css; the cluster puts it on
+       the right side of the pager. */
+    height: 26px;
+    padding: 0 8px;
+}
+
+/* Pager's hide layer. Lives on top of the filter's .is-hidden so the
+   two concerns stay separate (filter is a predicate; pager is a
+   slice). CSS keeps both hidden. */
+.is-paged-out {
+    display: none !important;
+}
+
+/* ---------------------------------------------------------------------------
+   View overlay (sponsor / about popup)
+   Fixed full-screen overlay with centered dialog box. Shown/hidden via
+   aria-hidden toggled by the data-rail-view click handler.
+   --------------------------------------------------------------------------- */
+#view-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#view-overlay[aria-hidden="true"] {
+    display: none;
+}
+.view-overlay-backdrop {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--black) 60%, transparent);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+.view-overlay-box {
+    position: relative;
+    z-index: 1;
+    max-width: 660px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 24px;
+    border-radius: 6px;
+    background: var(--panel2);
+    box-shadow: 0 24px 64px color-mix(in srgb, var(--black) 55%, transparent);
+    display: grid;
+    gap: 16px;
+}
+.view-overlay-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--white) 6%, transparent);
+    color: var(--muted);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background 0.1s ease, color 0.1s ease;
+}
+.view-overlay-close:hover {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    color: var(--white);
+}
+.view-overlay-box h2 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: var(--text-transform-uppercase);
+    color: var(--text);
+    margin: 0;
+}
+.view-overlay-content {
+    display: grid;
+    gap: 14px;
+}
+.view-overlay-content[aria-hidden="true"] {
+    display: none;
+}
+.view-overlay-content p {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-thin);
+    line-height: var(--line-height-relaxed);
+    letter-spacing: var(--letter-spacing-normal);
+}
+.view-overlay-content .micro {
+    color: var(--muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-normal);
+    text-transform: var(--text-transform-uppercase);
+}
+.view-overlay-content .micro:before {
+    content: none;
+}
+.view-overlay-content .note {
+    color: var(--soft);
+    line-height: var(--line-height-normal);
+}
+.view-overlay-content a {
+    color: var(--accent);
+    text-decoration: underline;
+}
+.view-overlay-content a:hover {
+    color: var(--white);
+}
+.section-label {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: var(--text-transform-uppercase);
+    color: var(--muted);
+}
+.sponsor-list {
+    display: grid;
+    gap: 6px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.sponsor-list li {
+    position: relative;
+    padding-left: 14px;
+    color: var(--text-soft);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-thin);
+    line-height: var(--line-height-relaxed);
+    letter-spacing: var(--letter-spacing-normal);
+}
+.sponsor-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.6em;
+    width: 5px;
+    height: 5px;
+    border-radius: 1px;
+    background: var(--accent);
+    opacity: 0.5;
+}
+.pix-qr-wrap {
+    display: grid;
+    place-items: center;
+    gap: 6px;
+}
+.pix-qr {
+    display: block;
+    border-radius: var(--pill-radius);
+    max-width: 100%;
+    height: auto;
+}
+.pix-qr[hidden] {
+    display: none;
+}
+.qr-link {
+    font-size: var(--font-size-xs);
+    color: var(--accent);
+    text-decoration: underline;
+}
+.qr-link[hidden] {
+    display: none;
+}
+.lang-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+}
+.lang-list li {
+    height: var(--pill-height);
+    padding: 0 var(--chip-padding-x);
+    border-radius: var(--pill-radius);
+    background: color-mix(in srgb, var(--white) var(--pill-bg-alpha), transparent);
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-mid);
+    text-transform: var(--text-transform-uppercase);
+    line-height: var(--line-height-compact);
+    white-space: nowrap;
+}

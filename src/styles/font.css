@@ -1,0 +1,98 @@
+/* ---------------------------------------------------------------------------
+   font.css
+   Single source of truth for typography. Imported first, before global.css,
+   so the :root font stack is available to every other stylesheet.
+
+   The font itself (Roboto, weights 100/200/300/500/700) is loaded from
+   Google Fonts here so the family declared in --font-family below is
+   always the one that actually renders. `display=swap` prevents FOIT.
+
+   Type system: three orthogonal axes, each with a small set of named
+   tiers. Consumers reference tiers, not raw values. To change the size
+   of every caption, change --font-size-xs once; every caption tracks.
+
+   Sizes     --font-size-{tiny|xs|sm|md|lg|xl}
+   Weights   --font-weight-{thin|regular|medium|bold|black}
+   Spacing   --letter-spacing-{tight|normal|mid|wide}
+   Transform --text-transform-{uppercase|lowercase|none}
+   --------------------------------------------------------------------------- */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap");
+
+:root {
+    --font-family: Roboto, sans-serif;
+
+    /* --- size tiers ---------------------------------------------------
+       6 steps, each ~1–2px apart. Names describe the role, not the
+       pixel value — so a future bump from 9px to 10px doesn't force
+       a rename across the codebase. */
+    --font-size-tiny: 9px; /* micro: equation labels, canvas overlays */
+    --font-size-xs: 10px; /* caption: meta, micro, filter chips */
+    --font-size-sm: 11px; /* pill/chip: toolbar, info bar, filter */
+    --font-size-md: 12px; /* card-title, wall-head, related cards */
+    --font-size-lg: 14px; /* body: detail summary, formula */
+    --font-size-xl: 16px; /* display: brand h1, pager btn */
+    --font-size-2xl: 20px; /* hero / large heading */
+    --font-size-3xl: 24px; /* display / page title */
+
+    /* --- weight tiers -------------------------------------------------
+       5 steps, matching the weights loaded from Google Fonts. */
+    --font-weight-thin: 300;
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-bold: 600;
+    --font-weight-black: 700;
+
+    /* --- letter-spacing tiers ----------------------------------------
+       4 steps. "mid" covers chrome labels (sponsor, detail wall-head)
+       that need more air than normal but less than full wide. "wide"
+       is for uppercase labels. */
+    --letter-spacing-tight: 0.04em;
+    --letter-spacing-normal: 0.06em;
+    --letter-spacing-mid: 0.08em;
+    --letter-spacing-wide: 0.1em;
+
+    /* --- text-transform tiers ----------------------------------------
+        3 named values. */
+    --text-transform-uppercase: uppercase;
+    --text-transform-lowercase: lowercase;
+    --text-transform-none: none;
+
+    /* --- line-height tiers -------------------------------------------
+        4 steps for body, caption, heading, and compact chrome. */
+    --line-height-compact: 1;
+    --line-height-tight: 1.1;
+    --line-height-normal: 1.3;
+    --line-height-relaxed: 1.5;
+
+    /* --- default body chrome ---------------------------------------- */
+    --font-weight-default: var(--font-weight-regular);
+    --letter-spacing-default: var(--letter-spacing-normal);
+}
+
+body {
+    font-family: var(--font-family);
+    font-weight: var(--font-weight-default);
+    letter-spacing: var(--letter-spacing-default);
+}
+
+.card-title {
+    font-family: var(--font-family);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-regular);
+    line-height: 1.2;
+    letter-spacing: var(--letter-spacing-normal);
+    text-transform: var(--text-transform-uppercase);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    min-width: 0;
+    align-self: center;
+}
+
+.meta-target {
+    font-family: var(--font-family);
+    font-size: var(--font-size-tiny);
+    font-weight: var(--font-weight-black);
+    line-height: 1;
+    letter-spacing: var(--letter-spacing-tight);
+}

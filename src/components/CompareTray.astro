@@ -1,0 +1,43 @@
+---
+import CurveViewport from "./CurveViewport.astro";
+import type { CurveDefinition } from "../data/curves";
+
+interface Props {
+    curves: CurveDefinition[];
+}
+
+const { curves } = Astro.props as Props;
+---
+
+<section class="tray" id="compare-tray" data-tray>
+    <div class="tray-head">
+        <strong>Compare</strong>
+        <span class="micro tray-count" id="tray-count">0</span>
+    </div>
+    <div class="tray-body">
+        <div class="strip" id="tray-strip">
+            {
+                curves.map((curve) => (
+                    <a
+                        class="mini-card tray-item tray-seed"
+                        href={`/curve/${curve.id}`}
+                        data-tray-id={curve.id}
+                        title={curve.summary}
+                    >
+                        <span class="tray-item-name">{curve.name}</span>
+                        <CurveViewport curve={curve} variant="mini" />
+                    </a>
+                ))
+            }
+        </div>
+        <div class="tray-empty" id="tray-empty">
+            <span class="micro">no curves in compare</span>
+            <span class="micro tray-empty-hint">tap <b>+</b> on a card</span>
+        </div>
+    </div>
+    <div class="icons tray-tools">
+        <button class="icon" type="button" id="tray-clear" title="Clear compare"
+            >cl</button
+        >
+    </div>
+</section>

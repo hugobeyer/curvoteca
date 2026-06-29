@@ -1,0 +1,71 @@
+/* ---------------------------------------------------------------------------
+   colors.css
+   Single source of truth for the design-system color palette.
+
+   - The bg ladder (--bg-step-0 .. --bg-step-5) is the only place raw
+     surface hex values are defined. Every other token in the system
+     (panels, cards, popovers, curve canvas, app body, mini previews)
+     aliases one of these steps. Steps are kept around in case a new
+     surface is needed; only the ones mapped to an alias below are
+     currently consumed.
+
+   - Curve + line colors (--curve, --curve2, --axis, --zero, --grid,
+     --subgrid) live here too so the renderer (src/lib/renderer/colors.ts)
+     has one place to read from via getComputedStyle. The renderer
+     composes alpha at draw time; the line tokens are RGB-only.
+
+   - Text, accent, line, and other non-bg tokens stay in global.css
+     since they're consumed by app chrome rather than the canvas.
+
+   Cascade: this file must be imported first, before font.css and
+   global.css, so the ladder and aliases are available everywhere.
+   --------------------------------------------------------------------------- */
+
+:root {
+    /* --- bg ladder ----------------------------------------------------
+       6 evenly-spaced dark steps. Each step is ~2 RGB units brighter
+       than the previous one. Bump or tighten the ladder here; the
+       semantic aliases below follow automatically. */
+    --bg-step-0: #06090e;
+    --bg-step-1: #080b10;
+    --bg-step-2: #0c1016;
+    --bg-step-3: #0e141c;
+    --bg-step-4: #121a24;
+    --bg-step-5: #141b27;
+
+    /* --- semantic aliases ---------------------------------------------
+       The names below are the API surface. The renderer and the rest
+       of the app should reference these, never the ladder directly. */
+    --body-bg: var(--bg-step-0); /* outermost app background */
+    --bg: var(--bg-step-1); /* curve canvas, app fallback */
+    --panel3: var(--bg-step-1); /* wall chrome (matches curve canvas) */
+    --mini-graph-bg: var(--bg-step-1); /* mini graph in compare tray */
+    --mini-card-bg: var(--bg-step-2); /* mini compare card body */
+    --panel: var(--bg-step-3); /* bar / rail / tray chrome */
+    --panel2: var(--bg-step-4); /* card body + pager base */
+    --popover: var(--bg-step-5); /* popover host */
+
+    /* --- viewport canvas colors ---------------------------------------
+       Curve strokes + gridline RGB triplets (renderer composes alpha).
+       Effect colors (glow / shadow / line-glow / vignette) are also
+       canvas-facing; the renderer reads them via getComputedStyle. */
+    --curve: #ff9b45;
+    --curve2: #78c5d2;
+    --axis: 214, 225, 242;
+    --zero: 214, 225, 242;
+    --grid: 214, 225, 242;
+    --subgrid: 214, 225, 242;
+
+    /* Effect colors. Read by src/lib/renderer/effects.ts readEffects().
+       Numeric effect parameters (glowBlur, vignetteInner, ...) live in
+       effects.ts DEFAULTS — the renderer composes them with these
+       colors at draw time. */
+    --effect-glow-color: color-mix(in srgb, var(--curve2) 55%, transparent);
+    --effect-shadow-color: color-mix(in srgb, var(--black) 50%, transparent);
+    --effect-line-glow-color: color-mix(in srgb, var(--curve) 35%, transparent);
+    --effect-vignette-color: var(--black);
+
+    /* Text label alpha — shared by gallery readouts (meta-summary,
+       curve-view-probe, curve-view-snap). */
+    --text-label-alpha: 78%;
+}

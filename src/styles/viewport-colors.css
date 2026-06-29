@@ -1,0 +1,14 @@
+/* Viewport canvas colors.
+   Consumed at runtime by src/lib/renderer/colors.ts via getComputedStyle
+   on the .curve-view root. CSS owns these values; JS only reads them.
+   Scope: viewport grid, subgrid, axis, background, and the two curve
+   stroke colors.
+
+   The actual token values live in colors.css (single source of truth
+   for the whole palette). This file is kept as a thin documentation
+   header for the viewport-specific tokens.
+
+   Line colors (--grid, --subgrid, --axis) are RGB-only. The renderer
+   composes rgba(R,G,B,alpha) at draw time using per-line alpha tokens
+   (--grid-line-alpha, --subgrid-line-alpha, --end-line-alpha) defined in
+   tokens.ts. */

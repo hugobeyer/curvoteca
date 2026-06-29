@@ -1,0 +1,672 @@
+/* ---------------------------------------------------------------------------
+   global.css
+   Reset, design tokens (:root), app shell, shared buttons, bar/rail/tray chrome.
+
+   Card / wall / grid rules live in gallery.css (imported after this file
+   so the card layer system wins cascade).
+   --------------------------------------------------------------------------- */
+
+:root {
+    color-scheme: dark;
+
+    /* Register card-size clamp tokens (tight + loose) so getComputedStyle()
+       returns a resolved pixel value instead of raw "calc(...)", which keeps
+       parseFloat() in GRID_TOKENS() working. */
+    @property --card-min-w-min {
+        syntax: "<length>";
+        inherits: true;
+        initial-value: 182px;
+    }
+    @property --card-min-w-max {
+        syntax: "<length>";
+        inherits: true;
+        initial-value: 378px;
+    }
+    @property --card-row-h-min {
+        syntax: "<length>";
+        inherits: true;
+        initial-value: 130px;
+    }
+    @property --card-row-h-max {
+        syntax: "<length>";
+        inherits: true;
+        initial-value: 270px;
+    }
+    @property --card-wheel-step {
+        syntax: "<length>";
+        inherits: true;
+        initial-value: 8px;
+    }
+    --line: rgba(178, 195, 222, 0.08);
+    --line-soft: rgba(178, 195, 222, 0.055);
+    --line2: rgba(178, 195, 222, 0.14);
+    --line3: #b2c3de;
+    --text: #eff5ff;
+    --text-strong: #e1e8f4;
+    --text-soft: #d6e1f2;
+    --text-card: #a8b1c2;
+    --muted: #8995a6;
+    --soft: #5d6878;
+    --accent: #8f70c3;
+    --accent2: #56c8d6;
+    --accent3: #6fcf5a;
+    --fav: #f5d547;
+    --danger: #ff7878;
+    --target-equation: #a98bff;
+    --target-vex: #ff9c77;
+    --black: #000;
+    --white: #fff;
+
+    /* Card grid sizing — single source of truth.
+       --card-min-w / --card-row-h are the active values consumed by .grid;
+       JS sets them per mode (--card-{mode}-w/h) and per drag-resize.
+       The -tight/-loose min/max pair are the bounds at 8 cols / 1 col
+       respectively. JS interpolates between them for cols 2..7 so
+       fewer columns = bigger cards, more columns = smaller.
+       ratio locks drag w/h. */
+    --card-min-w: 240px;
+    --card-row-h: 170px;
+    --card-head-h: 24px;
+    --card-ratio: 1.4;
+    --card-min-w-min: 182px;
+    --card-min-w-max: 378px;
+    --card-row-h-min: 130px;
+    --card-row-h-max: 270px;
+    --card-min-w-min-loose: 280px;
+    --card-min-w-max-loose: 546px;
+    --card-row-h-min-loose: 200px;
+    --card-row-h-max-loose: 390px;
+    --card-wheel-step: 8px;
+    --card-atlas-w: 160px;
+    --card-atlas-h: 120px;
+    --card-browse-w: 240px;
+    --card-browse-h: 170px;
+    --card-radius: 1.5px;
+
+    /* Pill geometry (chips / search / info bar). Single source of
+       truth so all three chrome elements look like the same family. */
+    --pill-height: 26px;
+    --pill-radius: 3px;
+    --pill-padding-x: 12px;
+    --pill-bg-alpha: 5%;
+    /* Chip-specific overrides. Chips are tighter than the generic pill
+       (used by search / info bar) so the toolbar stays compact. */
+    --chip-padding-x: 7px;
+    --chip-gap: 4px;
+    /* Info label color/opacity (consumed by .layout-status in this file).
+       The matching font-size/weight live in font.css. */
+    --info-label-color: var(--muted);
+    --info-label-opacity: 1;
+    --info-key-color: var(--soft);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* Treat Curvoteca like an app/tool: no text selection outside real text surfaces. */
+html,
+body,
+.app,
+.bar,
+.rail,
+.wall,
+.tray,
+.card,
+.related-card,
+.detail-wall,
+.detail-panel,
+.detail-grid,
+.detail-pager,
+.pager,
+.layout-note,
+.detail-related-block {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Re-enable text selection for actual text/copy fields. */
+input,
+textarea,
+[contenteditable="true"],
+code,
+pre,
+kbd,
+samp,
+var,
+.detail-snippet-code,
+.detail-formula,
+.is-selectable,
+.allow-select {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+html,
+body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--body-bg);
+    color: var(--text);
+}
+
+h1,
+h2,
+h3,
+p {
+    margin: 0;
+}
+
+.app {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) 134px;
+    grid-template-rows: auto minmax(0, 1fr) 66px;
+    gap: 6px;
+    padding: 6px;
+    background: var(--bg);
+}
+
+.tray {
+    border: 0;
+    background: color-mix(in srgb, var(--panel) 82%, transparent);
+    backdrop-filter: blur(12px);
+}
+
+.bar {
+    grid-column: 1 / 4;
+    border-radius: 3px;
+    display: grid;
+    grid-template-columns: 112px minmax(160px, 1fr) auto auto;
+    align-items: center;
+    gap: 7px;
+    padding: 12px 6px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    margin-left: 8px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.brand-mark {
+    width: 14px;
+    height: 14px;
+    margin-right: 8px;
+}
+
+.brand h1 {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-regular);
+    line-height: 1;
+    letter-spacing: var(--letter-spacing-normal);
+    text-transform: none;
+}
+
+.micro {
+    display: inline;
+    color: var(--muted);
+    font-size: var(--font-size-xs);
+    line-height: 1.1;
+    letter-spacing: var(--letter-spacing-normal);
+    text-transform: var(--text-transform-uppercase);
+}
+
+.micro:before {
+    content: " / ";
+    color: var(--soft);
+}
+
+.search {
+    height: var(--pill-height);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 0;
+    border-radius: var(--pill-radius);
+    background: color-mix(
+        in srgb,
+        var(--white) var(--pill-bg-alpha),
+        transparent
+    );
+    color: var(--muted);
+    padding: 0 var(--pill-padding-x);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    /* No text-transform — the placeholder is user-facing prose. */
+}
+
+.search-hint {
+    color: var(--soft);
+    font-size: var(--font-size-sm);
+}
+
+.search-icon {
+    flex: 0 0 auto;
+    color: var(--soft);
+    opacity: 0.7;
+}
+
+.search input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    padding: 0;
+}
+
+.search input::placeholder {
+    color: var(--soft);
+}
+
+.chip {
+    cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------------
+   Wall-head status bar
+   .layout-note container lives in gallery.css; base tokens below.
+   Status chips: vis, tot, fav, cmp, mode, scale, filter-state.
+   --------------------------------------------------------------------------- */
+
+.layout-count {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    color: var(--muted);
+}
+
+.layout-count b {
+    color: var(--text);
+    font-weight: var(--font-weight-bold);
+}
+
+.layout-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: var(--pill-height);
+    padding: 0 var(--pill-padding-x);
+    border-radius: var(--pill-radius);
+    background: color-mix(
+        in srgb,
+        var(--white) var(--pill-bg-alpha),
+        transparent
+    );
+    color: var(--info-label-color);
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    text-transform: var(--text-transform-none);
+    opacity: var(--info-label-opacity);
+}
+
+.layout-status b {
+    color: var(--info-label-color);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-sm);
+    line-height: 1;
+}
+
+.status-key {
+    color: var(--info-key-color);
+    opacity: var(--info-label-opacity);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+}
+
+/* Compare tray collapse state (rail C toggle) */
+.app.is-tray-collapsed .tray {
+    display: none;
+}
+
+.app.is-tray-collapsed {
+    grid-template-rows: auto minmax(0, 1fr) 0;
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+.app.is-tray-collapsed .tray,
+.app.is-tray-collapsed .tray-placeholder {
+    display: none;
+}
+
+.is-hidden {
+    display: none !important;
+}
+
+.chips,
+.tools,
+.icons {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.chip,
+.icon,
+.pill {
+    height: var(--pill-height);
+    min-width: var(--pill-height);
+    border: 0;
+    border-radius: var(--pill-radius);
+    background: color-mix(
+        in srgb,
+        var(--white) var(--pill-bg-alpha),
+        transparent
+    );
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    text-transform: var(--text-transform-none);
+    line-height: 1;
+    text-decoration: none;
+}
+
+.chip {
+    padding: 0 var(--chip-padding-x);
+    min-width: 0;
+    gap: var(--chip-gap);
+    text-transform: none;
+}
+
+.active {
+    color: var(--white);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.rail {
+    grid-column: 1;
+    grid-row: 2 / 4;
+    border-radius: 3px;
+    padding: 5px;
+    display: grid;
+    align-content: start;
+    gap: 8px;
+}
+
+.rail .icon {
+    width: 32px;
+    height: 32px;
+    font-size: var(--font-size-sm);
+}
+
+.wall {
+    position: relative;
+    border-radius: 3px;
+    padding: 8px;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+    cursor: grab;
+    user-select: none;
+    /* No background — the app bg shows through so the wall doesn't
+       read as a separate panel. */
+    flex: 1 1 auto;
+}
+
+/* Search field: dim by default, glow when user is typing. */
+.bar .search {
+    transition:
+        background 0.12s ease,
+        box-shadow 0.12s ease;
+    box-shadow: inset 0 0 0 1px transparent;
+}
+
+/* Rail C compare button: clear pressed vs. collapsed. */
+.rail .icon[aria-pressed="true"] {
+    color: var(--white);
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    box-shadow: inset 0 0 0 1px
+        color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+/* Link toggle: quiet bottom-right of the wall head. */
+.link-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 18px;
+    padding: 0 5px;
+    border: 0;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--white) 4.5%, transparent);
+    color: var(--muted);
+    font-family: var(--font-family);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.2;
+    letter-spacing: var(--letter-spacing-mid);
+    text-transform: var(--text-transform-uppercase);
+    cursor: pointer;
+    margin-left: auto;
+    align-self: center;
+    transition:
+        background 0.12s ease,
+        color 0.12s ease;
+}
+.link-toggle:hover {
+    color: var(--white);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.link-toggle[aria-pressed="true"] {
+    color: var(--white);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.link-toggle-state {
+    color: inherit;
+}
+
+.link-toggle[aria-pressed="false"] .link-toggle-state {
+    color: inherit;
+}
+
+.rail .icon[aria-pressed="false"] {
+    color: var(--muted);
+    box-shadow: inset 0 0 0 1px transparent;
+}
+
+/* Compare tray: focus ring when opened from rail C. */
+.app.is-tray-focus .tray {
+    box-shadow:
+        0 14px 42px color-mix(in srgb, var(--black) var(--fx-mid), transparent),
+        inset 0 1px 0 color-mix(in srgb, var(--white) 3.5%, transparent),
+        inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+    transition: box-shadow 0.18s ease;
+}
+
+.tray.is-empty .tray-head strong {
+    color: var(--muted);
+}
+
+.tray {
+    grid-column: 2 / 4;
+    grid-row: 3;
+    border-radius: 3px;
+    padding: 5px;
+    display: grid;
+    grid-template-columns: 100px 1fr auto;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+}
+
+.tray-head {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    min-width: 0;
+}
+
+.tray-count {
+    color: var(--soft);
+    font-family: var(--font-family);
+    font-size: var(--font-size-xs);
+}
+
+.tray-body {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+}
+
+.tray-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 0 6px;
+    color: var(--soft);
+    pointer-events: none;
+}
+
+.tray-empty-hint b {
+    color: var(--muted);
+    font-weight: var(--font-weight-bold);
+    padding: 0 3px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--white) 5%, transparent);
+}
+
+.tray-tools {
+    align-self: center;
+}
+
+.tray-item {
+    position: relative;
+    text-decoration: none;
+    color: inherit;
+    min-width: 0;
+}
+
+.tray-item .mini-graph {
+    margin-top: 4px;
+}
+
+.tray-item-x {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 16px;
+    height: 16px;
+    font-size: var(--font-size-xs);
+    opacity: 0;
+    transform: translateY(-2px);
+    transition:
+        opacity 0.12s ease,
+        transform 0.12s ease;
+}
+
+.tray-item:hover .tray-item-x,
+.tray-item:focus-within .tray-item-x {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.compare-btn.is-on {
+    opacity: 1;
+    color: color-mix(in srgb, var(--accent) 90%, transparent);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.fav-btn.is-on {
+    opacity: 1;
+    color: color-mix(in srgb, var(--fav) 90%, transparent);
+    background: color-mix(in srgb, var(--fav) 15%, transparent);
+}
+
+.strip {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(110px, 1fr));
+    gap: 5px;
+}
+
+.mini-card {
+    border: 0;
+    border-radius: 3px;
+    background: var(--mini-card-bg);
+    box-shadow: inset 0 0 0 1px
+        color-mix(in srgb, var(--line2) 39%, transparent);
+    padding: 5px;
+    min-width: 0;
+}
+
+.mini-card span {
+    display: block;
+    font-size: var(--font-size-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 1120px) {
+    .app {
+        grid-template-columns: max-content minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr) 76px;
+    }
+
+    .bar,
+    .tray {
+        grid-column: 1 / 3;
+    }
+
+    .dock {
+        display: none;
+    }
+
+    .wall-area {
+        grid-column: 2;
+    }
+}
+
+@media (max-width: 760px) {
+    body {
+        overflow: auto;
+    }
+
+    .app {
+        height: auto;
+        min-height: 100vh;
+        display: block;
+    }
+
+    .bar,
+    .rail,
+    .wall,
+    .tray {
+        margin-bottom: 6px;
+    }
+
+    .bar {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .rail {
+        display: flex;
+        overflow: auto;
+    }
+
+    .grid,
+    .strip {
+        grid-template-columns: 1fr;
+    }
+
+    .wall .grid {
+        grid-template-columns: 1fr;
+    }
+}

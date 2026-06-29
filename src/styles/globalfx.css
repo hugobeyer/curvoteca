@@ -1,0 +1,297 @@
+/* ---------------------------------------------------------------------------
+   globalfx.css
+   Reusable visual effects: glows, shadows, outlines, fade-outs, vignettes.
+   All values reference tokens from global.css and viewport-colors.css.
+   No hardcoded values, no fallbacks. Every color is color-mixed from a token.
+
+   Usage patterns:
+     - Utility class:  <div class="glow-accent">
+     - Token consumer: .my-thing { box-shadow: var(--shadow-card); }
+   --------------------------------------------------------------------------- */
+
+:root {
+    /* Effect alpha constants (centralized percentages) */
+    --fx-tiny: 8%;
+    --fx-sml: 16%;
+    --fx-mid: 24%;
+    --fx-lg: 32%;
+    --fx-avg: 40%;
+    --fx-half: 50%;
+    --fx-strong: 75%;
+    --fx-full: 100%;
+
+    /* Glow blur / spread scale */
+    --glow-blur-sm: 4px;
+    --glow-blur-md: 8px;
+    --glow-blur-lg: 14px;
+    --glow-blur-xl: 22px;
+    --glow-spread: 0px;
+
+    /* Reusable shadow recipes (additive, layer multiple if needed) */
+    --shadow-sm: 0 1px 2px
+        color-mix(in srgb, var(--black) var(--fx-sml), transparent);
+    --shadow-md: 0 4px 12px
+        color-mix(in srgb, var(--black) var(--fx-mid), transparent);
+    --shadow-lg: 0 14px 42px
+        color-mix(in srgb, var(--black) var(--fx-mid), transparent);
+    --shadow-inset-line: inset 0 0 0 1px var(--line2);
+    --shadow-inset-line-strong: inset 0 0 0 1px
+        color-mix(in srgb, var(--line2) var(--fx-full), transparent);
+
+    /* Composable card shadow (used by .card in gallery.css) */
+    --shadow-card:
+        0 0 var(--glow-blur-md) var(--glow-spread)
+            color-mix(in srgb, var(--curve2) var(--fx-sml), transparent),
+        0 0 0 1px var(--line),
+        0 3px 18px color-mix(in srgb, var(--black) var(--fx-lg), transparent);
+    /* Soft drop shadow for screen-glued panels (pager). A blurred
+       shadow stack: a tight, darker close drop + a wider, softer
+       ambient drop, with no glow halo so the panel reads as
+       "floating" rather than "lit". */
+    --shadow-panel:
+        0 2px 6px color-mix(in srgb, var(--black) var(--fx-lg), transparent),
+        0 12px 32px color-mix(in srgb, var(--black) var(--fx-mid), transparent);
+    --shadow-card-drop: 0 0 0 1px var(--line);
+    --shadow-card-glow-accent:
+        0 0 var(--glow-blur-sm) var(--glow-spread)
+            color-mix(in srgb, var(--accent) var(--fx-mid), transparent),
+        var(--shadow-card-drop);
+    --shadow-card-glow-curve:
+        0 0 var(--glow-blur-sm) var(--glow-spread)
+            color-mix(in srgb, var(--curve) var(--fx-mid), transparent),
+        var(--shadow-card-drop);
+    --shadow-card-glow-curve2:
+        0 0 var(--glow-blur-sm) var(--glow-spread)
+            color-mix(in srgb, var(--curve2) var(--fx-mid), transparent),
+        var(--shadow-card-drop);
+
+    /* Outline tokens */
+    --outline-accent: 0 0 0 1px
+        color-mix(in srgb, var(--accent) var(--fx-lg), var(--line));
+    --outline-curve: 0 0 0 1px
+        color-mix(in srgb, var(--curve) var(--fx-lg), var(--line));
+    --outline-curve2: 0 0 0 1px
+        color-mix(in srgb, var(--curve2) var(--fx-avg), var(--line));
+
+    /* Inset ring: shared 1px accent ring used by .active, .filter-state,
+       .layout-note .layout-status.is-on, and link-toggle pressed state. */
+    --fx-ring-accent: inset 0 0 0 1px
+        color-mix(in srgb, var(--accent) 20%, transparent);
+
+    /* Vignette / fade gradients (used with mask-image and overlays) */
+    --fade-out-top: linear-gradient(
+        to bottom,
+        transparent 0%,
+        color-mix(in srgb, var(--black) var(--fx-full), transparent) 24px,
+        color-mix(in srgb, var(--black) var(--fx-full), transparent) 100%
+    );
+    --fade-out-bottom: linear-gradient(
+        to top,
+        transparent 0%,
+        color-mix(in srgb, var(--black) var(--fx-full), transparent) 24px,
+        color-mix(in srgb, var(--black) var(--fx-full), transparent) 100%
+    );
+    --fade-out-x: linear-gradient(
+        to right,
+        transparent 0%,
+        color-mix(in srgb, var(--black) var(--fx-full), transparent) 18px,
+        color-mix(in srgb, var(--black) var(--fx-full), transparent)
+            calc(100% - 18px),
+        transparent 100%
+    );
+    --fade-out-y: linear-gradient(
+        to bottom,
+        transparent 0%,
+        color-mix(in srgb, var(--black) var(--fx-full), transparent) 18px,
+        color-mix(in srgb, var(--black) var(--fx-full), transparent)
+            calc(100% - 18px),
+        transparent 100%
+    );
+}
+
+/* ------------------------------------------------------------------
+   Glow utilities
+   ------------------------------------------------------------------ */
+.glow,
+.glow-sm,
+.glow-md,
+.glow-lg,
+.glow-xl {
+    transition: box-shadow 0.18s ease;
+}
+
+.glow-sm {
+    box-shadow: 0 0 var(--glow-blur-sm) var(--glow-spread)
+        color-mix(in srgb, var(--accent) var(--fx-sml), transparent);
+}
+.glow,
+.glow-md {
+    box-shadow: 0 0 var(--glow-blur-md) var(--glow-spread)
+        color-mix(in srgb, var(--accent) var(--fx-mid), transparent);
+}
+.glow-lg {
+    box-shadow: 0 0 var(--glow-blur-lg) var(--glow-spread)
+        color-mix(in srgb, var(--accent) var(--fx-lg), transparent);
+}
+.glow-xl {
+    box-shadow: 0 0 var(--glow-blur-xl) var(--glow-spread)
+        color-mix(in srgb, var(--accent) var(--fx-lg), transparent);
+}
+
+.glow-curve {
+    box-shadow: 0 0 var(--glow-blur-md) var(--glow-spread)
+        color-mix(in srgb, var(--curve) var(--fx-mid), transparent);
+}
+.glow-curve2 {
+    box-shadow: 0 0 var(--glow-blur-md) var(--glow-spread)
+        color-mix(in srgb, var(--curve2) var(--fx-mid), transparent);
+}
+
+.glow-accent:hover,
+.glow:hover {
+    box-shadow: 0 0 var(--glow-blur-lg) var(--glow-spread)
+        color-mix(in srgb, var(--accent) var(--fx-lg), transparent);
+}
+
+/* Dot glow: a small, intense point of light (for icons, badges) */
+.dot-glow {
+    box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--accent) var(--fx-lg), transparent),
+        0 0 8px 2px
+            color-mix(in srgb, var(--accent) var(--fx-half), transparent);
+}
+
+/* ------------------------------------------------------------------
+   Text glow
+   ------------------------------------------------------------------ */
+.text-glow {
+    text-shadow: 0 0 8px
+        color-mix(in srgb, currentColor var(--fx-half), transparent);
+}
+.text-glow-sm {
+    text-shadow: 0 0 4px
+        color-mix(in srgb, currentColor var(--fx-half), transparent);
+}
+.text-glow-lg {
+    text-shadow:
+        0 0 10px color-mix(in srgb, currentColor var(--fx-strong), transparent),
+        0 0 20px color-mix(in srgb, currentColor var(--fx-avg), transparent);
+}
+
+/* ------------------------------------------------------------------
+   Outline utilities
+   ------------------------------------------------------------------ */
+.outline-accent {
+    box-shadow: var(--outline-accent);
+}
+.outline-curve {
+    box-shadow: var(--outline-curve);
+}
+.outline-curve2 {
+    box-shadow: var(--outline-curve2);
+}
+.outline-line {
+    box-shadow: var(--shadow-inset-line);
+}
+.outline-line-strong {
+    box-shadow: var(--shadow-inset-line-strong);
+}
+
+/* ------------------------------------------------------------------
+   Shadow utilities
+   ------------------------------------------------------------------ */
+.shadow-sm {
+    box-shadow: var(--shadow-sm);
+}
+.shadow-md {
+    box-shadow: var(--shadow-md);
+}
+.shadow-lg {
+    box-shadow: var(--shadow-lg);
+}
+
+/* ------------------------------------------------------------------
+   Fade-out (mask-image) utilities
+   Apply to scroll containers or overflowing elements to soften edges.
+   ------------------------------------------------------------------ */
+.fade-out-top {
+    mask-image: var(--fade-out-top);
+    -webkit-mask-image: var(--fade-out-top);
+}
+.fade-out-bottom {
+    mask-image: var(--fade-out-bottom);
+    -webkit-mask-image: var(--fade-out-bottom);
+}
+.fade-out-x {
+    mask-image: var(--fade-out-x);
+    -webkit-mask-image: var(--fade-out-x);
+}
+.fade-out-y {
+    mask-image: var(--fade-out-y);
+    -webkit-mask-image: var(--fade-out-y);
+}
+
+/* ------------------------------------------------------------------
+   Vignette: radial darkening overlay
+   Use as ::before/::after on a positioned parent, or with .vignette
+   on an absolutely-positioned child.
+   ------------------------------------------------------------------ */
+.vignette {
+    position: relative;
+}
+.vignette::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+        ellipse at center,
+        transparent 50%,
+        color-mix(in srgb, var(--black) var(--fx-lg), transparent) 100%
+    );
+}
+
+/* Corner vignette glow: warm/cool point of light from a corner */
+.vignette-glow-tl {
+    position: relative;
+}
+.vignette-glow-tl::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+        circle at 0% 0%,
+        color-mix(in srgb, var(--accent) var(--fx-sml), transparent) 0%,
+        transparent 55%
+    );
+}
+.vignette-glow-br {
+    position: relative;
+}
+.vignette-glow-br::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+        circle at 100% 100%,
+        color-mix(in srgb, var(--accent) var(--fx-sml), transparent) 0%,
+        transparent 55%
+    );
+}
+
+/* ------------------------------------------------------------------
+   Card effects
+   ------------------------------------------------------------------
+   Thin wrapper: base drop shadow + transition. The state layer system
+   (background gradients) and state glows (box-shadow) live in
+   gallery.css, which must be imported after this file so its rules
+   win the cascade.
+   ------------------------------------------------------------------ */
+.card {
+    box-shadow: var(--shadow-card-drop);
+    transition:
+        box-shadow 0.18s ease,
+        transform 0.18s ease;
+}

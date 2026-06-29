@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+.astro/
+
+# caches & tooling
+.codex/
+.agents/
+
+# logs
+*.log
+build.log
+
+# env
+.env
+.env.*
+!.env.example
+
+# external reference snippets
+ref/
+
+# docs
+docs/
