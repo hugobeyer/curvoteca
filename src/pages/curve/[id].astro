@@ -1,0 +1,697 @@
+---
+// ---------------------------------------------------------------------------
+// [id].astro
+// Per-curve detail page. Uses Astro's static `getStaticPaths` to emit
+// one HTML page per curve in `data/curves.ts`, with prev/next siblings
+// (wrapping around the array) and any `related` curves pre-resolved.
+// Renders the persistent shell (TopBar, IconRail) plus a focused
+// CurveViewport for the current curve and the surrounding navigation
+// + snippet copy actions.
+// ---------------------------------------------------------------------------
+import TopBar from "../../components/TopBar.astro";
+import IconRail from "../../components/IconRail.astro";
+import CurveViewport from "../../components/CurveViewport.astro";
+import TargetIcon from "../../components/TargetIcon.astro";
+import CopyIcon from "../../components/CopyIcon.astro";
+import { curves } from "../../data/curves";
+import "../../styles/colors.css";
+import "../../styles/font.css";
+import "../../styles/global.css";
+import "../../styles/icons.css";
+import "../../styles/globalfx.css";
+import "../../styles/viewport-colors.css";
+import "../../styles/gallery.css";
+
+export function getStaticPaths() {
+    return curves.map((curve, i) => ({
+        params: { id: curve.id },
+        props: {
+            curve,
+            prev: curves[(i - 1 + curves.length) % curves.length],
+            next: curves[(i + 1) % curves.length],
+            related: (curve.related ?? [])
+                .map((rid) => curves.find((c) => c.id === rid))
+                .filter((c): c is (typeof curves)[number] => Boolean(c)),
+        },
+    }));
+}
+
+interface Props {
+    curve: (typeof curves)[number];
+    prev: (typeof curves)[number];
+    next: (typeof curves)[number];
+    related: (typeof curves)[number][];
+}
+
+const { curve, prev, next, related } = Astro.props as Props;
+
+const equation = curve.snippets?.equation ?? curve.formula;
+const formatNum = (n: number) =>
+    Number.isInteger(n) ? String(n) : n.toFixed(2);
+const fmtRange = (lo: number, hi: number) =>
+    `${formatNum(lo)}->${formatNum(hi)}`;
+const title = `${curve.name} - ${curve.summary} / Curvoteca`;
+const keywords = [
+    curve.name,
+    ...(curve.aliases ?? []),
+    curve.family,
+    curve.continuity ?? "",
+    "curve",
+    "easing",
+    "animation",
+    ...curve.tags,
+]
+    .filter(Boolean)
+    .join(", ");
+const description = `${curve.name}: ${curve.summary}. ${curve.formula}. Domain ${fmtRange(curve.domain[0], curve.domain[1])}, range ${fmtRange(curve.range[0], curve.range[1])}, ${curve.continuity ?? "continuity n/a"}.${curve.useCases.length ? " Use cases: " + curve.useCases.join(", ") + "." : ""}`;
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <title>{title}</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={`/curve/${curve.id}/`} />
+        <meta name="keywords" content={keywords} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:type" content="article" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description} />
+    </head>
+    <body>
+        <main class="app app-detail" id="app">
+            <TopBar />
+            <IconRail />
+            <section class="wall detail-wall">
+                <header class="wall-head">
+                    <div class="detail-head">
+                        <h2>{curve.name}</h2>
+                        <p class="micro detail-head-meta">
+                            <span class="detail-family">{curve.family}</span>
+                            <span class="detail-continuity"
+                                >{curve.continuity ?? "-"}</span
+                            >
+                            <span class="detail-domain"
+                                >d {formatNum(curve.domain[0])}...{
+                                    formatNum(curve.domain[1])
+                                }</span
+                            >
+                            <span class="detail-range"
+                                >r {formatNum(curve.range[0])}...{
+                                    formatNum(curve.range[1])
+                                }</span
+                            >
+                        </p>
+                    </div>
+                    <a class="pill" href="/" title="Back to curve wall">back</a>
+                </header>
+
+                <div class="detail-grid">
+                    <div class="detail-viewport">
+                        <CurveViewport curve={curve} />
+                    </div>
+
+                    <div class="detail-panel">
+                        <div class="detail-row">
+                            <span class="detail-label">summary</span>
+                            <p class="detail-summary">{curve.summary}</p>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-label">formula</span>
+                            <p class="detail-formula">{curve.formula}</p>
+                        </div>
+
+                        <div class="detail-snippet">
+                            <div class="detail-snippet-head">
+                                <span class="detail-label">equation</span>
+                                <button
+                                    class="icon copy-btn"
+                                    data-copy={equation}
+                                    data-label="eq"
+                                    title="Copy equation"
+                                    type="button"
+                                >
+                                    <CopyIcon size={20} />
+                                </button>
+                            </div>
+                            <pre class="detail-snippet-code">{equation}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <dl class="detail-meta-grid" aria-label="Curve metadata">
+                    <div class="detail-meta">
+                        <dt class="detail-label">family</dt>
+                        <dd class="detail-meta-val">{curve.family}</dd>
+                    </div>
+                    <div class="detail-meta">
+                        <dt class="detail-label">continuity</dt>
+                        <dd class="detail-meta-val">
+                            {curve.continuity ?? "-"}
+                        </dd>
+                    </div>
+                    <div class="detail-meta">
+                        <dt class="detail-label">domain</dt>
+                        <dd class="detail-meta-val">
+                            {formatNum(curve.domain[0])} -> {
+                                formatNum(curve.domain[1])
+                            }
+                        </dd>
+                    </div>
+                    <div class="detail-meta">
+                        <dt class="detail-label">range</dt>
+                        <dd class="detail-meta-val">
+                            {formatNum(curve.range[0])} -> {
+                                formatNum(curve.range[1])
+                            }
+                        </dd>
+                    </div>
+                    {
+                        curve.useCases.length ? (
+                            <div class="detail-meta detail-meta-wide">
+                                <dt class="detail-label">use cases</dt>
+                                <dd class="detail-meta-val">
+                                    {curve.useCases.join(" / ")}
+                                </dd>
+                            </div>
+                        ) : null
+                    }
+                    {
+                        curve.tags.length ? (
+                            <div class="detail-meta detail-meta-wide">
+                                <dt class="detail-label">tags</dt>
+                                <dd class="detail-meta-val">
+                                    {curve.tags.join(" / ")}
+                                </dd>
+                            </div>
+                        ) : null
+                    }
+                    {
+                        Object.keys(curve.snippets ?? {}).length ? (
+                            <div class="detail-meta detail-meta-wide">
+                                <dt class="detail-label">targets</dt>
+                                <dd class="detail-meta-val">
+                                    {Object.keys(curve.snippets ?? {}).map(
+                                        (t) => (
+                                            <span
+                                                class="chip detail-target"
+                                                title={t}
+                                            >
+                                                <TargetIcon
+                                                    target={t}
+                                                    size={20}
+                                                />
+                                                <span class="detail-target-label">
+                                                    {t}
+                                                </span>
+                                            </span>
+                                        ),
+                                    )}
+                                </dd>
+                            </div>
+                        ) : null
+                    }
+                    {
+                        curve.aliases && curve.aliases.length ? (
+                            <div class="detail-meta detail-meta-wide">
+                                <dt class="detail-label">aliases</dt>
+                                <dd class="detail-meta-val">
+                                    {curve.aliases.join(" / ")}
+                                </dd>
+                            </div>
+                        ) : null
+                    }
+                </dl>
+
+                {
+                    related.length ? (
+                        <section
+                            class="detail-related-block"
+                            aria-label="Related curves"
+                        >
+                            <div class="detail-related-head">
+                                <span class="detail-label">related</span>
+                                <span class="micro">{related.length}</span>
+                            </div>
+                            <div class="detail-related-grid">
+                                {related.map((r) => {
+                                    const rEq =
+                                        r.snippets?.equation ?? r.formula;
+                                    return (
+                                        <a
+                                            class="related-card"
+                                            href={`/curve/${r.id}`}
+                                            title={r.summary}
+                                        >
+                                            <div class="related-card-top">
+                                                <span class="related-name">
+                                                    {r.name}
+                                                </span>
+                                                <button
+                                                    class="icon copy-btn"
+                                                    data-copy={rEq}
+                                                    data-label="eq"
+                                                    title={`Copy ${r.name} equation`}
+                                                    type="button"
+                                                >
+                                                    eq
+                                                </button>
+                                            </div>
+                                            <CurveViewport
+                                                curve={r}
+                                                variant="mini"
+                                            />
+                                            <span class="related-meta">
+                                                {r.family} /{" "}
+                                                {r.continuity ?? "-"}
+                                            </span>
+                                        </a>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    ) : null
+                }
+
+                <nav class="detail-pager" aria-label="Curve navigation">
+                    <a
+                        class="pager pager-prev"
+                        href={`/curve/${prev.id}`}
+                        title={prev.name}
+                    >
+                        <span class="pager-dir">prev</span>
+                        <span class="pager-name">{prev.name}</span>
+                    </a>
+                    <a
+                        class="pager pager-next"
+                        href={`/curve/${next.id}`}
+                        title={next.name}
+                    >
+                        <span class="pager-dir">next</span>
+                        <span class="pager-name">{next.name}</span>
+                    </a>
+                </nav>
+
+                <p class="micro detail-back">
+                    <a href="/">&larr; all curves</a>
+                </p>
+            </section>
+        </main>
+
+        <script is:inline>
+            (function () {
+                const isTextSurface = function (el) {
+                    if (!el) return false;
+                    if (
+                        el.closest &&
+                        el.closest(
+                            'input, textarea, [contenteditable="true"], code, pre, kbd, samp, var, .detail-snippet-code, .detail-formula, .is-selectable, .allow-select',
+                        )
+                    ) {
+                        return true;
+                    }
+                    return false;
+                };
+                document.addEventListener("contextmenu", function (e) {
+                    if (isTextSurface(e.target)) return;
+                    e.preventDefault();
+                });
+            })();
+        </script>
+
+        <script is:inline>
+            (function () {
+                document.addEventListener("click", function (e) {
+                    const btn = e.target.closest("[data-copy]");
+                    if (!btn) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const text = btn.getAttribute("data-copy");
+                    if (!text) return;
+
+                    const doCopy = function () {
+                        if (navigator.clipboard && window.isSecureContext) {
+                            return navigator.clipboard.writeText(text);
+                        }
+                        var ta = document.createElement("textarea");
+                        ta.value = text;
+                        ta.style.position = "fixed";
+                        ta.style.opacity = "0";
+                        document.body.appendChild(ta);
+                        ta.select();
+                        try {
+                            document.execCommand("copy");
+                        } catch (err) {
+                            /* ignore */
+                        }
+                        document.body.removeChild(ta);
+                        return Promise.resolve();
+                    };
+
+                    doCopy()
+                        .then(function () {
+                            btn.classList.add("is-copied");
+                            setTimeout(function () {
+                                btn.classList.remove("is-copied");
+                            }, 600);
+                        })
+                        .catch(function () {
+                            /* silently fail */
+                        });
+                });
+            })();
+        </script>
+    </body>
+</html>
+
+<style>
+    .app-detail {
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+    .app-detail .rail {
+        grid-row: 2 / 3;
+    }
+    .app-detail .tray,
+    .app-detail .dock {
+        display: none;
+    }
+    .detail-wall {
+        grid-column: 2;
+        grid-row: 2;
+        display: grid;
+        grid-template-rows: auto 1fr auto auto auto;
+        gap: 8px;
+        padding: 10px;
+        min-height: 0;
+        overflow: auto;
+    }
+    .detail-wall .wall-head h2 {
+        display: inline;
+        font-size: var(--font-size-lg);
+        letter-spacing: var(--letter-spacing-mid);
+        text-transform: var(--text-transform-uppercase);
+        line-height: 1.05;
+    }
+    .detail-wall .wall-head .detail-head-meta {
+        display: inline;
+        margin: 0 0 0 8px;
+    }
+    .detail-wall .wall-head .pill {
+        height: 22px;
+        font-size: var(--font-size-sm);
+    }
+    .detail-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+        gap: 8px;
+        min-height: 0;
+    }
+    .detail-viewport {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+    .detail-viewport .graph {
+        flex: 1 1 auto;
+        min-height: 240px;
+        align-self: stretch;
+    }
+    .detail-panel {
+        display: grid;
+        align-content: start;
+        gap: 6px;
+        padding: 8px;
+        border-radius: 3px;
+        background:
+            linear-gradient(
+                180deg,
+                color-mix(in srgb, var(--white) 4%, transparent),
+                color-mix(in srgb, var(--white) 1%, transparent)
+            ),
+            var(--panel2);
+        box-shadow: inset 0 0 0 1px var(--line-soft);
+        overflow: auto;
+    }
+    .detail-row {
+        display: grid;
+        grid-template-columns: 64px minmax(0, 1fr);
+        gap: 8px;
+        align-items: start;
+    }
+    .detail-label {
+        font-size: var(--font-size-xs);
+        letter-spacing: var(--letter-spacing-wide);
+        text-transform: var(--text-transform-uppercase);
+        color: var(--soft);
+        padding-top: 2px;
+    }
+    .detail-summary {
+        color: var(--text);
+        font-size: var(--font-size-lg);
+        line-height: 1.35;
+    }
+    .detail-formula {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        color: var(--text-soft);
+        font-size: var(--font-size-lg);
+        line-height: 1.4;
+    }
+    .detail-snippet {
+        display: grid;
+        gap: 4px;
+    }
+    .detail-snippet-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+    }
+    .detail-snippet-head .icon {
+        width: 22px;
+        height: 22px;
+        font-size: var(--font-size-xs);
+    }
+    .detail-snippet-code {
+        margin: 0;
+        padding: 6px 8px;
+        border: 0;
+        border-radius: 3px;
+        background: var(--bg-step-1);
+        box-shadow: inset 0 0 0 1px var(--line-soft);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        color: var(--text-soft);
+        font-size: var(--font-size-md);
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+    .detail-tags,
+    .detail-usecases,
+    .detail-targets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3px;
+        color: var(--muted);
+        font-size: var(--font-size-md);
+        line-height: 1.4;
+    }
+
+    .detail-target {
+        cursor: default;
+    }
+
+    .detail-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 5px;
+        padding: 6px 8px;
+        margin: 0;
+        border-radius: 3px;
+        background:
+            linear-gradient(
+                180deg,
+                color-mix(in srgb, var(--white) 4%, transparent),
+                color-mix(in srgb, var(--white) 1%, transparent)
+            ),
+            var(--panel2);
+        box-shadow: inset 0 0 0 1px var(--line-soft);
+    }
+
+    .detail-meta {
+        display: grid;
+        grid-template-rows: auto auto;
+        gap: 2px;
+        min-width: 0;
+        padding: 4px 0;
+    }
+
+    .detail-meta dt,
+    .detail-meta dd {
+        margin: 0;
+    }
+
+    .detail-meta-wide {
+        grid-column: 1 / -1;
+    }
+
+    .detail-meta-val {
+        color: var(--text);
+        font-size: var(--font-size-md);
+        line-height: 1.35;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .detail-meta-grid .chip {
+        height: 18px;
+        font-size: var(--font-size-xs);
+        padding: 0 5px;
+        background: color-mix(in srgb, var(--white) 5%, transparent);
+        color: var(--muted);
+    }
+    .detail-related-block {
+        display: grid;
+        gap: 5px;
+    }
+    .detail-related-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 6px;
+    }
+    .detail-related-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 5px;
+    }
+    .related-card {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 4px;
+        padding: 6px;
+        border: 0;
+        border-radius: 3px;
+        background:
+            linear-gradient(
+                180deg,
+                color-mix(in srgb, var(--white) 4.5%, transparent),
+                color-mix(in srgb, var(--white) 1%, transparent)
+            ),
+            var(--panel2);
+        box-shadow: inset 0 0 0 1px var(--line-soft);
+        color: inherit;
+        text-decoration: none;
+        min-width: 0;
+    }
+    .related-card:hover {
+        box-shadow:
+            inset 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent),
+            0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent);
+    }
+    .related-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
+    }
+    .related-name {
+        color: var(--text);
+        font-size: var(--font-size-md);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .related-card .mini-graph {
+        height: 30px;
+    }
+    .related-meta {
+        color: var(--soft);
+        font-size: var(--font-size-xs);
+        letter-spacing: var(--letter-spacing-tight);
+        text-transform: var(--text-transform-uppercase);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .related-card .icon {
+        width: 20px;
+        height: 20px;
+        font-size: var(--font-size-xs);
+    }
+    .detail-pager {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+    }
+    .pager {
+        display: grid;
+        grid-template-rows: auto auto;
+        gap: 1px;
+        padding: 5px 7px;
+        border: 0;
+        border-radius: 3px;
+        background: color-mix(in srgb, var(--white) 4%, transparent);
+        color: var(--muted);
+        text-decoration: none;
+        min-width: 0;
+    }
+    .pager:hover {
+        color: var(--white);
+        background: color-mix(in srgb, var(--accent) 18%, transparent);
+        box-shadow: inset 0 0 0 1px
+            color-mix(in srgb, var(--accent) 20%, transparent);
+    }
+    .pager-dir {
+        font-size: var(--font-size-xs);
+        letter-spacing: var(--letter-spacing-wide);
+        text-transform: var(--text-transform-uppercase);
+        color: var(--soft);
+    }
+    .pager-name {
+        font-size: var(--font-size-md);
+        color: var(--text);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .pager-next {
+        text-align: right;
+    }
+    .detail-back a {
+        color: var(--muted);
+        text-decoration: none;
+    }
+    .detail-back a:hover {
+        color: var(--text);
+    }
+    @media (max-width: 1120px) {
+        .app-detail {
+            grid-template-columns: 52px minmax(0, 1fr);
+        }
+        .app-detail .bar {
+            grid-column: 1 / 3;
+        }
+        .detail-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+        .detail-meta-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 760px) {
+        .app-detail {
+            height: auto;
+            min-height: 100vh;
+            display: block;
+        }
+        .detail-meta-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+</style>

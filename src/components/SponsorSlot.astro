@@ -1,0 +1,81 @@
+---
+import DonateIcon from "./DonateIcon.astro";
+
+// Ad-ready sponsor slot. Currently routes to external donation pages.
+// No embedded ad scripts, payment SDKs, or backend logic.
+const donateLinks = [
+    { name: "Buy Me a Coffee", url: "https://buymeacoffee.com/curvoteca", qr: "buyme" },
+    { name: "Ko-fi", url: "https://ko-fi.com/hugobeyer" },
+    { name: "PayPal", url: "https://www.paypal.com/donate/?hosted_button_id=65JQLD86LZJFA" },
+    { name: "Pix (BR)", url: "/pixqrcode.png", qr: "pix" },
+];
+---
+
+<div class="sponsor-slot">
+    <div class="sponsor-links">
+        {
+            donateLinks.map((link) => (
+                <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="sponsor-btn"
+                    {...(link.qr ? { "data-toggle-qr": link.qr } : {})}
+                >
+                    <DonateIcon size={18} class="is-donate" />
+                    <span class="sponsor-btn-label">{link.name}</span>
+                </a>
+            ))
+        }
+    </div>
+</div>
+
+<style>
+    .sponsor-slot {
+        display: grid;
+        gap: 5px;
+    }
+    .sponsor-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .sponsor-btn {
+        height: 32px;
+        padding: 0 8px;
+        border: 0;
+        border: 0;
+        border-radius: var(--pill-radius);
+        background: color-mix(in srgb, var(--white) 5%, transparent);
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-regular);
+        line-height: var(--line-height-compact);
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.12s ease, color 0.12s ease;
+    }
+    .sponsor-btn:hover {
+        color: var(--white);
+        background: color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+    .sponsor-btn:active {
+        color: var(--white);
+        background: color-mix(in srgb, var(--accent) 28%, transparent);
+    }
+    .sponsor-btn .is-donate {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+    }
+    .sponsor-btn-label {
+        font-size: var(--font-size-sm);
+        letter-spacing: var(--letter-spacing-mid);
+        text-transform: var(--text-transform-uppercase);
+        line-height: var(--line-height-compact);
+        white-space: nowrap;
+    }
+</style>

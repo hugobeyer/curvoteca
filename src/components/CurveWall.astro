@@ -1,0 +1,172 @@
+---
+import CurveCard from "./CurveCard.astro";
+import StarIcon from "./StarIcon.astro";
+import type { CurveDefinition } from "../data/curves";
+import { projectToViewBox, sampleKernel } from "../lib/curveMath";
+
+interface Props {
+    curves: CurveDefinition[];
+}
+
+const { curves } = Astro.props as Props;
+
+const VIEWBOX = { x: 0, y: 0, w: 252, h: 128 };
+
+// Family chip config. Display label + filter value (matches `data-family`
+// attribute on each card). Curated order matches the existing UX; new
+// families appended in the order they were added to the registry.
+const familyChips: { label: string; value: string }[] = [
+    { label: "smooth", value: "smoothstep" },
+    { label: "power", value: "power" },
+    { label: "remap", value: "remap" },
+    { label: "sigmoid", value: "sigmoid" },
+    { label: "easing", value: "easing" },
+    { label: "trig", value: "trigonometric" },
+    { label: "noise", value: "noise" },
+    { label: "wave", value: "wave" },
+    { label: "window", value: "window" },
+    { label: "signed", value: "signed" },
+    { label: "log-exp", value: "log-exp" },
+    { label: "distribution", value: "distribution" },
+    { label: "utility", value: "utility" },
+    { label: "bezier", value: "bezier" },
+    { label: "linear", value: "linear" },
+    { label: "physics", value: "physics" },
+    { label: "oscillator", value: "oscillator" },
+    { label: "interpolation", value: "interpolation" },
+    { label: "envelope", value: "envelope" },
+    { label: "dsp", value: "dsp" },
+    { label: "distortion", value: "distortion" },
+    { label: "tone-map", value: "tone-mapping" },
+    { label: "dynamics", value: "dynamics" },
+    { label: "adjustment", value: "adjustment" },
+    { label: "sdf", value: "sdf" },
+    { label: "polynomial", value: "polynomial" },
+    { label: "chaos", value: "chaos" },
+];
+
+const curveIndex = curves.map((c) => {
+    const samples = sampleKernel(c.kernel, c.sampling);
+    const projected = projectToViewBox(samples, VIEWBOX, c.domain, c.range);
+    return {
+        id: c.id,
+        name: c.name,
+        family: c.family,
+        summary: c.summary,
+        previewPoints: projected.map((p) => [p.x, p.y] as [number, number]),
+        equation: c.snippets?.equation ?? c.formula,
+    };
+});
+---
+
+<section class="wall-area" id="wall-area">
+    <div class="wall-head">
+        <div>
+            <div class="chips" role="toolbar" aria-label="Curve filters">
+                <button
+                    class="chip"
+                    type="button"
+                    data-filter="fav"
+                    data-filter-value=""
+                    aria-label="Show favorites only"
+                    title="Show favorites only"
+                >
+                    <StarIcon size={12} />
+                </button>
+                <button
+                    class="chip active"
+                    type="button"
+                    data-filter="all"
+                    data-filter-value=""
+                    aria-label="Show all curves">all</button
+                >
+                {
+                    familyChips
+                        .filter((chip) =>
+                            curves.some((c) => c.family === chip.value),
+                        )
+                        .map((chip) => (
+                            <button
+                                class="chip"
+                                type="button"
+                                data-filter="family"
+                                data-filter-value={chip.value}
+                                aria-label={`Filter by ${chip.label}`}
+                            >
+                                {chip.label}
+                            </button>
+                        ))
+                }
+            </div>
+        </div>
+        <div class="search" id="curve-search-wrap">
+            <svg
+                class="search-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                height="14px"
+                viewBox="0 -960 960 960"
+                width="14px"
+                fill="currentColor"
+                aria-hidden="true"
+            >
+                <path
+                    d="m769.48-105.56-243.95-244.4q-29.31 18.74-67.63 29.9-38.31 11.15-80.26 11.15-111.56 0-190.06-78.53-78.49-78.53-78.49-190.11 0-111.58 78.52-189.99 78.53-78.42 190.11-78.42 111.58 0 190 78.5 78.41 78.49 78.41 190.06 0 42.51-10.43 78.61-10.44 36.09-30.18 66.4l245.39 245.96-81.43 80.87Zm-392.1-318.31q65.24 0 109.52-44.04 44.27-44.05 44.27-109.29 0-65.25-44.27-109.52Q442.62-731 377.38-731q-65.25 0-109.29 44.28-44.05 44.27-44.05 109.52 0 65.24 44.05 109.29 44.04 44.04 109.29 44.04Z"
+                ></path>
+            </svg>
+            <input
+                id="curve-search"
+                type="text"
+                placeholder="search curve, family, formula"
+                autocomplete="off"
+                spellcheck="false"
+                aria-label="Search curves by name, family, formula, or alias"
+            />
+        </div>
+        <div class="layout-note" id="layout-note" aria-label="Library counts">
+            <span class="layout-status" title="all curves">
+                <b id="total-count">{curves.length}</b><span class="status-key"
+                    >total</span
+                >
+            </span>
+            <span class="layout-status" title="favorites" id="status-fav">
+                <b id="fav-count">0</b><span class="status-key">favorites</span>
+            </span>
+            <span class="layout-status" title="compare tray" id="status-cmp">
+                <b id="cmp-count">0</b><span class="status-key">compare</span>
+            </span>
+            <span
+                class="layout-status grid-mode"
+                id="grid-mode"
+                title="gallery mode"
+            >
+                <b id="grid-mode-label">browse</b>
+                <span class="status-key">mode</span>
+            </span>
+            <span class="filter-state is-hidden" id="filter-state">
+                <span class="filter-state-key" id="filter-state-key"
+                    >filter</span
+                >
+                <span class="filter-state-val" id="filter-state-val">all</span>
+                <button
+                    class="icon filter-state-clear"
+                    type="button"
+                    id="filter-state-clear"
+                    title="clear filter">x</button
+                >
+            </span>
+        </div>
+    </div>
+
+    <section
+        class="wall"
+        id="curve-wall"
+        data-curves={JSON.stringify(curveIndex)}
+    >
+        <div class="grid" id="wall-grid">
+            {curves.map((curve) => <CurveCard curve={curve} />)}
+        </div>
+        <p class="micro wall-empty is-hidden" id="wall-empty">
+            no curve matches the current filter
+        </p>
+    </section>
+</section>

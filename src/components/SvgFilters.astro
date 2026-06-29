@@ -1,0 +1,25 @@
+---
+// Shared SVG <defs>: filters, symbols, anything reusable across icons.
+// Render once as a hidden <svg> at the top of the consuming page or
+// component. Reference via url(#id) in CSS or fill="url(#id)" in markup.
+
+// Erode the heaviest filled icons so they read at the same weight as the
+// lighter ones. radius is in user units; bump to thin more, lower to thin less.
+const ICON_ERODE_RADIUS = 0.2;
+const FILTER_REGION_PAD = 10; // % of bounding box on each side, avoids clipping the eroded edge
+---
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+        <filter
+            id="icon-morph-erode"
+            x={`-${FILTER_REGION_PAD}%`}
+            y={`-${FILTER_REGION_PAD}%`}
+            width={`${100 + FILTER_REGION_PAD * 2}%`}
+            height={`${100 + FILTER_REGION_PAD * 2}%`}
+        >
+            <feMorphology operator="erode" radius={ICON_ERODE_RADIUS}
+            ></feMorphology>
+        </filter>
+    </defs>
+</svg>

@@ -1,0 +1,74 @@
+---
+import StarIcon from "./StarIcon.astro";
+import GalleryIcon from "./GalleryIcon.astro";
+import DonateIcon from "./DonateIcon.astro";
+import InfoIcon from "./InfoIcon.astro";
+import SvgFilters from "./SvgFilters.astro";
+---
+
+<SvgFilters />
+
+<nav class="rail" id="icon-rail" aria-label="Icon navigation">
+    <a
+        href="/"
+        class="icon"
+        data-rail-view="gallery"
+        title="Gallery"
+        aria-label="Gallery"
+    >
+        <GalleryIcon size={20} class="is-gallery" />
+        <span class="rail-label">Gallery</span>
+    </a>
+    <button
+        class="icon"
+        type="button"
+        data-fav-filter
+        data-rail-fav
+        disabled
+        title="Favorites"
+        aria-label="Toggle favorites filter"
+    >
+        <StarIcon size={20} class="is-star" />
+        <span class="rail-label">Favorites</span>
+    </button>
+    <button
+        class="icon"
+        type="button"
+        disabled
+        title="Snippets"
+        aria-label="Snippets (coming soon)"
+    >
+        <span class="rail-glyph" aria-hidden="true">{}</span>
+        <span class="rail-label">Snippets</span>
+    </button>
+    <button
+        class="icon"
+        type="button"
+        disabled
+        title="Shader"
+        aria-label="Shader (coming soon)"
+    >
+        <span class="rail-glyph" aria-hidden="true">fx</span>
+        <span class="rail-label">Shader</span>
+    </button>
+    <button
+        class="icon"
+        type="button"
+        data-rail-view="sponsor"
+        title="Sponsor"
+        aria-label="Support Curvoteca"
+    >
+        <DonateIcon size={20} class="is-donate" />
+        <span class="rail-label">Sponsor</span>
+    </button>
+    <button
+        class="icon"
+        type="button"
+        data-rail-view="about"
+        title="About"
+        aria-label="About Curvoteca"
+    >
+        <InfoIcon size={20} class="is-info" />
+        <span class="rail-label">About</span>
+    </button>
+</nav>

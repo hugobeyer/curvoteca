@@ -1,0 +1,91 @@
+---
+import CurveViewport from "./CurveViewport.astro";
+import TargetIcon from "./TargetIcon.astro";
+import StarIcon from "./StarIcon.astro";
+import CombineIcon from "./CombineIcon.astro";
+import CopyIcon from "./CopyIcon.astro";
+import ExpandIcon from "./ExpandIcon.astro";
+import { buildSearchHaystack } from "../lib/searchIndex";
+import type { CurveDefinition } from "../data/curves";
+
+interface Props {
+    curve: CurveDefinition;
+}
+
+const { curve } = Astro.props as Props;
+
+const haystack = buildSearchHaystack(curve);
+const family = curve.family;
+const tags = curve.tags.join(" ");
+const useCases = curve.useCases.join(" ");
+const targets = Object.keys(curve.snippets ?? {}).join(" ");
+const equation = curve.snippets?.equation ?? curve.formula;
+const curveLabel = [curve.family, curve.continuity].filter(Boolean).join(" / ");
+
+const snippetsJson = JSON.stringify(curve.snippets ?? {});
+---
+
+<article
+    class="card"
+    data-curve-id={curve.id}
+    data-search={haystack}
+    data-family={family}
+    data-tags={tags}
+    data-usecases={useCases}
+    data-targets={targets}
+    title="RMB opens context actions: copy, paste, compare, pin"
+>
+    <header class="card-head">
+        <span class="card-title">{curve.name}</span>
+
+        <div class="actions" aria-label="Icon actions">
+            <span class="action">
+                <button
+                    class="icon copy-btn"
+                    data-copy-toggle
+                    data-snippets={snippetsJson}
+                    title="Copy snippet"
+                    type="button"
+                >
+                    <CopyIcon size={16} />
+                </button>
+            </span>
+            <span class="action">
+                <button
+                    class="icon compare-btn"
+                    title="compare"
+                    type="button"
+                    data-compare-toggle={curve.id}
+                    data-label="on"
+                >
+                    <CombineIcon size={16} />
+                </button>
+            </span>
+            <span class="action">
+                <button
+                    class="icon fav-btn"
+                    title="favorite"
+                    type="button"
+                    data-fav-toggle={curve.id}
+                    data-label="*"
+                >
+                    <StarIcon size={12} />
+                </button>
+            </span>
+            <span class="action">
+                <a
+                    class="icon info-btn"
+                    href={`/curve/${curve.id}`}
+                    title="Open detail page"
+                    aria-label={`Open ${curve.name} detail page`}
+                >
+                    <ExpandIcon size={16} />
+                </a>
+            </span>
+        </div>
+    </header>
+    <CurveViewport curve={curve} showReadout={true} />
+    <div class="meta" aria-hidden="true">
+        <span class="meta-summary">{curveLabel}</span>
+    </div>
+</article>
