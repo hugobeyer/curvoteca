@@ -18,15 +18,16 @@ const { curves } = Astro.props as Props;
         <div class="strip" id="tray-strip">
             {
                 curves.map((curve) => (
-                    <a
+                    <button
                         class="mini-card tray-item tray-seed"
-                        href={`/curve/${curve.id}`}
+                        type="button"
+                        data-open-detail={curve.id}
                         data-tray-id={curve.id}
                         title={curve.summary}
                     >
                         <span class="tray-item-name">{curve.name}</span>
                         <CurveViewport curve={curve} variant="mini" />
-                    </a>
+                    </button>
                 ))
             }
         </div>

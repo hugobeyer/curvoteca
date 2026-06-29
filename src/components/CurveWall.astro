@@ -55,6 +55,7 @@ const curveIndex = curves.map((c) => {
         summary: c.summary,
         previewPoints: projected.map((p) => [p.x, p.y] as [number, number]),
         equation: c.snippets?.equation ?? c.formula,
+        snippets: c.snippets ?? {},
     };
 });
 ---
