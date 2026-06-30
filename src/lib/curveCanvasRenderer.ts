@@ -17,10 +17,16 @@ import {
   type CurveRect,
   type CurveViewportState,
 } from "./curveViewportMath";
+import type { CurveViewMode } from "../data/curves";
 import { readColors, type RendererColors } from "./renderer/colors";
 import { readTokens, type RendererTokens } from "./renderer/tokens";
 import { readEffects, type EffectValues } from "./renderer/effects";
 import { drawCurve, parseSampledPoints } from "./renderer/curve";
+import {
+  readRampColors,
+  readRampTokens,
+  renderRamp,
+} from "./renderer/views/ramp";
 import { drawGridLines } from "./renderer/gridLines";
 import { buildEdgeMaskPair, type EdgeMaskPair } from "./renderer/edgeFade";
 import { drawBounds, drawZeroLines } from "./renderer/bounds";
@@ -55,6 +61,13 @@ export type CurveRenderer = {
   clearProbe(): void;
   setViewportVisible(visible: boolean): void;
   setColumnCount(c: number): void;
+  /**
+   * Notify the renderer that the view mode changed (e.g. the user
+   * clicked the cycle button). The renderer re-reads the
+   * `data-curve-view-mode` attribute on the next renderStatic. The
+   * call is a no-op for off-viewport cards.
+   */
+  notifyViewModeChanged(): void;
   destroy(): void;
 };
 
@@ -167,6 +180,7 @@ export const createCurveCanvasRenderer = (
       clearProbe() {},
       setViewportVisible() {},
       setColumnCount() {},
+      notifyViewModeChanged() {},
       destroy() {},
     };
   }
@@ -296,6 +310,19 @@ export const createCurveCanvasRenderer = (
       compositeCanvas = document.createElement("canvas");
       compositeCtx = compositeCanvas.getContext("2d");
     }
+    // View mode dispatcher. Read once per static redraw; the mode lives
+    // on the root element as `data-curve-view-mode` (set by CurveViewport
+    // and updated by the detail popup's view-cycle button). Only the curve
+    // draw is swapped; bg (quad, zero, labels) and the masked layer's
+    // scaffolding (grid, bounds, edge fade) are unchanged. The attribute
+    // is always set by CurveViewport.astro — a missing value here is a
+    // bug, not something to silently default.
+    const viewMode = root!.getAttribute(
+      "data-curve-view-mode",
+    ) as CurveViewMode;
+    const rampMode = viewMode === "ramp";
+    const rampTokens = rampMode ? readRampTokens(root!) : null;
+    const rampColors = rampMode ? readRampColors(root!) : null;
     const dpr = currentDpr();
     const w = Math.max(1, Math.round(screen.width * dpr));
     const h = Math.max(1, Math.round(screen.height * dpr));
@@ -381,17 +408,33 @@ export const createCurveCanvasRenderer = (
         tokens,
         screenPoint: sp,
       });
-      drawCurve({
-        ctx,
-        points,
-        metrics,
-        visible,
-        state,
-        screen,
-        colors,
-        tokens,
-        screenPoint: sp,
-      });
+      if (rampMode && rampTokens && rampColors && range) {
+        renderRamp({
+          ctx,
+          points,
+          baseRect,
+          visible,
+          range,
+          state,
+          tokens: rampTokens,
+          colors: rampColors,
+          baseColors: colors,
+          baseTokens: tokens,
+          screenPoint: sp,
+        });
+      } else {
+        drawCurve({
+          ctx,
+          points,
+          metrics,
+          visible,
+          state,
+          screen,
+          colors,
+          tokens,
+          screenPoint: sp,
+        });
+      }
       // Edge-fade masks: 1D ramps composited over the content layer.
       // Both axes are applied so all four edges fade, regardless of
       // aspect ratio. The masks are cached and rebuilt only on resize /
@@ -696,6 +739,21 @@ export const createCurveCanvasRenderer = (
         probe = null;
         clearProbeDom();
       }
+      requestRender();
+    },
+    notifyViewModeChanged() {
+      // The view mode is read off the root element on every
+      // renderStatic, so a mode change only needs to invalidate the
+      // cached static layer and request a redraw. Off-viewport cards
+      // skip the redraw; the next in-viewport render() will pick up
+      // the new mode (needsStaticRedraw is still set).
+      if (!inViewport) {
+        needsStaticRedraw = true;
+        liveCanvasClean = false;
+        return;
+      }
+      needsStaticRedraw = true;
+      liveCanvasClean = false;
       requestRender();
     },
     destroy() {

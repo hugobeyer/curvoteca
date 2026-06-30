@@ -821,6 +821,16 @@ import "../styles/gallery.css";
                                     "data-curve-view-default",
                                     "0 0 252 128",
                                 );
+                                // Honor the curve's defaultView so the
+                                // detail popup starts in the same view
+                                // the wall card uses. The view-toggle
+                                // button below cycles through entry.views.
+                                if (entry.defaultView) {
+                                    wrap.setAttribute(
+                                        "data-curve-view-mode",
+                                        entry.defaultView,
+                                    );
+                                }
                                 var pts = entry.previewPoints;
                                 if (pts && pts.length) {
                                     wrap.setAttribute(
@@ -950,6 +960,100 @@ import "../styles/gallery.css";
                             }
 
                             openOverlay("detail");
+                            // Wire the view-cycle button: enable it
+                            // when the curve has >1 view, set the
+                            // current label, and update the right-
+                            // column view-modes chip's is-default
+                            // highlight to match the active view.
+                            try {
+                                var viewBtn =
+                                    document.getElementById(
+                                        "detail-view-toggle",
+                                    );
+                                var viewLabel =
+                                    viewBtn && viewBtn.querySelector("span");
+                                var viewModesWrap = infoCol
+                                    ? infoCol.querySelector(
+                                          ".detail-view-modes",
+                                      )
+                                    : null;
+                                var viewsList = Array.isArray(entry.views)
+                                    ? entry.views
+                                    : [];
+                                var currentView = entry.defaultView || "graph";
+                                var applyViewUI = function (mode) {
+                                    if (viewLabel) viewLabel.textContent = mode;
+                                    if (viewModesWrap) {
+                                        var chips =
+                                            viewModesWrap.querySelectorAll(
+                                                ".detail-view-mode",
+                                            );
+                                        chips.forEach(function (c) {
+                                            c.classList.toggle(
+                                                "is-default",
+                                                c.textContent === mode,
+                                            );
+                                        });
+                                    }
+                                };
+                                if (viewBtn) {
+                                    if (viewsList.length > 1) {
+                                        viewBtn.removeAttribute("disabled");
+                                        viewBtn.setAttribute(
+                                            "title",
+                                            "cycle view mode",
+                                        );
+                                    } else {
+                                        viewBtn.setAttribute("disabled", "");
+                                        viewBtn.setAttribute(
+                                            "title",
+                                            "only one view available",
+                                        );
+                                    }
+                                    viewBtn.onclick = function (ev) {
+                                        ev.preventDefault();
+                                        if (viewsList.length < 2) return;
+                                        if (
+                                            typeof window.__cycleCurveView !==
+                                            "function"
+                                        )
+                                            return;
+                                        var nextView = window.__cycleCurveView(
+                                            viewsList,
+                                            currentView,
+                                        );
+                                        currentView = nextView;
+                                        var vp = document.getElementById(
+                                            "detail-overlay-viewport",
+                                        );
+                                        var inner = vp
+                                            ? vp.querySelector(
+                                                  "[data-curve-view]",
+                                              )
+                                            : null;
+                                        if (inner) {
+                                            inner.setAttribute(
+                                                "data-curve-view-mode",
+                                                nextView,
+                                            );
+                                            // Tell the renderer to
+                                            // re-read the mode attribute
+                                            // and redraw. Without this
+                                            // the detail popup keeps
+                                            // showing the previous view.
+                                            try {
+                                                if (window.__rendererFor) {
+                                                    window
+                                                        .__rendererFor(inner)
+                                                        .notifyViewModeChanged();
+                                                }
+                                            } catch (err) {}
+                                        }
+                                        applyViewUI(nextView);
+                                    };
+                                }
+                                applyViewUI(currentView);
+                            } catch (err) {}
                             setTimeout(function () {
                                 try {
                                     document.dispatchEvent(
@@ -961,6 +1065,84 @@ import "../styles/gallery.css";
                             }, 0);
                         } catch (err) {}
                         return;
+                    }
+                });
+
+                // Card-level view-cycle button (the one in the card
+                // header). Clicking it cycles the card's viewport
+                // through entry.views and updates the title attribute
+                // so the tooltip shows the current mode. The button is
+                // always rendered (so card headers stay uniform); for
+                // curves with only one view the click is a no-op.
+                (function initCardViewCycleTitles() {
+                    var cycleBtns =
+                        document.querySelectorAll("[data-view-cycle]");
+                    cycleBtns.forEach(function (btn) {
+                        if (btn.hasAttribute("disabled")) return;
+                        var card = btn.closest(".card");
+                        if (!card) return;
+                        var viewport = card.querySelector("[data-curve-view]");
+                        if (!viewport) return;
+                        var mode =
+                            viewport.getAttribute("data-curve-view-mode") ||
+                            "graph";
+                        btn.setAttribute("title", "View: " + mode);
+                    });
+                })();
+
+                window.__appClickHandlers.push(function (e) {
+                    const cycleBtn = e.target.closest("[data-view-cycle]");
+                    if (!cycleBtn) return;
+                    if (cycleBtn.hasAttribute("disabled")) return;
+                    if (typeof window.__cycleCurveView !== "function") return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var id = cycleBtn.getAttribute("data-view-cycle");
+                    if (!id) return;
+                    var wall = document.getElementById("curve-wall");
+                    if (!wall) return;
+                    var registry;
+                    try {
+                        registry = JSON.parse(
+                            wall.getAttribute("data-curves") || "[]",
+                        );
+                    } catch (err) {
+                        return;
+                    }
+                    var entry = null;
+                    for (var i = 0; i < registry.length; i++) {
+                        if (registry[i].id === id) {
+                            entry = registry[i];
+                            break;
+                        }
+                    }
+                    if (!entry) return;
+                    var views = Array.isArray(entry.views) ? entry.views : [];
+                    if (views.length < 2) return;
+                    var card = cycleBtn.closest(".card");
+                    if (!card) return;
+                    var viewport = card.querySelector("[data-curve-view]");
+                    if (!viewport) return;
+                    var current =
+                        viewport.getAttribute("data-curve-view-mode") ||
+                        entry.defaultView ||
+                        "graph";
+                    var next = window.__cycleCurveView(views, current);
+                    viewport.setAttribute("data-curve-view-mode", next);
+                    cycleBtn.setAttribute("title", "View: " + next);
+                    // Tell the renderer to re-read the mode attribute
+                    // and redraw the static layer. Without this the
+                    // card keeps showing the previous view until the
+                    // next viewport state change.
+                    if (
+                        window.__rendererFor &&
+                        typeof window.__rendererFor === "function"
+                    ) {
+                        try {
+                            window
+                                .__rendererFor(viewport)
+                                .notifyViewModeChanged();
+                        } catch (err) {}
                     }
                 });
 
@@ -1983,6 +2165,12 @@ import "../styles/gallery.css";
                     }
                     return renderer;
                 };
+                // Expose rendererFor to the page-level inline script
+                // (which runs before the module script that imports
+                // createCurveCanvasRenderer). The view-cycle button
+                // uses this to notify the renderer that the mode
+                // attribute changed, so it redraws the static layer.
+                window.__rendererFor = rendererFor;
                 // --- viewport visibility ---------------------------------------
                 // IntersectionObserver (relative to the wall's scroll container)
                 // tells each renderer whether its card is in view. Off-viewport
@@ -3096,12 +3284,18 @@ import "../styles/gallery.css";
                 copyDetailCode,
                 flashCopied,
             } from "../lib/detailCodeField";
+            import { cycleViewMode } from "../lib/curveViewMode";
             window.__detailOverlay = {
                 buildSnippetTabs,
                 showCode,
                 copyDetailCode,
                 flashCopied,
             };
+            // Expose the pure view-cycle helper to the page-level
+            // inline script (which runs before this module script).
+            // The detail popup's view-cycle button calls this on click
+            // to advance the viewport's data-curve-view-mode.
+            window.__cycleCurveView = cycleViewMode;
         </script>
     </body>
 </html>

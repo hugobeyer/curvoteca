@@ -183,12 +183,12 @@ export type CurveDefinition = {
   factory: CurveFactory;
 
   // --- optional curve metadata (see docs/MetadataPlan.md) ---
-  views?: CurveViewMode[];
+  views?: readonly CurveViewMode[];
   defaultView?: CurveViewMode;
   viewHints?: CurveViewHints;
   params?: CurveParamSchema;
   snippetOptions?: CurveSnippetOptions;
-  roleTags?: CurveRoleTag[];
+  roleTags?: readonly CurveRoleTag[];
 };
 
 // --- view modes ---------------------------------------------------------

@@ -7,7 +7,7 @@ import type {
 
 export const cubicBezierMeta = {
   views: ["graph", "ramp"] as readonly CurveViewMode[],
-  defaultView: "ramp" as CurveViewMode,
+  defaultView: "graph" as CurveViewMode,
   viewHints: {
     monotonic: true,
     bounded: true,

@@ -5,7 +5,7 @@ import StarIcon from "./StarIcon.astro";
 import CopyIcon from "./CopyIcon.astro";
 import ExpandIcon from "./ExpandIcon.astro";
 import { buildSearchHaystack } from "../lib/searchIndex";
-import type { CurveDefinition } from "../data/curves";
+import { resolveCurveViews, type CurveDefinition } from "../data/curves";
 
 interface Props {
     curve: CurveDefinition;
@@ -22,6 +22,8 @@ const equation = curve.snippets?.equation ?? curve.formula;
 const curveLabel = [curve.family, curve.continuity].filter(Boolean).join(" / ");
 
 const snippetsJson = JSON.stringify(curve.snippets ?? {});
+const { views } = resolveCurveViews(curve);
+const showViewCycle = views.length > 1;
 ---
 
 <article
@@ -78,30 +80,58 @@ const snippetsJson = JSON.stringify(curve.snippets ?? {});
                         fill="currentColor"
                         aria-hidden="true"
                     >
-                        <path d="M480-144 144-408l58-46 278 218 278-218 58 46-336 264Zm0-192L144-600l336-264 336 264-336 264Zm0-258Zm0 166 219-172-219-172-219 172 219 172Z" />
+                        <path
+                            d="M480-144 144-408l58-46 278 218 278-218 58 46-336 264Zm0-192L144-600l336-264 336 264-336 264Zm0-258Zm0 166 219-172-219-172-219 172 219 172Z"
+                        ></path>
                     </svg>
                 </button>
             </span>
-            <span class="action">
-                <button
-                    class="icon view-cycle-btn"
-                    title="Cycle view"
-                    type="button"
-                    data-view-cycle={curve.id}
-                    aria-label={`Cycle ${curve.name} view`}
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        height="20px"
-                        viewBox="0 -960 960 960"
-                        width="20px"
-                        fill="currentColor"
-                        aria-hidden="true"
-                    >
-                        <path d="M192-240v-72h576v72H192Zm0-144v-72h576v72H192Zm0-144v-84l216-132 180 128.38L768-744v88.2L588-528 405.3-657.6 192-528Z" />
-                    </svg>
-                </button>
-            </span>
+            {
+                showViewCycle ? (
+                    <span class="action">
+                        <button
+                            class="icon view-cycle-btn"
+                            title="Cycle view"
+                            type="button"
+                            data-view-cycle={curve.id}
+                            aria-label={`Cycle ${curve.name} view`}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                height="20px"
+                                viewBox="0 -960 960 960"
+                                width="20px"
+                                fill="currentColor"
+                                aria-hidden="true"
+                            >
+                                <path d="M192-240v-72h576v72H192Zm0-144v-72h576v72H192Zm0-144v-84l216-132 180 128.38L768-744v88.2L588-528 405.3-657.6 192-528Z" />
+                            </svg>
+                        </button>
+                    </span>
+                ) : (
+                    <span class="action">
+                        <button
+                            class="icon view-cycle-btn"
+                            title="Only one view available"
+                            type="button"
+                            data-view-cycle={curve.id}
+                            aria-label={`Cycle ${curve.name} view`}
+                            disabled
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                height="20px"
+                                viewBox="0 -960 960 960"
+                                width="20px"
+                                fill="currentColor"
+                                aria-hidden="true"
+                            >
+                                <path d="M192-240v-72h576v72H192Zm0-144v-72h576v72H192Zm0-144v-84l216-132 180 128.38L768-744v88.2L588-528 405.3-657.6 192-528Z" />
+                            </svg>
+                        </button>
+                    </span>
+                )
+            }
             <span class="action">
                 <button
                     class="icon info-btn"

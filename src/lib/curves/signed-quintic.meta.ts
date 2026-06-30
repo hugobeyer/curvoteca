@@ -7,7 +7,7 @@ import type {
 
 export const signedQuinticMeta = {
   views: ["graph", "ramp"] as readonly CurveViewMode[],
-  defaultView: "ramp" as CurveViewMode,
+  defaultView: "graph" as CurveViewMode,
   viewHints: {
     signed: true,
     bipolar: true,
