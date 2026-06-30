@@ -55,6 +55,9 @@ export type RendererTokens = {
   // F-key fit padding: screen-pixel margin on each side of the canvas
   // when the user presses F. Read by `fitStateFor` in src/pages/index.astro.
   fitPadding: number;
+  // Motion view: ms per sweep of the probe across the polyline's X
+  // span. One cycle = probe moves from points[0].x to points[last].x.
+  motionPeriodMs: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -112,6 +115,9 @@ const DEFAULTS = {
   dprMin: 1,
   dprMax: 2,
   fitPadding: 18,
+
+  // Motion view: ms per sweep of the probe across the polyline.
+  motionPeriodMs: 1200,
 } as const;
 
 const JS_ONLY_KEYS: ReadonlySet<keyof RendererTokens> = new Set([
@@ -155,6 +161,8 @@ const JS_ONLY_KEYS: ReadonlySet<keyof RendererTokens> = new Set([
   "lineMaskEnd",
   // F-key fit padding (no CSS source; read via readTokens -> DEFAULTS).
   "fitPadding",
+  // Motion view period (no CSS source; read via readTokens -> DEFAULTS).
+  "motionPeriodMs",
 ]);
 
 // ---------------------------------------------------------------------------

@@ -29,6 +29,7 @@ import {
 } from "./renderer/views/ramp";
 import { renderField } from "./renderer/views/field";
 import { renderHeightStrip } from "./renderer/views/heightStrip";
+import { renderMotion } from "./renderer/views/motion";
 import { drawGridLines } from "./renderer/gridLines";
 import { buildEdgeMaskPair, type EdgeMaskPair } from "./renderer/edgeFade";
 import { drawBounds, drawZeroLines } from "./renderer/bounds";
@@ -186,6 +187,12 @@ export const createCurveCanvasRenderer = (
   // through "full" -> "lines" -> "axis" -> "full". Honored inside
   // renderStatic so the suppressed draws are skipped entirely.
   let viewGridMode: ViewGridMode = "full";
+  // True when the motion view is active. The motion view animates a
+  // head pulse along the curve's X axis; the pulse is drawn on the
+  // live canvas (not the cached composite) so the static layers
+  // stay reusable. `motionActive` forces a per-frame render even
+  // when the composite is otherwise up to date.
+  let motionActive = false;
   // Cached pair of 1D edge-fade masks (horizontal + vertical), rebuilt on
   // resize or when the fade width / DPR change. Applied as two sequential
   // destination-in passes at the end of renderStatic. Stored as canvases
@@ -350,7 +357,14 @@ export const createCurveCanvasRenderer = (
     const rampMode = viewMode === "ramp";
     const fieldMode = viewMode === "field";
     const heightStripMode = viewMode === "heightStrip";
+    const motionMode = viewMode === "motion";
     const rampLikeMode = rampMode || heightStripMode;
+    // The motion view is the only one that needs a per-frame overlay
+    // (the head pulse). All other views are static — the cached
+    // composite is reusable, and the render() early-return can skip
+    // them. Flip motionActive here so the per-frame path stays in
+    // sync with whatever mode the static layer just rendered.
+    motionActive = motionMode;
     const rampTokens = rampLikeMode ? readRampTokens(root!) : null;
     const rampColors = rampLikeMode ? readRampColors(root!) : null;
     const dpr = currentDpr();
@@ -636,7 +650,14 @@ export const createCurveCanvasRenderer = (
       // it: a size change, a state change, a theme change, or the
       // presence of a probe/cursor. We track that with liveCanvasClean
       // and clear it at every entry point below.
-      if (liveCanvasClean && !needsStaticRedraw && !probe && !mouse) return;
+      if (
+        liveCanvasClean &&
+        !needsStaticRedraw &&
+        !probe &&
+        !mouse &&
+        !motionActive
+      )
+        return;
       if (needsStaticRedraw) renderStatic(screen);
       ctx!.clearRect(0, 0, screen.width, screen.height);
       // Blit the cached composite (bg + static already combined). The
@@ -646,10 +667,10 @@ export const createCurveCanvasRenderer = (
       // re-touching bg+static on probe-fade frames where they haven't
       // changed.
       ctx!.drawImage(compositeCanvas!, 0, 0);
-      // From here on, any probe/cursor draw invalidates the composite
+      // From here on, any probe/cursor/motion draw invalidates the composite
       // (different pixels next frame). The composite is only reusable
       // after a clean blit with no probe and no mouse — which we just did.
-      if (!probe && !mouse) {
+      if (!probe && !mouse && !motionActive) {
         liveCanvasClean = true;
         needsStaticRedraw = false;
         return;
@@ -701,6 +722,33 @@ export const createCurveCanvasRenderer = (
       // faded by the edge mask.
       if (mouse) {
         drawCursor({ ctx: ctx!, screenPt: mouse, colors, tokens });
+      }
+      // Motion view: draw a glowing probe that slides along the curve
+      // like an object on rails. The phase is monotonic in
+      // `performance.now()`, so each frame renders a slightly
+      // different probe position. The probe lives in the live canvas
+      // (not the cached composite) so the static layers stay
+      // reusable across frames.
+      if (motionActive) {
+        const sp = (p: CurvePoint) => screenPoint(p, screen);
+        const now = performance.now();
+        const phase = (now % tokens.motionPeriodMs) / tokens.motionPeriodMs;
+        renderMotion({
+          ctx: ctx!,
+          points,
+          metrics,
+          visible,
+          state,
+          screen,
+          colors,
+          tokens,
+          screenPoint: sp,
+          phase,
+        });
+        // Schedule another frame so the animation keeps moving.
+        // The same requestRender path as the probe / cursor keeps
+        // the frame loop cancellable on destroy.
+        requestRender();
       }
       // Probe/cursor are present, so the composite is dirty. Already
       // cleared liveCanvasClean above.
