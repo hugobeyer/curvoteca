@@ -208,8 +208,11 @@ export const renderRamp = ({
     ctx.beginPath();
     roundRect(ctx, 0, barY, screen.width, barH, tokens.barRadius);
     ctx.clip();
-    ctx.fillStyle = colors.barBg;
-    ctx.fillRect(0, barY, screen.width, barH);
+    // No background fill: the strip is just the pos / neg source
+    // image composited over the canvas's own bg. At y=0 the source
+    // pixels are alpha=0 (gradientFloor=0), so the canvas bg
+    // shows through uncluttered. The clip bounds the source to
+    // the bar's rounded rectangle.
 
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(source, 0, barY, screen.width, barH);

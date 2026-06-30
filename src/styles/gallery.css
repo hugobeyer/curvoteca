@@ -759,10 +759,10 @@
     --ramp-bar-top: 45;
     --ramp-zero-line-w: 1;
     --ramp-zero-line-alpha: 0.4;
-    --ramp-pos-alpha: 0.86;
-    --ramp-neg-alpha: 0.86;
+    --ramp-pos-alpha: 1;
+    --ramp-neg-alpha: 1;
     --ramp-frame-alpha: 0.06;
-    --ramp-gradient-floor: 0.02;
+    --ramp-gradient-floor: 0;
 }
 .curve-view .curve-view-canvas {
     position: absolute;
