@@ -9,12 +9,17 @@ const options = [
 ] as const;
 ---
 
-<div class="chips snippet-option-bar" aria-label="Snippet options">
+<div
+    class="chips snippet-option-bar"
+    aria-label="Snippet options"
+    data-snippet-bar
+>
     {
         options.map((option) => (
             <button
                 class="chip snippet-option"
                 type="button"
+                data-snippet-option-key={option}
                 disabled
                 aria-disabled="true"
                 title={`${option} option coming soon`}
@@ -24,3 +29,34 @@ const options = [
         ))
     }
 </div>
+
+<script is:inline>
+    (function () {
+        const host = document.querySelector("[data-snippet-bar]");
+        if (!host) return;
+
+        const apply = function () {
+            const raw = host.getAttribute("data-snippet-options");
+            if (!raw) return;
+            let options;
+            try {
+                options = JSON.parse(raw);
+            } catch (err) {
+                return;
+            }
+            if (!options || typeof options !== "object") return;
+            Object.keys(options).forEach(function (key) {
+                const btn = host.querySelector(
+                    '[data-snippet-option-key="' + key + '"]',
+                );
+                if (btn) btn.disabled = !options[key];
+            });
+        };
+
+        apply();
+        new MutationObserver(apply).observe(host, {
+            attributes: true,
+            attributeFilter: ["data-snippet-options"],
+        });
+    })();
+</script>

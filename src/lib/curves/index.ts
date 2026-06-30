@@ -17,6 +17,7 @@ export {
   defaultParams as smoothstepDefaultParams,
   type SmoothstepParams,
 } from "./smoothstep";
+export { smoothstepMeta } from "./smoothstep.meta";
 export {
   smoothstepEdgeCurve,
   defaultParams as smoothstepEdgeDefaultParams,
@@ -152,6 +153,7 @@ export {
   defaultParams as signedQuinticDefaultParams,
   type SignedQuinticParams,
 } from "./signed-quintic";
+export { signedQuinticMeta } from "./signed-quintic.meta";
 export {
   sineEaseCurve,
   defaultParams as sineEaseDefaultParams,
@@ -192,6 +194,7 @@ export {
   defaultParams as cubicBezierDefaultParams,
   type CubicBezierParams,
 } from "./cubic-bezier";
+export { cubicBezierMeta } from "./cubic-bezier.meta";
 export {
   cubicInCurve,
   defaultParams as cubicInDefaultParams,
@@ -372,21 +375,13 @@ export {
   defaultParams as perlinNoise1dDefaultParams,
   type PerlinNoise1dParams,
 } from "./perlin-noise-1d";
-export {
-  adCurve,
-  defaultParams as adDefaultParams,
-  type AdParams,
-} from "./ad";
+export { adCurve, defaultParams as adDefaultParams, type AdParams } from "./ad";
 export {
   adsrCurve,
   defaultParams as adsrDefaultParams,
   type AdsrParams,
 } from "./adsr";
-export {
-  arCurve,
-  defaultParams as arDefaultParams,
-  type ArParams,
-} from "./ar";
+export { arCurve, defaultParams as arDefaultParams, type ArParams } from "./ar";
 export {
   asrCurve,
   defaultParams as asrDefaultParams,
@@ -532,6 +527,7 @@ export {
   defaultParams as sdfSphereDefaultParams,
   type SdfSphereParams,
 } from "./sdf-sphere";
+export { sdfSphereMeta } from "./sdf-sphere.meta";
 export {
   sdfSubtractCurve,
   defaultParams as sdfSubtractDefaultParams,

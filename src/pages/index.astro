@@ -663,6 +663,150 @@ import "../styles/gallery.css";
                             if (summaryEl)
                                 summaryEl.textContent = entry.summary || "";
 
+                            // --- detail right-column metadata sections ---
+                            // Re-uses the existing .detail-info-col container.
+                            // Each section is rendered only when its data is
+                            // present; empty headers are never emitted. Sections
+                            // are rebuilt on every open so switching curves
+                            // does not leak the previous curve's chips.
+                            var infoCol = summaryEl
+                                ? summaryEl.parentElement
+                                : null;
+                            var sectionsEl = infoCol
+                                ? infoCol.querySelector(
+                                      "[data-detail-sections]",
+                                  )
+                                : null;
+                            if (infoCol && !sectionsEl) {
+                                sectionsEl = document.createElement("div");
+                                sectionsEl.setAttribute(
+                                    "data-detail-sections",
+                                    "",
+                                );
+                                infoCol.appendChild(sectionsEl);
+                            }
+                            if (sectionsEl) {
+                                sectionsEl.innerHTML = "";
+                                var mkSection = function (label) {
+                                    var sec = document.createElement("div");
+                                    sec.className = "detail-section";
+                                    var head = document.createElement("div");
+                                    head.className = "detail-section-label";
+                                    head.textContent = label;
+                                    var body = document.createElement("div");
+                                    body.className = "detail-section-body";
+                                    sec.appendChild(head);
+                                    sec.appendChild(body);
+                                    sectionsEl.appendChild(sec);
+                                    return body;
+                                };
+                                var mkChip = function (text, cls, extraClass) {
+                                    var span = document.createElement("span");
+                                    span.className = cls;
+                                    if (extraClass)
+                                        span.classList.add(extraClass);
+                                    span.textContent = text;
+                                    return span;
+                                };
+                                // a. Shape — view-hint flags
+                                var hints = entry.viewHints || {};
+                                var hintKeys = [
+                                    "signed",
+                                    "bipolar",
+                                    "periodic",
+                                    "monotonic",
+                                    "bounded",
+                                ];
+                                var activeHints = hintKeys.filter(function (k) {
+                                    return hints[k] === true;
+                                });
+                                if (activeHints.length) {
+                                    var shapeBody = mkSection("shape");
+                                    activeHints.forEach(function (k) {
+                                        shapeBody.appendChild(
+                                            mkChip(k, "detail-shape-chip"),
+                                        );
+                                    });
+                                }
+                                // b. Continuity
+                                if (entry.continuity) {
+                                    var contBody = mkSection("continuity");
+                                    var contP = document.createElement("p");
+                                    contP.className = "detail-continuity";
+                                    contP.textContent = entry.continuity;
+                                    contBody.appendChild(contP);
+                                }
+                                // c. Tags — roleTags (uppercase) + tags (lowercase)
+                                var roleTags = entry.roleTags || [];
+                                var freeTags = entry.tags || [];
+                                if (roleTags.length || freeTags.length) {
+                                    var tagsBody = mkSection("tags");
+                                    roleTags.forEach(function (t) {
+                                        tagsBody.appendChild(
+                                            mkChip(t, "detail-role-tag-chip"),
+                                        );
+                                    });
+                                    freeTags.forEach(function (t) {
+                                        tagsBody.appendChild(
+                                            mkChip(t, "detail-free-tag-chip"),
+                                        );
+                                    });
+                                }
+                                // d. Use cases
+                                if (
+                                    Array.isArray(entry.useCases) &&
+                                    entry.useCases.length
+                                ) {
+                                    var ucBody = mkSection("use cases");
+                                    var ul = document.createElement("ul");
+                                    ul.className = "detail-use-cases";
+                                    entry.useCases.forEach(function (u) {
+                                        var li = document.createElement("li");
+                                        li.textContent = u;
+                                        ul.appendChild(li);
+                                    });
+                                    ucBody.appendChild(ul);
+                                }
+                                // e. Related
+                                if (
+                                    Array.isArray(entry.related) &&
+                                    entry.related.length
+                                ) {
+                                    var relBody = mkSection("related");
+                                    var relWrap = document.createElement("div");
+                                    relWrap.className = "detail-related";
+                                    entry.related.forEach(function (rid) {
+                                        var a = document.createElement("a");
+                                        a.className = "detail-related-link";
+                                        a.setAttribute("data-open-detail", rid);
+                                        a.href = "#" + rid;
+                                        a.textContent = rid;
+                                        relWrap.appendChild(a);
+                                    });
+                                    relBody.appendChild(relWrap);
+                                }
+                                // f. View modes (informational only)
+                                if (
+                                    Array.isArray(entry.views) &&
+                                    entry.views.length
+                                ) {
+                                    var vmBody = mkSection("views");
+                                    var vmWrap = document.createElement("div");
+                                    vmWrap.className = "detail-view-modes";
+                                    entry.views.forEach(function (m) {
+                                        var isDef = m === entry.defaultView;
+                                        vmWrap.appendChild(
+                                            mkChip(
+                                                m,
+                                                "detail-view-mode",
+                                                isDef ? "is-default" : null,
+                                            ),
+                                        );
+                                    });
+                                    vmBody.appendChild(vmWrap);
+                                }
+                            }
+
                             var vpEl = document.getElementById(
                                 "detail-overlay-viewport",
                             );
@@ -793,6 +937,16 @@ import "../styles/gallery.css";
                                     },
                                 );
                                 ov.showCode(codeEl, copyEl, entry.equation);
+                            }
+
+                            var snippetBar =
+                                document.querySelector("[data-snippet-bar]");
+                            if (snippetBar) {
+                                var opts = entry.snippetOptions || {};
+                                snippetBar.setAttribute(
+                                    "data-snippet-options",
+                                    JSON.stringify(opts),
+                                );
                             }
 
                             openOverlay("detail");

@@ -29,6 +29,7 @@ import { cosineEaseCurve } from "../lib/curves/cosine-ease";
 import { cosineInCurve } from "../lib/curves/cosine-in";
 import { cosineOutCurve } from "../lib/curves/cosine-out";
 import { cubicBezierCurve } from "../lib/curves/cubic-bezier";
+import { cubicBezierMeta } from "../lib/curves/cubic-bezier.meta";
 import { cubicInCurve } from "../lib/curves/cubic-in";
 import { cubicInOutCurve } from "../lib/curves/cubic-in-out";
 import { cubicOutCurve } from "../lib/curves/cubic-out";
@@ -62,6 +63,7 @@ import { sawtoothWaveCurve } from "../lib/curves/sawtooth-wave";
 import { septicSmoothstepCurve } from "../lib/curves/septic-smoothstep";
 import { signedLogisticCurve } from "../lib/curves/signed-logistic";
 import { signedQuinticCurve } from "../lib/curves/signed-quintic";
+import { signedQuinticMeta } from "../lib/curves/signed-quintic.meta";
 import { signedScaleCurve } from "../lib/curves/signed-scale";
 import { simplexNoise1dCurve } from "../lib/curves/simplex-noise-1d";
 import { sincCurve } from "../lib/curves/sinc";
@@ -70,6 +72,7 @@ import { sineInCurve } from "../lib/curves/sine-in";
 import { sineInOutCurve } from "../lib/curves/sine-in-out";
 import { sineOutCurve } from "../lib/curves/sine-out";
 import { smoothstepCurve } from "../lib/curves/smoothstep";
+import { smoothstepMeta } from "../lib/curves/smoothstep.meta";
 import { smoothstepEdgeCurve } from "../lib/curves/smoothstep-edge";
 import { smootherstepCurve } from "../lib/curves/smootherstep";
 import { softDeadZoneCurve } from "../lib/curves/soft-dead-zone";
@@ -105,6 +108,7 @@ import { lfoShapesCurve } from "../lib/curves/lfo-shapes";
 import { worleyF2F1Curve } from "../lib/curves/worley-f2-f1";
 import { voronoiJitterCurve } from "../lib/curves/voronoi-jitter";
 import { sdfSphereCurve } from "../lib/curves/sdf-sphere";
+import { sdfSphereMeta } from "../lib/curves/sdf-sphere.meta";
 import { sdfBoxCurve } from "../lib/curves/sdf-box";
 import { sdfRoundBoxCurve } from "../lib/curves/sdf-round-box";
 import { sdfTorusCurve } from "../lib/curves/sdf-torus";
@@ -177,11 +181,114 @@ export type CurveDefinition = {
   sampling: SamplingHint;
   related?: string[];
   factory: CurveFactory;
+
+  // --- optional curve metadata (see docs/MetadataPlan.md) ---
+  views?: CurveViewMode[];
+  defaultView?: CurveViewMode;
+  viewHints?: CurveViewHints;
+  params?: CurveParamSchema;
+  snippetOptions?: CurveSnippetOptions;
+  roleTags?: CurveRoleTag[];
 };
+
+// --- view modes ---------------------------------------------------------
+// Closed set of preview modes. Today only "graph" is rendered; the rest
+// are reserved for upcoming view-cycling work. Consumers should iterate
+// CURVE_VIEW_MODES, not hardcode the list.
+export type CurveViewMode =
+  "graph" | "ramp" | "motion" | "field" | "heightStrip";
+
+export const CURVE_VIEW_MODES: readonly CurveViewMode[] = [
+  "graph",
+  "ramp",
+  "motion",
+  "field",
+  "heightStrip",
+] as const;
+
+// --- view hints (semantic shape flags) ---------------------------------
+export type CurveViewHints = {
+  signed?: boolean;
+  bipolar?: boolean;
+  periodic?: boolean;
+  monotonic?: boolean;
+  bounded?: boolean;
+  preferredPreview?: CurveViewMode;
+};
+
+// --- param schema (future-slider hook) ---------------------------------
+export type CurveParamDefinition = {
+  label: string;
+  default: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+  description?: string;
+};
+
+export type CurveParamSchema = Record<string, CurveParamDefinition>;
+
+// --- snippet options (per-curve opt-in for the disabled snippet bar) --
+export type CurveSnippetOptions = {
+  constants?: boolean;
+  clamp?: boolean;
+  fit?: boolean;
+  function?: boolean;
+  comments?: boolean;
+  uniforms?: boolean;
+};
+
+export const DEFAULT_SNIPPET_OPTIONS: Required<CurveSnippetOptions> = {
+  constants: true,
+  clamp: true,
+  fit: true,
+  function: true,
+  comments: true,
+  uniforms: false,
+};
+
+// --- role tags (drives future chips and view defaults) -----------------
+export type CurveRoleTag =
+  | "easing"
+  | "smoothstep"
+  | "sigmoid"
+  | "falloff"
+  | "mask"
+  | "tonemap"
+  | "window"
+  | "wave"
+  | "noise"
+  | "sdf"
+  | "dsp"
+  | "dynamics"
+  | "remap"
+  | "interpolation";
+
+// --- view normalizer ----------------------------------------------------
+// Single source of truth for "what views are available" and "what is the
+// default view" for a curve. Falls back to ["graph"] / "graph" if the
+// curve declares no metadata, so this is always safe to call.
+export function resolveCurveViews(curve: CurveDefinition): {
+  views: CurveViewMode[];
+  defaultView: CurveViewMode;
+} {
+  const views: CurveViewMode[] = curve.views?.length
+    ? [...curve.views]
+    : ["graph"];
+  const fromHints = curve.viewHints?.preferredPreview;
+  const defaultView =
+    (fromHints && views.includes(fromHints) ? fromHints : undefined) ||
+    (curve.defaultView && views.includes(curve.defaultView)
+      ? curve.defaultView
+      : undefined) ||
+    views[0];
+  return { views, defaultView };
+}
 
 export const curves: CurveDefinition[] = [
   linearCurve(),
-  smoothstepCurve(),
+  { ...smoothstepCurve(), ...smoothstepMeta },
   smootherstepCurve(),
   septicSmoothstepCurve(),
   smoothstepEdgeCurve(),
@@ -211,7 +318,7 @@ export const curves: CurveDefinition[] = [
   signedLogisticCurve(),
   inversePowerCurve(),
   signedScaleCurve(),
-  signedQuinticCurve(),
+  { ...signedQuinticCurve(), ...signedQuinticMeta },
   sineEaseCurve(),
   sineInCurve(),
   sineOutCurve(),
@@ -255,7 +362,7 @@ export const curves: CurveDefinition[] = [
   lfoShapesCurve(),
   worleyF2F1Curve(),
   voronoiJitterCurve(),
-  sdfSphereCurve(),
+  { ...sdfSphereCurve(), ...sdfSphereMeta },
   sdfBoxCurve(),
   sdfRoundBoxCurve(),
   sdfTorusCurve(),
@@ -287,7 +394,7 @@ export const curves: CurveDefinition[] = [
   gaussianCurve(),
   bellCurveCurve(),
   sincCurve(),
-  cubicBezierCurve(),
+  { ...cubicBezierCurve(), ...cubicBezierMeta },
   windowHannCurve(),
   windowHammingCurve(),
   windowTriangleCurve(),

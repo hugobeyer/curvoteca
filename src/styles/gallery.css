@@ -1244,15 +1244,138 @@
 .detail-info-col {
     min-width: 0;
     padding: 6px;
-    border-radius: 3px;
-    background: color-mix(in srgb, var(--white) 3%, transparent);
-    box-shadow: inset 0 0 0 1px var(--line-soft);
+    background: transparent;
 }
 .detail-overlay-summary {
     margin: 0;
     color: var(--text-soft);
     font-size: var(--font-size-sm);
     line-height: 1.35;
+}
+
+/* --- detail right-column metadata sections ----------------------------
+   Each section wraps a label + body. Sections only render when their
+   data is present (see handler in index.astro), so empty headers never
+   appear. */
+.detail-section {
+    display: grid;
+    gap: 6px;
+    margin-top: 0;
+    padding: 12px 8px;
+    min-width: 0;
+}
+.detail-section:first-child {
+    padding-top: 8px;
+}
+.detail-section-label {
+    font-size: var(--font-size-tiny);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: var(--text-transform-uppercase);
+    color: var(--muted);
+    line-height: var(--line-height-tight);
+    text-decoration: none;
+    opacity: 0.7;
+}
+.detail-section-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+}
+.detail-shape-chip,
+.detail-view-mode,
+.detail-role-tag-chip,
+.detail-free-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 4px 12px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--white) 6%, transparent);
+    color: var(--muted);
+    font-size: var(--font-size-tiny);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-normal);
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+}
+.detail-role-tag-chip {
+    text-transform: var(--text-transform-uppercase);
+    letter-spacing: var(--letter-spacing-mid);
+    font-weight: var(--font-weight-regular);
+}
+.detail-free-tag-chip {
+    text-transform: var(--text-transform-lowercase);
+    color: var(--text-soft);
+}
+.detail-view-mode {
+    font-family: var(--font-family);
+}
+.detail-view-mode.is-default {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    color: var(--white);
+}
+.detail-continuity {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: var(--font-size-tiny);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-normal);
+    line-height: var(--line-height-tight);
+    text-decoration: none;
+}
+.detail-use-cases {
+    margin: 0;
+    padding-left: 14px;
+    color: var(--text-soft);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-thin);
+    line-height: var(--line-height-normal);
+    list-style: disc;
+    text-decoration: none;
+}
+.detail-related {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+}
+.detail-related .detail-related-link,
+.detail-related-link {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 4px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--white) 6%, transparent);
+    color: var(--muted);
+    font-size: var(--font-size-tiny);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-normal);
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        background 0.12s ease,
+        color 0.12s ease;
+}
+.detail-related .detail-related-link:hover,
+.detail-related-link:hover {
+    background: color-mix(in srgb, var(--accent2) 18%, transparent);
+    color: var(--white);
+    text-decoration: none;
+}
+.detail-related .detail-related-link:focus,
+.detail-related .detail-related-link:visited,
+.detail-related .detail-related-link:active,
+.detail-related-link:focus,
+.detail-related-link:visited,
+.detail-related-link:active {
+    text-decoration: none;
 }
 .detail-controls {
     position: absolute;
@@ -1454,5 +1577,8 @@
     .pix-qr-wrap {
         grid-auto-flow: row;
         justify-content: start;
+    }
+    .detail-section-body {
+        gap: 3px;
     }
 }

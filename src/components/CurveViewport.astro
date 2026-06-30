@@ -1,5 +1,6 @@
 ---
 import type { CurveDefinition } from "../data/curves";
+import { resolveCurveViews } from "../data/curves";
 import { projectToViewBox, sampleKernel } from "../lib/curveMath";
 
 interface Props {
@@ -18,6 +19,10 @@ const projected = projectToViewBox(samples, VIEWBOX, curve.domain, curve.range);
 const pointsJson = JSON.stringify(
     projected.map((p) => [p.x, p.y] as [number, number]),
 );
+const { views, defaultView } = resolveCurveViews(curve);
+const viewsJson = JSON.stringify(views);
+const hintsJson = JSON.stringify(curve.viewHints ?? {});
+const roleTagsJson = JSON.stringify(curve.roleTags ?? []);
 ---
 
 <div
@@ -28,6 +33,10 @@ const pointsJson = JSON.stringify(
     data-curve-domain={JSON.stringify(curve.domain)}
     data-curve-range={JSON.stringify(curve.range)}
     data-curve-points={pointsJson}
+    data-curve-views={viewsJson}
+    data-curve-view-mode={defaultView}
+    data-curve-view-hints={hintsJson}
+    data-curve-role-tags={roleTagsJson}
 >
     <canvas class="curve-view-canvas" data-curve-canvas aria-hidden="true"
     ></canvas>

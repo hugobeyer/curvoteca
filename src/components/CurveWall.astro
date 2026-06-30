@@ -2,7 +2,11 @@
 import CurveCard from "./CurveCard.astro";
 import SponsorCard from "./SponsorCard.astro";
 import StarIcon from "./StarIcon.astro";
-import type { CurveDefinition } from "../data/curves";
+import {
+    DEFAULT_SNIPPET_OPTIONS,
+    resolveCurveViews,
+    type CurveDefinition,
+} from "../data/curves";
 import sponsorsData from "../data/sponsors.json";
 import { projectToViewBox, sampleKernel } from "../lib/curveMath";
 
@@ -50,6 +54,7 @@ const familyChips: { label: string; value: string }[] = [
 const curveIndex = curves.map((c) => {
     const samples = sampleKernel(c.kernel, c.sampling);
     const projected = projectToViewBox(samples, VIEWBOX, c.domain, c.range);
+    const { views, defaultView } = resolveCurveViews(c);
     return {
         id: c.id,
         name: c.name,
@@ -58,6 +63,14 @@ const curveIndex = curves.map((c) => {
         previewPoints: projected.map((p) => [p.x, p.y] as [number, number]),
         equation: c.snippets?.equation ?? c.formula,
         snippets: c.snippets ?? {},
+        views,
+        defaultView,
+        viewHints: c.viewHints ?? {},
+        roleTags: c.roleTags ?? [],
+        continuity: c.continuity,
+        useCases: c.useCases,
+        related: c.related,
+        snippetOptions: c.snippetOptions ?? DEFAULT_SNIPPET_OPTIONS,
     };
 });
 
