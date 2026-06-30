@@ -68,7 +68,7 @@ const DEFAULTS = {
 
   // Edge fade.
   edgeFade: 0,
-  edgeFadeInset: 12,
+  edgeFadeInset: 0,
 
   // Axis tick labels.
   labelSize: 9,
