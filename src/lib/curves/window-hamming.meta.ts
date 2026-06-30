@@ -7,7 +7,7 @@ import type {
 } from "../../data/curves";
 
 export const windowHammingMeta = {
-  views: ["graph", "heightStrip", "ramp"] as readonly CurveViewMode[],
+  views: ["graph", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {
   bounded: true

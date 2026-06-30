@@ -7,7 +7,7 @@ import type {
 } from "../../data/curves";
 
 export const asrMeta = {
-  views: ["graph", "motion", "heightStrip"] as readonly CurveViewMode[],
+  views: ["graph", "motion", "field", "heightStrip"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {
   bounded: true

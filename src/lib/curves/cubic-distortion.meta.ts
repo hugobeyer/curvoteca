@@ -7,7 +7,7 @@ import type {
 } from "../../data/curves";
 
 export const cubicDistortionMeta = {
-  views: ["graph", "heightStrip"] as readonly CurveViewMode[],
+  views: ["graph", "field", "heightStrip"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {} satisfies CurveViewHints,
   params: {

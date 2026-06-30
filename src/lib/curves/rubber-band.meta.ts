@@ -7,7 +7,7 @@ import type {
 } from "../../data/curves";
 
 export const rubberBandMeta = {
-  views: ["graph", "motion", "heightStrip", "ramp"] as readonly CurveViewMode[],
+  views: ["graph", "motion", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {} satisfies CurveViewHints,
   params: {
