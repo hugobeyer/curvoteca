@@ -21,7 +21,12 @@ import type { CurveViewMode } from "../data/curves";
 import { readColors, type RendererColors } from "./renderer/colors";
 import { readTokens, type RendererTokens } from "./renderer/tokens";
 import { readEffects, type EffectValues } from "./renderer/effects";
-import { drawCurve, parseSampledPoints } from "./renderer/curve";
+import {
+  drawCurve,
+  parseSampledPoints,
+  getZeroWorldX,
+  getZeroWorldY,
+} from "./renderer/curve";
 import {
   readRampColors,
   readRampTokens,
@@ -314,7 +319,8 @@ export const createCurveCanvasRenderer = (
   const screenPoint = (
     point: CurvePoint,
     screen: { width: number; height: number },
-  ): CurvePoint => worldToScreen(point, visible, screen);
+    visibleOverride?: CurveRect,
+  ): CurvePoint => worldToScreen(point, visibleOverride ?? visible, screen);
 
   // Strip probe DOM classes when the card leaves the viewport. The probe
   // sample stays in memory so the re-entry path can resume the ramp, but
@@ -371,7 +377,60 @@ export const createCurveCanvasRenderer = (
     staticCtx!.setTransform(dpr, 0, 0, dpr, 0, 0);
     bgCtx!.setTransform(dpr, 0, 0, dpr, 0, 0);
     compositeCtx!.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const sp = (p: CurvePoint) => screenPoint(p, screen);
+    // Field mode: center the projection on world (0, 0) and use a
+    // uniform 1:1 visible rect (same world-units per screen-pixel on
+    // X and Y) so the field is geometrically square regardless of
+    // the persisted zoomX/zoomY. State itself is untouched — only
+    // the projection changes, so leaving field mode restores the
+    // user's view instantly. Curves whose domain or range don't
+    // include 0 fall through to the default `sp`.
+    let spVisible: CurveRect | undefined;
+    if (fieldMode && range) {
+      const zx = getZeroWorldX(baseRect, domain);
+      const zy = getZeroWorldY(baseRect, range);
+      if (zx !== null && zy !== null && screen.width > 0) {
+        // Use the smaller of X/Y zoom (the more zoomed-out axis) so
+        // we don't surprise the user with a sudden zoom-in. The
+        // world rect is then sized so the FIELD is square in screen
+        // pixels (i.e. a `min(w, h) × min(w, h)` square centered in
+        // the card). This means:
+        //   1. world units per screen pixel are equal on X and Y
+        //      (1:1 ratio, no distortion of the field image), AND
+        //   2. the field itself is round/square — it doesn't stretch
+        //      with the card's aspect. The longer screen axis has
+        //      empty canvas-space flanking the square field.
+        // For a 600×240 card with zoom 1, the field is a 240×240
+        // square in the middle; for an 80×60 card, a 60×60 square.
+        const effectiveZoom = Math.min(state.zoomX, state.zoomY);
+        const sizeWorld = baseRect.w / effectiveZoom;
+        const minScreen = Math.min(screen.width, screen.height);
+        const pixelsPerWorldUnit = minScreen / sizeWorld;
+        const w = screen.width / pixelsPerWorldUnit;
+        const h = screen.height / pixelsPerWorldUnit;
+        spVisible = {
+          x: zx - w / 2,
+          y: zy - h / 2,
+          w,
+          h,
+        };
+      }
+    }
+    const sp = (p: CurvePoint) => screenPoint(p, screen, spVisible);
+    // Same projection passes through the draw calls that take `visible`
+    // explicitly (grid step, bounds, zero lines, axis labels). In field
+    // mode this is the zero-centered square rect; otherwise it's the
+    // user's persisted visible rect.
+    const drawVisible = spVisible ?? visible;
+
+    // Field view keeps only the bg-layer zero lines (the world 0,0
+    // crosshair) and drops all grid chrome: viewport quad, axis
+    // labels, grid lines, and endlines. The user's grid cycle still
+    // updates the bottom-bar UI label, but the field itself renders
+    // with axis-only semantics so the field image isn't overlaid with
+    // a busy grid. This is a render-time override — the persisted
+    // `viewGridMode` is untouched, so the user's grid preference
+    // returns when they cycle back to graph / motion / ramp / strip.
+    const effectiveGridMode: ViewGridMode = fieldMode ? "axis" : viewGridMode;
 
     // ---- bg layer (NOT masked): bg fill + viewport quad + zero lines -
     // Zero lines live here too: the world (0,0) reference is a stable
@@ -382,7 +441,7 @@ export const createCurveCanvasRenderer = (
     bgCtx!.clearRect(0, 0, screen.width, screen.height);
     bgCtx!.fillStyle = colors.bg;
     bgCtx!.fillRect(0, 0, screen.width, screen.height);
-    if (viewGridMode === "full") {
+    if (effectiveGridMode === "full") {
       drawViewportQuad({
         ctx: bgCtx!,
         baseRect,
@@ -394,7 +453,7 @@ export const createCurveCanvasRenderer = (
     drawZeroLines({
       ctx: bgCtx!,
       baseRect,
-      visible,
+      visible: drawVisible,
       domain,
       range,
       colors,
@@ -405,11 +464,11 @@ export const createCurveCanvasRenderer = (
     // picks a recursive density tier (octa / quart / half / pair) based
     // on screen.width. Drawn in "full" and "lines" modes; hidden in
     // "axis" mode so the user sees only the zero lines.
-    if (viewGridMode !== "axis") {
+    if (effectiveGridMode !== "axis") {
       drawAxisLabels({
         ctx: bgCtx!,
         baseRect,
-        visible,
+        visible: drawVisible,
         domain,
         state,
         screen,
@@ -434,7 +493,7 @@ export const createCurveCanvasRenderer = (
           ctx,
           points,
           baseRect,
-          visible,
+          visible: drawVisible,
           range,
           state,
           tokens: rampTokens,
@@ -461,7 +520,7 @@ export const createCurveCanvasRenderer = (
           ctx,
           points,
           baseRect,
-          visible,
+          visible: drawVisible,
           range,
           state,
           tokens: rampTokens,
@@ -476,7 +535,7 @@ export const createCurveCanvasRenderer = (
           ctx,
           points,
           metrics,
-          visible,
+          visible: drawVisible,
           state,
           screen,
           colors,
@@ -486,23 +545,25 @@ export const createCurveCanvasRenderer = (
       }
       // Grid chrome on top of the data. "full" = major + subgrid + bounds.
       // "lines" = major only. "axis" = no grid chrome here (axis lines
-      // are drawn earlier in the bg layer).
-      if (viewGridMode !== "axis") {
+      // are drawn earlier in the bg layer). In field mode this is
+      // forced to "axis" so the field is the only thing on top of the
+      // data.
+      if (effectiveGridMode !== "axis") {
         drawGridLines({
           ctx,
           baseRect,
-          visible,
+          visible: drawVisible,
           screen,
           colors,
           tokens,
           screenPoint: sp,
-          subgrid: viewGridMode === "full",
+          subgrid: effectiveGridMode === "full",
         });
-        if (viewGridMode === "full") {
+        if (effectiveGridMode === "full") {
           drawBounds({
             ctx,
             baseRect,
-            visible,
+            visible: drawVisible,
             domain,
             range,
             colors,
