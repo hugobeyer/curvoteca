@@ -65,6 +65,17 @@
     --effect-line-glow-color: color-mix(in srgb, var(--curve) 35%, transparent);
     --effect-vignette-color: var(--black);
 
+    /* Ramp view colors. Read by src/lib/renderer/views/ramp.ts. The
+       ramp view paints a horizontal bar whose per-pixel output value
+       (the curve's y at each x) becomes the alpha or color of the bar.
+       Positive / negative split lets signed curves show their zero
+       crossing as a visible color change. */
+    --ramp-pos-color: var(--curve);
+    --ramp-neg-color: var(--curve2);
+    --ramp-zero-color: var(--zero);
+    --ramp-bar-bg: color-mix(in srgb, var(--white) 3%, transparent);
+    --ramp-frame-color: color-mix(in srgb, var(--white) 5%, transparent);
+
     /* Text label alpha — shared by gallery readouts (meta-summary,
        curve-view-probe, curve-view-snap). */
     --text-label-alpha: 78%;

@@ -746,6 +746,19 @@
    (--effect-glow-color, --effect-shadow-color, --effect-line-glow-color,
    --effect-vignette-color) and are read by effects.ts readEffects().
    A missing CSS variable is a CSS bug, not a JS fallback. */
+
+    /* Ramp view tokens. Read by src/lib/renderer/views/ramp.ts. Numeric
+      defaults only — the ramp view paints a single horizontal bar; the
+      sign of the curve's output drives positive/negative color split. */
+    --ramp-bar-h: 14;
+    --ramp-bar-radius: 2;
+    --ramp-bar-gap: 6;
+    --ramp-bar-top: 18;
+    --ramp-zero-line-w: 1;
+    --ramp-zero-line-alpha: 0.4;
+    --ramp-pos-alpha: 0.92;
+    --ramp-neg-alpha: 0.92;
+    --ramp-frame-alpha: 0.06;
 }
 .curve-view .curve-view-canvas {
     position: absolute;

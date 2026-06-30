@@ -27,16 +27,14 @@ const CSS_VARS = [
 
 export const readColors = (root: HTMLElement): RendererColors => {
   const style = getComputedStyle(root);
-  const get = (name: (typeof CSS_VARS)[number]) =>
-    style.getPropertyValue(name).trim();
   return {
-    bg: get("--bg"),
-    grid: get("--grid"),
-    subgrid: get("--subgrid"),
-    axis: get("--axis"),
-    zero: get("--zero"),
-    curve: get("--curve"),
-    curve2: get("--curve2"),
+    bg: style.getPropertyValue("--bg"),
+    grid: style.getPropertyValue("--grid"),
+    subgrid: style.getPropertyValue("--subgrid"),
+    axis: style.getPropertyValue("--axis"),
+    zero: style.getPropertyValue("--zero"),
+    curve: style.getPropertyValue("--curve"),
+    curve2: style.getPropertyValue("--curve2"),
   };
 };
 
@@ -55,7 +53,7 @@ export const withAlpha = (rgb: string, alpha: number): string => {
 };
 
 const extractRgbChannels = (value: string): string | null => {
-  const v = value.trim();
+  const v = value;
   if (!v) return null;
   // "rgb(R, G, B)" or "rgba(R, G, B, A)"
   const fnMatch = v.match(/^rgba?\(\s*([^)]+?)\s*\/?\s*[0-9.]*\s*\)$/i);

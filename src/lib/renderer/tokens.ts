@@ -150,21 +150,15 @@ const JS_ONLY_KEYS: ReadonlySet<keyof RendererTokens> = new Set([
 // ---------------------------------------------------------------------------
 // CSS → values
 // ---------------------------------------------------------------------------
+// `NUMERIC_VARS` is the list of tokens that have a CSS custom-property
+// source of truth. `JS_ONLY_KEYS` is the list of tokens that are owned by
+// `DEFAULTS` in this file (Canvas2D-internal values, see comment block above).
+// The two lists must NOT overlap. `readTokens` reads CSS for `NUMERIC_VARS`
+// and falls back to `DEFAULTS` for `JS_ONLY_KEYS`.
 
 const NUMERIC_VARS: Partial<Record<keyof RendererTokens, string>> = {
   curveLineWidth: "--curve-line-width",
-  cursorReach: "--cursor-reach",
-  cursorGapRatio: "--cursor-gap-ratio",
   viewportQuadAlpha: "--viewport-quad-alpha",
-  probeDotRadius: "--probe-dot-radius",
-  probeBoxSize: "--probe-box-size",
-  probeBoxArmRatio: "--probe-box-arm-ratio",
-  probeBoxLineWidth: "--probe-box-line-width",
-  probeNearRadius: "--probe-near-radius",
-  probeAppearMs: "--probe-appear-ms",
-  probeDisappearMs: "--probe-disappear-ms",
-  lineMaskStart: "--line-mask-start",
-  lineMaskEnd: "--line-mask-end",
   tileMarginFactor: "--tile-margin-factor",
   dprMin: "--dpr-min",
   dprMax: "--dpr-max",
@@ -176,8 +170,7 @@ export const readTokens = (root: HTMLElement): RendererTokens => {
   (Object.keys(NUMERIC_VARS) as Array<keyof RendererTokens>).forEach((key) => {
     const cssName = NUMERIC_VARS[key];
     if (!cssName) return;
-    const raw = parseFloat(style.getPropertyValue(cssName));
-    result[key] = Number.isFinite(raw) ? raw : DEFAULTS[key];
+    result[key] = parseFloat(style.getPropertyValue(cssName));
   });
   JS_ONLY_KEYS.forEach((key) => {
     result[key] = DEFAULTS[key];

@@ -78,13 +78,12 @@ export type EffectValues = {
 
 export const readEffects = (root: HTMLElement): EffectValues => {
   const style = getComputedStyle(root);
-  const get = (name: string) => style.getPropertyValue(name).trim();
   return {
     ...NUMBERS,
-    glowColor: get(COLOR_VARS.glowColor),
-    shadowColor: get(COLOR_VARS.shadowColor),
-    lineGlowColor: get(COLOR_VARS.lineGlowColor),
-    vignetteColor: get(COLOR_VARS.vignetteColor),
+    glowColor: style.getPropertyValue(COLOR_VARS.glowColor),
+    shadowColor: style.getPropertyValue(COLOR_VARS.shadowColor),
+    lineGlowColor: style.getPropertyValue(COLOR_VARS.lineGlowColor),
+    vignetteColor: style.getPropertyValue(COLOR_VARS.vignetteColor),
   };
 };
 
