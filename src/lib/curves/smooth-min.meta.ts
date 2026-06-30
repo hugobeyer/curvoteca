@@ -7,7 +7,7 @@ import type {
 } from "../../data/curves";
 
 export const smoothMinMeta = {
-  views: ["graph", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
+  views: ["graph", "motion", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {
   bounded: true

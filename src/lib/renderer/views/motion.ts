@@ -6,14 +6,20 @@
 // X: lerp the polyline to the current X, then project the result to
 // screen. The motion is fast; the glow is the visual cue, and its
 // intensity scales with the probe's world velocity (|dy/dx| at
-// the probe's X). Three things read the velocity: the halo's
-// alpha (motionGlowMin..max), the focus disc's radius (max..min,
-// so steep = tight), and the focus stroke's line width (min..max,
-// so steep = thick). Flat sections read as a wide, thin, soft
-// spotlight; steep sections read as a tight, thick, bright pulse.
-// Reuses the existing tile/wrap math via the same `getLoopWorldY` +
-// screenPoint path that drawCurve uses, so clamp / repeat / mirror
-// / loop wrap modes all behave the same as the graph view.
+// the probe's X). The dim pass strokes the curve at a low base
+// alpha (the silhouette). The focus pass re-strokes each polyline
+// segment inside the disc individually with a gaussian-falloff
+// alpha centered on the probe — peak at the probe, ~10% at the
+// disc edge, 0 past the skip radius. Four things read the
+// velocity: the halo's alpha (motionGlowMin..max), the focus
+// disc's radius (max..min, so steep = tight), the focus stroke's
+// line width (min..max, so steep = thick), and the gaussian's
+// sigma (proportional to focusRadius). Flat sections read as a
+// wide, thin, soft spotlight; steep sections read as a tight,
+// thick, bright pulse. Reuses the existing tile/wrap math via
+// the same `getLoopWorldY` + screenPoint path that drawCurve
+// uses, so clamp / repeat / mirror / loop wrap modes all behave
+// the same as the graph view.
 //
 // The dispatcher in curveCanvasRenderer.ts drives this with a fresh
 // phase on each frame: it derives phase from `performance.now()` and
@@ -116,11 +122,15 @@ export const renderMotion = ({
   );
 
   // Vignette pass: dim the curve everywhere except the focus zone
-  // around the probe. We stroke the full curve at low alpha, then
-  // clip to the (velocity-tightened) disc around the probe and
-  // re-stroke at a velocity-scaled alpha + line width. The grid
-  // chrome is on the static layer underneath; over-stroking the
-  // curve at the curve's location leaves the chrome untouched
+  // around the probe. The dim pass strokes the full curve at low
+  // alpha (the silhouette). The focus pass re-strokes segments
+  // inside the probe's disc with a gaussian falloff: each segment
+  // gets `globalAlpha = gaussian(d) * glow`, where `d` is the
+  // segment's distance to the probe. The gaussian tail is the
+  // soft "spotlight" — the curve reads as a wide dim band that
+  // brightens smoothly to a peak at the probe. The grid chrome
+  // is on the static layer underneath; over-stroking the curve
+  // at the curve's location leaves the chrome untouched
   // everywhere except at the curve.
   const dimColors = { ...colors, curve: withAlpha(colors.curve, DIM_ALPHA) };
   drawCurve({
@@ -135,27 +145,36 @@ export const renderMotion = ({
     screenPoint,
   });
 
+  // Gaussian focus pass: stroke each polyline segment inside the
+  // disc individually with `globalAlpha = gaussian(d) * glow`.
+  // Sigma is focusRadius / 2.5 so the gaussian's effective range
+  // matches the disc (the tail is ~10% at the edge). Segments
+  // outside `focusRadius * 1.5` are skipped as an early-out.
+  // Same tile/wrap math as drawCurve, so clamp / repeat / mirror
+  // / loop modes all work the same.
+  const sigma = focusRadius / 2.5;
+  const inv2Sigma2 = 1 / (2 * sigma * sigma);
+  const skipRadius = focusRadius * 1.5;
+  const skipRadius2 = skipRadius * skipRadius;
+  const peakAlpha = Math.min(1, glow);
   ctx.save();
-  ctx.beginPath();
-  ctx.arc(probeScreen.x, probeScreen.y, focusRadius, 0, Math.PI * 2);
-  ctx.clip();
-  // Inside the focus zone: re-stroke the curve at a velocity-scaled
-  // alpha and line width. The alpha boost (motionGlowMin..max) is
-  // composited over the dim pass via "source-over" at higher alpha,
-  // so the curve reads brighter in the focus band on steep sections.
-  drawCurve({
+  ctx.strokeStyle = colors.curve;
+  ctx.lineWidth = focusLineWidth;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  strokeCurveGaussian(
     ctx,
     points,
     metrics,
     visible,
     state,
-    screen,
-    colors,
     tokens,
     screenPoint,
-    curveColor: withAlpha(colors.curve, Math.min(1, glow)),
-    curveLineWidth: focusLineWidth,
-  });
+    probeScreen,
+    skipRadius2,
+    inv2Sigma2,
+    peakAlpha,
+  );
   ctx.restore();
 
   // Halo: large soft glow at the probe's screen position. Drawn
@@ -270,4 +289,91 @@ const samplePolylineYAndSlope = (
   const y =
     Math.abs(worldX - first.x) < Math.abs(worldX - last.x) ? first.y : last.y;
   return { y, velocity: 0 };
+};
+
+// Stroke the curve's polyline with a gaussian-falloff alpha
+// centered on `probe` (screen-space). Each segment is stroked
+// individually with `globalAlpha = (ga + gb) / 2 * peakAlpha`,
+// where `g*` is the gaussian falloff at each endpoint distance.
+// Segments where both endpoints are outside `skipRadius2` are
+// skipped as an early-out (cheaper than stroking them at ~0
+// alpha). The tile range + wrap math mirrors drawCurve so the
+// focus band is consistent with the dim pass.
+const strokeCurveGaussian = (
+  ctx: CanvasRenderingContext2D,
+  points: CurvePoint[],
+  metrics: CurveTileMetrics,
+  visible: CurveRect,
+  state: CurveViewportState,
+  tokens: RendererTokens,
+  screenPoint: (point: CurvePoint) => CurvePoint,
+  probe: CurvePoint,
+  skipRadius2: number,
+  inv2Sigma2: number,
+  peakAlpha: number,
+): void => {
+  const tiles: number[] = [];
+  if (state.wrapMode === "clamp") {
+    tiles.push(0);
+  } else {
+    const margin = Math.max(metrics.pitch, visible.w * tokens.tileMarginFactor);
+    const startTile = Math.floor(
+      (visible.x - metrics.x1 - margin) / metrics.pitch,
+    );
+    const endTile = Math.ceil(
+      (visible.x + visible.w - metrics.x0 + margin) / metrics.pitch,
+    );
+    for (let tile = startTile; tile <= endTile; tile += 1) tiles.push(tile);
+  }
+
+  const projectPoint = (p: CurvePoint, tile: number): CurvePoint => {
+    const local = p.x - metrics.x0;
+    const mirrored = state.wrapMode === "mirror" && tile % 2 !== 0;
+    const world = {
+      x:
+        metrics.x0 +
+        tile * metrics.pitch +
+        (mirrored ? metrics.pitch - local : local),
+      y: getLoopWorldY(metrics, p.y, tile, state.wrapMode),
+    };
+    return screenPoint(world);
+  };
+
+  const alphaAt = (p: CurvePoint): number => {
+    const dx = p.x - probe.x;
+    const dy = p.y - probe.y;
+    return Math.exp(-(dx * dx + dy * dy) * inv2Sigma2);
+  };
+
+  for (const tile of tiles) {
+    let prev: CurvePoint | null = null;
+    let prevAlpha = 0;
+    for (let i = 0; i < points.length; i += 1) {
+      const p = projectPoint(points[i], tile);
+      if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) {
+        prev = null;
+        continue;
+      }
+      const a = alphaAt(p);
+      if (prev) {
+        const dxA = p.x - probe.x;
+        const dyA = p.y - probe.y;
+        const dxP = prev.x - probe.x;
+        const dyP = prev.y - probe.y;
+        if (
+          dxA * dxA + dyA * dyA <= skipRadius2 ||
+          dxP * dxP + dyP * dyP <= skipRadius2
+        ) {
+          ctx.globalAlpha = ((a + prevAlpha) / 2) * peakAlpha;
+          ctx.beginPath();
+          ctx.moveTo(prev.x, prev.y);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+        }
+      }
+      prev = p;
+      prevAlpha = a;
+    }
+  }
+  ctx.globalAlpha = 1;
 };
