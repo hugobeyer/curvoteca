@@ -20,7 +20,7 @@ export type FieldRenderArgs = {
   screenPoint: (point: CurvePoint) => CurvePoint;
 };
 
-const FIELD_SIZE = 72;
+const FIELD_SIZE_DEFAULT = 72;
 
 export const renderField = ({
   ctx,
@@ -38,8 +38,12 @@ export const renderField = ({
   const rSpan = rMax - rMin;
   if (rSpan === 0) return;
 
-  const w = FIELD_SIZE;
-  const h = FIELD_SIZE;
+  // Resolution is owned by tokens.fieldSize (defaults to 72 in
+  // src/lib/renderer/tokens.ts DEFAULTS). Cost is O(fieldSize²) per
+  // static redraw; keep it modest. FIELD_SIZE_DEFAULT is a safety
+  // fallback for a misconfigured token read.
+  const w = tokens.fieldSize || FIELD_SIZE_DEFAULT;
+  const h = tokens.fieldSize || FIELD_SIZE_DEFAULT;
   const field = document.createElement("canvas");
   field.width = w;
   field.height = h;

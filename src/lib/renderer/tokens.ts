@@ -13,6 +13,13 @@ export type RendererTokens = {
   endLineAlpha: number;
   zeroLineAlpha: number;
   viewportQuadAlpha: number;
+  // Field view offscreen size. The field renderer samples the curve
+  // into a square `fieldSize × fieldSize` ImageData and draws it
+  // stretched to the live canvas. Bigger = crisper on dense cards
+  // (where the source is upscaled), smaller = cheaper. Cost is
+  // O(fieldSize²) per static redraw. Keep below 256 to stay under
+  // the ramp view's per-frame budget on a 1-column card.
+  fieldSize: number;
   // Edge fade.
   edgeFade: number;
   edgeFadeInset: number;
@@ -65,6 +72,7 @@ const DEFAULTS = {
   endLineAlpha: 0.055,
   zeroLineAlpha: 0.14,
   viewportQuadAlpha: 0.35,
+  fieldSize: 96,
 
   // Edge fade.
   edgeFade: 0,
@@ -115,6 +123,8 @@ const JS_ONLY_KEYS: ReadonlySet<keyof RendererTokens> = new Set([
   "subgridLineAlpha",
   "endLineAlpha",
   "zeroLineAlpha",
+  "viewportQuadAlpha",
+  "fieldSize",
   // Edge fade.
   "edgeFade",
   "edgeFadeInset",
