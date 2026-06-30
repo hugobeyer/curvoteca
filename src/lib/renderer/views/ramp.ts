@@ -99,6 +99,19 @@ export type RampRenderArgs = {
   screenPoint: (point: CurvePoint) => CurvePoint;
 };
 
+const RAMP_SIZE_DEFAULT = 72;
+
+// Ramp is rendered as a pixel-imaged source, the same way as the
+// field view: a small off-screen `ImageData` whose columns are
+// shaded with the curve's per-X output (sample → viewBox Y → curve
+// Y → rampAlpha → dominant sign's color), then drawImage'd across
+// the bar's width with smoothing. The per-X shading is identical
+// to the previous fillRampSegment math (gradient floor, |y|/scale,
+// pos/neg split); the only thing that changes is how the columns
+// are presented to the canvas — a per-pixel buffer instead of one
+// fillRect per polyline segment with a linear gradient. This keeps
+// the visual a step-function at zero crossings (the field's SDF
+// math is intentionally NOT used here).
 export const renderRamp = ({
   ctx,
   points,
@@ -108,7 +121,7 @@ export const renderRamp = ({
   state,
   tokens,
   colors,
-  baseColors,
+  baseColors: _baseColors,
   baseTokens,
   screen,
   screenPoint,
@@ -136,6 +149,60 @@ export const renderRamp = ({
   const pitch = x1 - x0;
   const tileRange = getTileRange(state, pitch, visible, x0, x1, baseTokens);
 
+  // Build a 1×w source image covering the visible X range. Each
+  // column samples the polyline at its worldX (respecting the wrap
+  // mode and tile range), and is shaded exactly like the previous
+  // fillRampSegment: dominant-sign color, alpha = rampAlpha(y,
+  // scale, baseAlpha, gradientFloor). The drawImage stretch to
+  // (screen.width, barH) does the smoothing.
+  const w = RAMP_SIZE_DEFAULT;
+  const source = document.createElement("canvas");
+  source.width = w;
+  source.height = 1;
+  const sctx = source.getContext("2d");
+  if (!sctx) return;
+
+  const image = sctx.createImageData(w, 1);
+  const data = image.data;
+  const posRgb = parseRgb(colors.pos);
+  const negRgb = parseRgb(colors.neg);
+  const xMin = visible.x;
+  const xMax = visible.x + visible.w;
+  const basePosAlpha = tokens.posAlpha;
+  const baseNegAlpha = tokens.negAlpha;
+  const floor = tokens.gradientFloor;
+
+  for (let x = 0; x < w; x += 1) {
+    const worldX = xMin + (x / (w - 1)) * (xMax - xMin);
+    const sampled = sampleRampColumn(
+      points,
+      x0,
+      x1,
+      pitch,
+      state.wrapMode,
+      tileRange,
+      worldX,
+      baseRect,
+      rMax,
+      rSpan,
+    );
+    let rgb: [number, number, number] = posRgb;
+    let alpha = 0;
+    if (sampled !== null) {
+      const positive = sampled >= 0;
+      rgb = positive ? posRgb : negRgb;
+      const baseAlpha = positive ? basePosAlpha : baseNegAlpha;
+      alpha = rampAlpha(sampled, scale, baseAlpha, floor);
+    }
+    const idx = x * 4;
+    data[idx] = rgb[0];
+    data[idx + 1] = rgb[1];
+    data[idx + 2] = rgb[2];
+    data[idx + 3] = Math.round(Math.max(0, Math.min(1, alpha)) * 255);
+  }
+
+  sctx.putImageData(image, 0, 0);
+
   resetCtx(ctx);
   try {
     ctx.beginPath();
@@ -144,34 +211,9 @@ export const renderRamp = ({
     ctx.fillStyle = colors.barBg;
     ctx.fillRect(0, barY, screen.width, barH);
 
-    for (let tile = tileRange.start; tile <= tileRange.end; tile++) {
-      const mirrored = state.wrapMode === "mirror" && Math.abs(tile) % 2 !== 0;
-      for (let i = 0; i < points.length - 1; i++) {
-        const a = points[i];
-        const b = points[i + 1];
-        if (!Number.isFinite(a.x) || !Number.isFinite(b.x)) continue;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(source, 0, barY, screen.width, barH);
 
-        const ax = tiledX(a.x, x0, pitch, tile, mirrored);
-        const bx = tiledX(b.x, x0, pitch, tile, mirrored);
-        if (state.wrapMode === "clamp" && (ax < x0 || ax > x1 || bx < x0 || bx > x1)) {
-          continue;
-        }
-
-        const sxA = screenPoint({ x: ax, y: baseRect.y }).x;
-        const sxB = screenPoint({ x: bx, y: baseRect.y }).x;
-        const yA = viewBoxYToCurveY(a.y, baseRect, rMax, rSpan);
-        const yB = viewBoxYToCurveY(b.y, baseRect, rMax, rSpan);
-
-        if (Math.sign(yA) === Math.sign(yB) || yA === 0 || yB === 0) {
-          fillRampSegment(ctx, sxA, sxB, yA, yB, barY, barH, scale, tokens, colors);
-        } else {
-          const t = Math.abs(yA) / (Math.abs(yA) + Math.abs(yB));
-          const zeroX = sxA + (sxB - sxA) * t;
-          fillRampSegment(ctx, sxA, zeroX, yA, 0, barY, barH, scale, tokens, colors);
-          fillRampSegment(ctx, zeroX, sxB, 0, yB, barY, barH, scale, tokens, colors);
-        }
-      }
-    }
     ctx.restore();
 
     resetCtx(ctx);
@@ -190,8 +232,53 @@ export const renderRamp = ({
   } finally {
     ctx.restore();
   }
+};
 
-  void baseColors;
+// Sample the polyline at `worldX` for a single ramp column, walking
+// the same tile range + per-tile polyline loop the previous segment
+// filler used, then linearly interpolating the two enclosing points
+// to get the column's curve Y. The wrapping (clamp / repeat / mirror)
+// matches the old fillRampSegment behavior: clamp skips columns
+// outside the polyline's X span; repeat / mirror tile the polyline
+// across `tileRange`, with mirrored tiles reflected about the tile
+// center on X (and Y untouched — the visual is the same as the old
+// per-segment fill).
+const sampleRampColumn = (
+  points: CurvePoint[],
+  x0: number,
+  x1: number,
+  pitch: number,
+  wrapMode: CurveViewportState["wrapMode"],
+  tileRange: { start: number; end: number },
+  worldX: number,
+  baseRect: CurveRect,
+  rMax: number,
+  rSpan: number,
+): number | null => {
+  for (let tile = tileRange.start; tile <= tileRange.end; tile++) {
+    const mirrored = wrapMode === "mirror" && Math.abs(tile) % 2 !== 0;
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i];
+      const b = points[i + 1];
+      if (!Number.isFinite(a.x) || !Number.isFinite(b.x)) continue;
+      const ax = tiledX(a.x, x0, pitch, tile, mirrored);
+      const bx = tiledX(b.x, x0, pitch, tile, mirrored);
+      if (wrapMode === "clamp" && (ax < x0 || ax > x1 || bx < x0 || bx > x1)) {
+        continue;
+      }
+      // Linear interpolation along the segment. worldX is the
+      // column's world-space X; the segment's tiled endpoints are
+      // (ax, a.y) / (bx, b.y) in viewBox Y, so we convert to curve
+      // Y via viewBoxYToCurveY at both ends.
+      if (worldX < Math.min(ax, bx) || worldX > Math.max(ax, bx)) continue;
+      if (bx === ax) continue;
+      const t = (worldX - ax) / (bx - ax);
+      const yA = viewBoxYToCurveY(a.y, baseRect, rMax, rSpan);
+      const yB = viewBoxYToCurveY(b.y, baseRect, rMax, rSpan);
+      return yA + (yB - yA) * t;
+    }
+  }
+  return null;
 };
 
 export const getTileRange = (
@@ -234,34 +321,6 @@ const curveValueToViewBoxY = (
   rSpan: number,
 ): number => baseRect.y + (1 - (value - rMin) / rSpan) * baseRect.h;
 
-const fillRampSegment = (
-  ctx: CanvasRenderingContext2D,
-  xA: number,
-  xB: number,
-  yA: number,
-  yB: number,
-  barY: number,
-  barH: number,
-  scale: number,
-  tokens: RampTokens,
-  colors: RampColors,
-) => {
-  const width = Math.abs(xB - xA);
-  if (width <= 0) return;
-
-  const dominant = Math.abs(yA) >= Math.abs(yB) ? yA : yB;
-  const positive = dominant >= 0;
-  const color = positive ? colors.pos : colors.neg;
-  const baseAlpha = positive ? tokens.posAlpha : tokens.negAlpha;
-  const alphaA = rampAlpha(yA, scale, baseAlpha, tokens.gradientFloor);
-  const alphaB = rampAlpha(yB, scale, baseAlpha, tokens.gradientFloor);
-  const grad = ctx.createLinearGradient(xA, 0, xB, 0);
-  grad.addColorStop(0, withAlpha(color, alphaA));
-  grad.addColorStop(1, withAlpha(color, alphaB));
-  ctx.fillStyle = grad;
-  ctx.fillRect(Math.min(xA, xB), barY, width + 0.5, barH);
-};
-
 const rampAlpha = (
   y: number,
   scale: number,
@@ -271,6 +330,18 @@ const rampAlpha = (
   const t = Math.min(1, Math.abs(y) / scale);
   if (t <= 0) return 0;
   return baseAlpha * (floor + (1 - floor) * t);
+};
+
+const parseRgb = (value: string): [number, number, number] => {
+  const hex = value.trim();
+  if (/^#[0-9a-f]{6}$/i.test(hex)) {
+    return [
+      parseInt(hex.slice(1, 3), 16),
+      parseInt(hex.slice(3, 5), 16),
+      parseInt(hex.slice(5, 7), 16),
+    ];
+  }
+  return [255, 155, 69];
 };
 
 const roundRect = (
