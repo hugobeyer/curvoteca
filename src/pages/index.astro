@@ -38,6 +38,7 @@ import {
     KEY_TRAY_COLLAPSED,
     KEY_GALLERY_MODE,
     KEY_CURVE_VIEW,
+    KEY_VIEW_MODE,
     KEY_WRAP_MODE,
     KEY_GRID_SIZE,
     KEY_GRID_COLS,
@@ -460,6 +461,27 @@ import "../styles/gallery.css";
                     </svg>
                     <span class="link-toggle-state" id="wrap-toggle-state"
                         >clamp</span
+                    >
+                </button>
+                <button
+                    class="link-toggle pager-view"
+                    type="button"
+                    id="view-mode-toggle"
+                    aria-pressed="false"
+                    title="cycle view mode"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="14px"
+                        viewBox="0 -960 960 960"
+                        width="14px"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path d="M192-240v-72h576v72H192Zm0-144v-72h576v72H192Zm0-144v-84l216-132 180 128 180-128v88L588-528 405-658 192-528Z" />
+                    </svg>
+                    <span class="link-toggle-state" id="view-mode-toggle-state"
+                        >graph</span
                     >
                 </button>
             </div>
@@ -1068,84 +1090,6 @@ import "../styles/gallery.css";
                     }
                 });
 
-                // Card-level view-cycle button (the one in the card
-                // header). Clicking it cycles the card's viewport
-                // through entry.views and updates the title attribute
-                // so the tooltip shows the current mode. The button is
-                // always rendered (so card headers stay uniform); for
-                // curves with only one view the click is a no-op.
-                (function initCardViewCycleTitles() {
-                    var cycleBtns =
-                        document.querySelectorAll("[data-view-cycle]");
-                    cycleBtns.forEach(function (btn) {
-                        if (btn.hasAttribute("disabled")) return;
-                        var card = btn.closest(".card");
-                        if (!card) return;
-                        var viewport = card.querySelector("[data-curve-view]");
-                        if (!viewport) return;
-                        var mode =
-                            viewport.getAttribute("data-curve-view-mode") ||
-                            "graph";
-                        btn.setAttribute("title", "View: " + mode);
-                    });
-                })();
-
-                window.__appClickHandlers.push(function (e) {
-                    const cycleBtn = e.target.closest("[data-view-cycle]");
-                    if (!cycleBtn) return;
-                    if (cycleBtn.hasAttribute("disabled")) return;
-                    if (typeof window.__cycleCurveView !== "function") return;
-                    e.preventDefault();
-                    e.stopPropagation();
-                    var id = cycleBtn.getAttribute("data-view-cycle");
-                    if (!id) return;
-                    var wall = document.getElementById("curve-wall");
-                    if (!wall) return;
-                    var registry;
-                    try {
-                        registry = JSON.parse(
-                            wall.getAttribute("data-curves") || "[]",
-                        );
-                    } catch (err) {
-                        return;
-                    }
-                    var entry = null;
-                    for (var i = 0; i < registry.length; i++) {
-                        if (registry[i].id === id) {
-                            entry = registry[i];
-                            break;
-                        }
-                    }
-                    if (!entry) return;
-                    var views = Array.isArray(entry.views) ? entry.views : [];
-                    if (views.length < 2) return;
-                    var card = cycleBtn.closest(".card");
-                    if (!card) return;
-                    var viewport = card.querySelector("[data-curve-view]");
-                    if (!viewport) return;
-                    var current =
-                        viewport.getAttribute("data-curve-view-mode") ||
-                        entry.defaultView ||
-                        "graph";
-                    var next = window.__cycleCurveView(views, current);
-                    viewport.setAttribute("data-curve-view-mode", next);
-                    cycleBtn.setAttribute("title", "View: " + next);
-                    // Tell the renderer to re-read the mode attribute
-                    // and redraw the static layer. Without this the
-                    // card keeps showing the previous view until the
-                    // next viewport state change.
-                    if (
-                        window.__rendererFor &&
-                        typeof window.__rendererFor === "function"
-                    ) {
-                        try {
-                            window
-                                .__rendererFor(viewport)
-                                .notifyViewModeChanged();
-                        } catch (err) {}
-                    }
-                });
-
                 window.__appClickHandlers.push(function (e) {
                     const pixBtn = e.target.closest("[data-toggle-qr]");
                     if (!pixBtn) return;
@@ -1193,6 +1137,7 @@ import "../styles/gallery.css";
                 KEY_TRAY_COLLAPSED,
                 KEY_GALLERY_MODE,
                 KEY_CURVE_VIEW,
+                KEY_VIEW_MODE,
                 KEY_WRAP_MODE,
                 KEY_GRID_SIZE,
                 KEY_GRID_COLS,
@@ -1206,6 +1151,7 @@ import "../styles/gallery.css";
             window.KEY_TRAY_COLLAPSED = KEY_TRAY_COLLAPSED;
             window.KEY_GALLERY_MODE = KEY_GALLERY_MODE;
             window.KEY_CURVE_VIEW = KEY_CURVE_VIEW;
+            window.KEY_VIEW_MODE = KEY_VIEW_MODE;
             window.KEY_WRAP_MODE = KEY_WRAP_MODE;
             window.KEY_GRID_SIZE = KEY_GRID_SIZE;
             window.KEY_GRID_COLS = KEY_GRID_COLS;
@@ -1984,6 +1930,7 @@ import "../styles/gallery.css";
                 interface CurvotecaWindow {
                     KEY_GALLERY_MODE: string;
                     KEY_CURVE_VIEW: string;
+                    KEY_VIEW_MODE: string;
                     KEY_WRAP_MODE: string;
                     KEY_GRID_SIZE: string;
                     KEY_GRID_COLS: string;
@@ -1993,6 +1940,7 @@ import "../styles/gallery.css";
                 const MODE_KEY = wnd.KEY_GALLERY_MODE;
                 const VIEW_KEY = wnd.KEY_CURVE_VIEW;
                 const VIEW_SHARED_ID = "__all";
+                const VIEW_MODE_KEY = wnd.KEY_VIEW_MODE;
                 const WRAP_KEY = wnd.KEY_WRAP_MODE;
                 const VIEW_VERSION = 2;
                 // X / Y zoom limits and center clamp are sourced from
@@ -2479,6 +2427,130 @@ import "../styles/gallery.css";
                         "#wall-grid .card:not(.is-hidden) [data-curve-view], #compare-tray [data-curve-view], #detail-overlay-viewport [data-curve-view]",
                     );
                 };
+                const VIEW_MODE_ORDER = [
+                    "graph",
+                    "motion",
+                    "field",
+                    "heightStrip",
+                    "ramp",
+                ];
+                let globalViewMode = "graph";
+                const viewModeBtn = document.getElementById(
+                    "view-mode-toggle",
+                ) as HTMLElement | null;
+                const viewModeState = document.getElementById(
+                    "view-mode-toggle-state",
+                ) as HTMLElement | null;
+                const readCurveRegistry = function () {
+                    const wall = document.getElementById("curve-wall");
+                    if (!wall) return [];
+                    try {
+                        const parsed = JSON.parse(
+                            wall.getAttribute("data-curves") || "[]",
+                        );
+                        return Array.isArray(parsed) ? parsed : [];
+                    } catch (err) {
+                        return [];
+                    }
+                };
+                const registryViewsFor = function (
+                    id: string | null,
+                ): string[] {
+                    if (!id) return ["graph"];
+                    const registry = readCurveRegistry();
+                    for (let i = 0; i < registry.length; i += 1) {
+                        if (registry[i].id === id) {
+                            return Array.isArray(registry[i].views)
+                                ? registry[i].views
+                                : ["graph"];
+                        }
+                    }
+                    return ["graph"];
+                };
+                const supportsViewMode = function (
+                    view: HTMLElement,
+                    mode: string,
+                ) {
+                    const views = registryViewsFor(
+                        view.getAttribute("data-curve-id"),
+                    );
+                    return views.indexOf(mode) >= 0;
+                };
+                const applyViewModeUI = function () {
+                    if (viewModeState) viewModeState.textContent = globalViewMode;
+                    if (viewModeBtn) {
+                        viewModeBtn.setAttribute("aria-pressed", "false");
+                        viewModeBtn.setAttribute(
+                            "title",
+                            "view mode: " + globalViewMode,
+                        );
+                    }
+                };
+                const applyGlobalViewMode = function () {
+                    applyViewModeUI();
+                    let unsupported = 0;
+                    visibleViews().forEach(function (view) {
+                        const supported = supportsViewMode(view, globalViewMode);
+                        const target = supported ? globalViewMode : "graph";
+                        const card = view.closest(".card");
+                        view.toggleAttribute("data-view-mode-unsupported", !supported);
+                        if (card) {
+                            card.classList.toggle(
+                                "is-view-mode-unsupported",
+                                !supported,
+                            );
+                            if (!supported) {
+                                unsupported += 1;
+                                card.setAttribute(
+                                    "title",
+                                    globalViewMode +
+                                        " is not registered for this curve; showing graph",
+                                );
+                            } else {
+                                card.removeAttribute("title");
+                            }
+                        }
+                        if (view.getAttribute("data-curve-view-mode") !== target) {
+                            view.setAttribute("data-curve-view-mode", target);
+                        }
+                        try {
+                            rendererFor(view).notifyViewModeChanged();
+                        } catch (err) {}
+                    });
+                    if (viewModeBtn && unsupported > 0) {
+                        viewModeBtn.setAttribute(
+                            "title",
+                            "view mode: " +
+                                globalViewMode +
+                                " (" +
+                                unsupported +
+                                " showing graph fallback)",
+                        );
+                    }
+                };
+                try {
+                    const stored = localStorage.getItem(VIEW_MODE_KEY);
+                    if (stored && VIEW_MODE_ORDER.indexOf(stored) >= 0) {
+                        globalViewMode = stored;
+                    }
+                } catch (err) {}
+                const cycleGlobalViewMode = function () {
+                    const idx = VIEW_MODE_ORDER.indexOf(globalViewMode);
+                    globalViewMode =
+                        VIEW_MODE_ORDER[(idx < 0 ? 0 : idx + 1) % VIEW_MODE_ORDER.length];
+                    try {
+                        localStorage.setItem(VIEW_MODE_KEY, globalViewMode);
+                    } catch (err) {}
+                    applyGlobalViewMode();
+                };
+                if (viewModeBtn) {
+                    viewModeBtn.addEventListener("click", cycleGlobalViewMode);
+                }
+                document.addEventListener(
+                    "curvoteca:views-changed",
+                    applyGlobalViewMode,
+                );
+                applyGlobalViewMode();
                 const broadcastView = function (
                     sourceView: HTMLElement,
                     st: CurveViewportState,

@@ -27,6 +27,8 @@ import {
   readRampTokens,
   renderRamp,
 } from "./renderer/views/ramp";
+import { renderField } from "./renderer/views/field";
+import { renderHeightStrip } from "./renderer/views/heightStrip";
 import { drawGridLines } from "./renderer/gridLines";
 import { buildEdgeMaskPair, type EdgeMaskPair } from "./renderer/edgeFade";
 import { drawBounds, drawZeroLines } from "./renderer/bounds";
@@ -321,8 +323,11 @@ export const createCurveCanvasRenderer = (
       "data-curve-view-mode",
     ) as CurveViewMode;
     const rampMode = viewMode === "ramp";
-    const rampTokens = rampMode ? readRampTokens(root!) : null;
-    const rampColors = rampMode ? readRampColors(root!) : null;
+    const fieldMode = viewMode === "field";
+    const heightStripMode = viewMode === "heightStrip";
+    const rampLikeMode = rampMode || heightStripMode;
+    const rampTokens = rampLikeMode ? readRampTokens(root!) : null;
+    const rampColors = rampLikeMode ? readRampColors(root!) : null;
     const dpr = currentDpr();
     const w = Math.max(1, Math.round(screen.width * dpr));
     const h = Math.max(1, Math.round(screen.height * dpr));
@@ -420,6 +425,34 @@ export const createCurveCanvasRenderer = (
           colors: rampColors,
           baseColors: colors,
           baseTokens: tokens,
+          screen,
+          screenPoint: sp,
+        });
+      } else if (fieldMode && range) {
+        renderField({
+          ctx,
+          points,
+          baseRect,
+          range,
+          state,
+          colors,
+          tokens,
+          screen,
+          screenPoint: sp,
+        });
+      } else if (heightStripMode && rampTokens && rampColors && range) {
+        renderHeightStrip({
+          ctx,
+          points,
+          baseRect,
+          visible,
+          range,
+          state,
+          tokens: rampTokens,
+          colors: rampColors,
+          baseColors: colors,
+          baseTokens: tokens,
+          screen,
           screenPoint: sp,
         });
       } else {
@@ -440,7 +473,7 @@ export const createCurveCanvasRenderer = (
       // aspect ratio. The masks are cached and rebuilt only on resize /
       // token change. The bg layer (which includes the viewport quad) is
       // drawn separately and is NOT touched by the mask.
-      const masks = ensureEdgeMasks(screen, dpr);
+      const masks = fieldMode ? null : ensureEdgeMasks(screen, dpr);
       if (masks) applyEdgeMasks(ctx, masks, screen);
     } finally {
       ctx = realCtx;

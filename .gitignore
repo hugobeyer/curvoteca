@@ -27,3 +27,5 @@ lh.json
 lh.report.json
 scripts/read-lh.mjs
 nul
+scratch/
+scripts/generate-metadata.mjs

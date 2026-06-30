@@ -1,0 +1,25 @@
+import type {
+  CurveParamSchema,
+  CurveRoleTag,
+  CurveSnippetOptions,
+  CurveViewHints,
+  CurveViewMode,
+} from "../../data/curves";
+
+export const linearMeta = {
+  views: ["graph", "motion", "heightStrip", "ramp"] as readonly CurveViewMode[],
+  defaultView: "graph" as CurveViewMode,
+  viewHints: {
+  monotonic: true,
+  bounded: true
+} satisfies CurveViewHints,
+  roleTags: ["remap", "interpolation"] as readonly CurveRoleTag[],
+  snippetOptions: {
+    constants: true,
+    clamp: true,
+    fit: true,
+    function: true,
+    comments: true,
+    uniforms: true,
+  } satisfies CurveSnippetOptions,
+};

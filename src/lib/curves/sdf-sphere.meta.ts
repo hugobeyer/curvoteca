@@ -1,4 +1,5 @@
 import type {
+  CurveParamSchema,
   CurveRoleTag,
   CurveSnippetOptions,
   CurveViewHints,
@@ -6,12 +7,24 @@ import type {
 } from "../../data/curves";
 
 export const sdfSphereMeta = {
-  views: ["graph", "field"] as readonly CurveViewMode[],
+  views: ["graph", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {
-    signed: true,
-    bounded: true,
-  } satisfies CurveViewHints,
+  signed: true,
+  bounded: true
+} satisfies CurveViewHints,
+  params: {
+  radius: {
+    label: "Radius",
+    default: 0.3,
+    step: 0.01
+  },
+  cx: {
+    label: "Cx",
+    default: 0.5,
+    step: 0.01
+  }
+} satisfies CurveParamSchema,
   roleTags: ["sdf", "mask"] as readonly CurveRoleTag[],
   snippetOptions: {
     constants: true,

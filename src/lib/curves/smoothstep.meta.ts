@@ -1,4 +1,5 @@
 import type {
+  CurveParamSchema,
   CurveRoleTag,
   CurveSnippetOptions,
   CurveViewHints,
@@ -6,13 +7,11 @@ import type {
 } from "../../data/curves";
 
 export const smoothstepMeta = {
-  views: ["graph", "ramp"] as readonly CurveViewMode[],
+  views: ["graph", "motion", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {
-    monotonic: true,
-    bounded: true,
-    preferredPreview: "ramp",
-  } satisfies CurveViewHints,
+  bounded: true
+} satisfies CurveViewHints,
   roleTags: ["smoothstep", "easing"] as readonly CurveRoleTag[],
   snippetOptions: {
     constants: true,

@@ -79,6 +79,9 @@
     --layer-head: none;
     --layer-title: var(--text-card);
 }
+.card.is-view-mode-unsupported {
+    opacity: 0.38;
+}
 .card.is-fav {
     /* Favorite indicator lives on the button itself, not the card body. */
     --layer-title: color-mix(in srgb, var(--fav) 92%, transparent);
@@ -750,16 +753,16 @@
     /* Ramp view tokens. Read by src/lib/renderer/views/ramp.ts. Numeric
       defaults only — the ramp view paints a single horizontal bar; the
       sign of the curve's output drives positive/negative color split. */
-    --ramp-bar-h: 14;
+    --ramp-bar-h: 38;
     --ramp-bar-radius: 2;
     --ramp-bar-gap: 6;
-    --ramp-bar-top: 18;
+    --ramp-bar-top: 45;
     --ramp-zero-line-w: 1;
     --ramp-zero-line-alpha: 0.4;
-    --ramp-pos-alpha: 0.92;
-    --ramp-neg-alpha: 0.92;
+    --ramp-pos-alpha: 0.86;
+    --ramp-neg-alpha: 0.86;
     --ramp-frame-alpha: 0.06;
-    --ramp-gradient-floor: 0.25;
+    --ramp-gradient-floor: 0.02;
 }
 .curve-view .curve-view-canvas {
     position: absolute;
@@ -896,7 +899,9 @@
 }
 /* Workbench button reuses .link-toggle (same as .pager-wrap) so the
    pager cluster has one chrome family for the labeled buttons. */
-.pager-compare {
+.pager-compare,
+.pager-wrap,
+.pager-view {
     height: 26px;
     padding: 0 8px;
 }
@@ -938,11 +943,9 @@
     letter-spacing: var(--letter-spacing-wide);
     text-transform: var(--text-transform-uppercase);
 }
-.pager-wrap {
-    /* Re-uses .link-toggle from global.css; the cluster puts it on
-       the right side of the pager. */
-    height: 26px;
-    padding: 0 8px;
+.pager-view[aria-pressed="true"] {
+    color: var(--muted);
+    background: transparent;
 }
 
 /* Pager's hide layer. Lives on top of the filter's .is-hidden so the

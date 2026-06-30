@@ -53,7 +53,7 @@ export const withAlpha = (rgb: string, alpha: number): string => {
 };
 
 const extractRgbChannels = (value: string): string | null => {
-  const v = value;
+  const v = value.trim();
   if (!v) return null;
   // "#rgb" or "#rrggbb"
   if (/^#[0-9a-fA-F]{3,6}$/.test(v)) {

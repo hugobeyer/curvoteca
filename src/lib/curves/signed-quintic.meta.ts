@@ -1,4 +1,5 @@
 import type {
+  CurveParamSchema,
   CurveRoleTag,
   CurveSnippetOptions,
   CurveViewHints,
@@ -6,16 +7,20 @@ import type {
 } from "../../data/curves";
 
 export const signedQuinticMeta = {
-  views: ["graph", "ramp"] as readonly CurveViewMode[],
+  views: ["graph", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {
-    signed: true,
-    bipolar: true,
-    monotonic: true,
-    bounded: true,
-    preferredPreview: "ramp",
-  } satisfies CurveViewHints,
-  roleTags: ["easing", "remap"] as readonly CurveRoleTag[],
+  signed: true,
+  bipolar: true
+} satisfies CurveViewHints,
+  params: {
+  p: {
+    label: "P",
+    default: 5,
+    step: 1
+  }
+} satisfies CurveParamSchema,
+  roleTags: ["remap"] as readonly CurveRoleTag[],
   snippetOptions: {
     constants: true,
     clamp: true,
