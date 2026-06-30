@@ -419,38 +419,16 @@ export const createCurveCanvasRenderer = (
       });
     }
 
-    // ---- content layer (MASKED): grid + bounds + curve -----------------
+    // ---- content layer (MASKED): curve / ramp / field / strip + grid ----
+    // The grid chrome (lines + bounds) is drawn AFTER the data so it sits
+    // on top — the grid is the reference, the curve is the data, and the
+    // reference reads better when it isn't crossed out by a strong
+    // curve stroke. The mask still applies to the whole layer, so the
+    // edge fade is preserved.
     const realCtx = ctx;
     ctx = staticCtx!;
     try {
       ctx.clearRect(0, 0, screen.width, screen.height);
-      // Major grid + bounds only render in "full" and "lines". The
-      // "lines" mode drops the subgrid pass (passed via subgrid:false)
-      // and the 0..1 frame endlines. The "axis" mode draws neither.
-      if (viewGridMode !== "axis") {
-        drawGridLines({
-          ctx,
-          baseRect,
-          visible,
-          screen,
-          colors,
-          tokens,
-          screenPoint: sp,
-          subgrid: viewGridMode === "full",
-        });
-        if (viewGridMode === "full") {
-          drawBounds({
-            ctx,
-            baseRect,
-            visible,
-            domain,
-            range,
-            colors,
-            tokens,
-            screenPoint: sp,
-          });
-        }
-      }
       if (rampMode && rampTokens && rampColors && range) {
         renderRamp({
           ctx,
@@ -505,6 +483,33 @@ export const createCurveCanvasRenderer = (
           tokens,
           screenPoint: sp,
         });
+      }
+      // Grid chrome on top of the data. "full" = major + subgrid + bounds.
+      // "lines" = major only. "axis" = no grid chrome here (axis lines
+      // are drawn earlier in the bg layer).
+      if (viewGridMode !== "axis") {
+        drawGridLines({
+          ctx,
+          baseRect,
+          visible,
+          screen,
+          colors,
+          tokens,
+          screenPoint: sp,
+          subgrid: viewGridMode === "full",
+        });
+        if (viewGridMode === "full") {
+          drawBounds({
+            ctx,
+            baseRect,
+            visible,
+            domain,
+            range,
+            colors,
+            tokens,
+            screenPoint: sp,
+          });
+        }
       }
       // Edge-fade masks: 1D ramps composited over the content layer.
       // Both axes are applied so all four edges fade, regardless of
