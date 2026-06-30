@@ -67,8 +67,8 @@ const DEFAULTS = {
   viewportQuadAlpha: 0.35,
 
   // Edge fade.
-  edgeFade: 24,
-  edgeFadeInset: 2,
+  edgeFade: 0,
+  edgeFadeInset: 12,
 
   // Axis tick labels.
   labelSize: 9,
