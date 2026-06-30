@@ -55,6 +55,14 @@ const THEME_EVENT = "curvoteca:theme-changed";
 // Public types
 // ---------------------------------------------------------------------------
 
+export type ViewGridMode = "full" | "lines" | "axis";
+
+export const VIEW_GRID_MODES: readonly ViewGridMode[] = [
+  "full",
+  "lines",
+  "axis",
+];
+
 export type CurveRenderer = {
   mount(root: HTMLElement): void;
   update(state: CurveViewportState): void;
@@ -63,6 +71,17 @@ export type CurveRenderer = {
   clearProbe(): void;
   setViewportVisible(visible: boolean): void;
   setColumnCount(c: number): void;
+  /**
+   * Cycle the canvas viewport grid display. Three modes:
+   *   - "full"  : major grid + subgrid + axis labels + 0..1 frame box
+   *              + endlines (default)
+   *   - "lines" : major grid + axis labels only (no subgrid, no
+   *              frame, no endlines)
+   *   - "axis"  : zero/axis lines only (no labels, no grid, no frame)
+   * Off-viewport cards store the mode and apply it on the next
+   * in-viewport render.
+   */
+  setViewGridMode(mode: ViewGridMode): void;
   /**
    * Notify the renderer that the view mode changed (e.g. the user
    * clicked the cycle button). The renderer re-reads the
@@ -162,6 +181,11 @@ export const createCurveCanvasRenderer = (
   // Default 1 = full UI; mount() reads the live value from the grid.
   const PROBE_COL_THRESHOLD = 2;
   let columnCount = 1;
+  // Canvas viewport grid display mode. Default "full" (grid + subgrid +
+  // labels + frame + endlines). The bottom-bar view-grid button cycles
+  // through "full" -> "lines" -> "axis" -> "full". Honored inside
+  // renderStatic so the suppressed draws are skipped entirely.
+  let viewGridMode: ViewGridMode = "full";
   // Cached pair of 1D edge-fade masks (horizontal + vertical), rebuilt on
   // resize or when the fade width / DPR change. Applied as two sequential
   // destination-in passes at the end of renderStatic. Stored as canvases
@@ -182,6 +206,7 @@ export const createCurveCanvasRenderer = (
       clearProbe() {},
       setViewportVisible() {},
       setColumnCount() {},
+      setViewGridMode() {},
       notifyViewModeChanged() {},
       destroy() {},
     };
@@ -351,17 +376,21 @@ export const createCurveCanvasRenderer = (
     // ---- bg layer (NOT masked): bg fill + viewport quad + zero lines -
     // Zero lines live here too: the world (0,0) reference is a stable
     // visual anchor and should not dissolve with the grid/curve at the
-    // canvas edges.
+    // canvas edges. The viewport quad (the 0..1 frame box) is part of
+    // the grid chrome and only renders in the "full" grid mode.
+    // Axis labels render in both "full" and "lines" modes.
     bgCtx!.clearRect(0, 0, screen.width, screen.height);
     bgCtx!.fillStyle = colors.bg;
     bgCtx!.fillRect(0, 0, screen.width, screen.height);
-    drawViewportQuad({
-      ctx: bgCtx!,
-      baseRect,
-      screen,
-      tokens,
-      screenPoint: sp,
-    });
+    if (viewGridMode === "full") {
+      drawViewportQuad({
+        ctx: bgCtx!,
+        baseRect,
+        screen,
+        tokens,
+        screenPoint: sp,
+      });
+    }
     drawZeroLines({
       ctx: bgCtx!,
       baseRect,
@@ -374,45 +403,54 @@ export const createCurveCanvasRenderer = (
     });
     // Axis labels run at every column count — drawAxisLabels itself
     // picks a recursive density tier (octa / quart / half / pair) based
-    // on screen.width, so dense cards still show "0" and "1" while
-    // sparse cards get the full 9-tick octa set. The minimum-gap filter
-    // inside drawAxisLabels then drops individual ticks that crowd.
-    drawAxisLabels({
-      ctx: bgCtx!,
-      baseRect,
-      visible,
-      domain,
-      state,
-      screen,
-      colors,
-      tokens,
-      screenPoint: sp,
-    });
+    // on screen.width. Drawn in "full" and "lines" modes; hidden in
+    // "axis" mode so the user sees only the zero lines.
+    if (viewGridMode !== "axis") {
+      drawAxisLabels({
+        ctx: bgCtx!,
+        baseRect,
+        visible,
+        domain,
+        state,
+        screen,
+        colors,
+        tokens,
+        screenPoint: sp,
+      });
+    }
 
     // ---- content layer (MASKED): grid + bounds + curve -----------------
     const realCtx = ctx;
     ctx = staticCtx!;
     try {
       ctx.clearRect(0, 0, screen.width, screen.height);
-      drawGridLines({
-        ctx,
-        baseRect,
-        visible,
-        screen,
-        colors,
-        tokens,
-        screenPoint: sp,
-      });
-      drawBounds({
-        ctx,
-        baseRect,
-        visible,
-        domain,
-        range,
-        colors,
-        tokens,
-        screenPoint: sp,
-      });
+      // Major grid + bounds only render in "full" and "lines". The
+      // "lines" mode drops the subgrid pass (passed via subgrid:false)
+      // and the 0..1 frame endlines. The "axis" mode draws neither.
+      if (viewGridMode !== "axis") {
+        drawGridLines({
+          ctx,
+          baseRect,
+          visible,
+          screen,
+          colors,
+          tokens,
+          screenPoint: sp,
+          subgrid: viewGridMode === "full",
+        });
+        if (viewGridMode === "full") {
+          drawBounds({
+            ctx,
+            baseRect,
+            visible,
+            domain,
+            range,
+            colors,
+            tokens,
+            screenPoint: sp,
+          });
+        }
+      }
       if (rampMode && rampTokens && rampColors && range) {
         renderRamp({
           ctx,
@@ -755,6 +793,14 @@ export const createCurveCanvasRenderer = (
       requestRender();
     },
     setViewportVisible,
+    setViewGridMode(mode: ViewGridMode) {
+      if (mode === viewGridMode) return;
+      viewGridMode = mode;
+      needsStaticRedraw = true;
+      liveCanvasClean = false;
+      if (!inViewport) return;
+      requestRender();
+    },
     setColumnCount(c: number) {
       if (c === columnCount) return;
       const wasDense = columnCount > PROBE_COL_THRESHOLD;

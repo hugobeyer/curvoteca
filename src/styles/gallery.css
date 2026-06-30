@@ -424,7 +424,6 @@
 .mini-graph {
     border: 0;
     border-radius: 3px 3px 4px 4px;
-    background: var(--bg);
     overflow: hidden;
     position: relative;
     flex: 1 1 auto;
@@ -434,6 +433,7 @@
 
 .graph {
     min-height: 62px;
+    background: var(--canvas-bg-0);
 }
 
 .card > .graph {
@@ -901,7 +901,8 @@
    pager cluster has one chrome family for the labeled buttons. */
 .pager-compare,
 .pager-wrap,
-.pager-view {
+.pager-view,
+.pager-grid {
     height: 26px;
     padding: 0 8px;
 }
@@ -943,9 +944,24 @@
     letter-spacing: var(--letter-spacing-wide);
     text-transform: var(--text-transform-uppercase);
 }
-.pager-view[aria-pressed="true"] {
+/* The pager cluster's three cycle buttons (wrap, view-mode, view-grid)
+   use .link-toggle styling but are not on/off toggles. Suppress the
+   .link-toggle[aria-pressed="true"] accent background so they keep the
+   same neutral link-toggle chrome in both states. The :hover override
+   re-applies the inherited link-toggle hover chrome (white text + 12%
+   accent) — without it, the more-specific pressed rule would shadow
+   .link-toggle:hover and the button would never highlight. */
+.pager-wrap[aria-pressed="true"],
+.pager-view[aria-pressed="true"],
+.pager-grid[aria-pressed="true"] {
     color: var(--muted);
-    background: transparent;
+    background: color-mix(in srgb, var(--white) 4.5%, transparent);
+}
+.pager-wrap:hover,
+.pager-view:hover,
+.pager-grid:hover {
+    color: var(--white);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 /* Pager's hide layer. Lives on top of the filter's .is-hidden so the

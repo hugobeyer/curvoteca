@@ -43,6 +43,7 @@ import {
     KEY_GRID_SIZE,
     KEY_GRID_COLS,
     KEY_PAGER_SIZE,
+    KEY_VIEW_GRID,
 } from "../lib/storageKeys";
 import "../styles/colors.css";
 import "../styles/font.css";
@@ -478,10 +479,35 @@ import "../styles/gallery.css";
                         fill="currentColor"
                         aria-hidden="true"
                     >
-                        <path d="M192-240v-72h576v72H192Zm0-144v-72h576v72H192Zm0-144v-84l216-132 180 128 180-128v88L588-528 405-658 192-528Z" />
+                        <path
+                            d="M192-240v-72h576v72H192Zm0-144v-72h576v72H192Zm0-144v-84l216-132 180 128 180-128v88L588-528 405-658 192-528Z"
+                        ></path>
                     </svg>
                     <span class="link-toggle-state" id="view-mode-toggle-state"
                         >graph</span
+                    >
+                </button>
+                <button
+                    class="link-toggle pager-grid"
+                    type="button"
+                    id="view-grid-toggle"
+                    aria-pressed="true"
+                    title="cycle grid mode"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="14px"
+                        viewBox="0 -960 960 960"
+                        width="14px"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M138-138v-684h684v684H138Zm606-78v-225H519v225h225Zm0-528H519v225h225v-225Zm-528 0v225h225v-225H216Zm0 528h225v-225H216v225Z"
+                        ></path>
+                    </svg>
+                    <span class="link-toggle-state" id="view-grid-toggle-state"
+                        >grid</span
                     >
                 </button>
             </div>
@@ -1142,6 +1168,7 @@ import "../styles/gallery.css";
                 KEY_GRID_SIZE,
                 KEY_GRID_COLS,
                 KEY_PAGER_SIZE,
+                KEY_VIEW_GRID,
                 PAGER_SIZES: PAGER.sizes,
                 PAGER_DEFAULT_SIZE: PAGER.defaultSize,
             }}
@@ -1156,6 +1183,7 @@ import "../styles/gallery.css";
             window.KEY_GRID_SIZE = KEY_GRID_SIZE;
             window.KEY_GRID_COLS = KEY_GRID_COLS;
             window.KEY_PAGER_SIZE = KEY_PAGER_SIZE;
+            window.KEY_VIEW_GRID = KEY_VIEW_GRID;
             window.PAGER_SIZES = PAGER_SIZES;
             window.PAGER_DEFAULT_SIZE = PAGER_DEFAULT_SIZE;
         </script>
@@ -1934,6 +1962,7 @@ import "../styles/gallery.css";
                     KEY_WRAP_MODE: string;
                     KEY_GRID_SIZE: string;
                     KEY_GRID_COLS: string;
+                    KEY_VIEW_GRID: string;
                     CurvotecaRenderCurveView: (view: HTMLElement) => void;
                 }
                 const wnd = window as unknown as CurvotecaWindow;
@@ -2477,7 +2506,8 @@ import "../styles/gallery.css";
                     return views.indexOf(mode) >= 0;
                 };
                 const applyViewModeUI = function () {
-                    if (viewModeState) viewModeState.textContent = globalViewMode;
+                    if (viewModeState)
+                        viewModeState.textContent = globalViewMode;
                     if (viewModeBtn) {
                         viewModeBtn.setAttribute("aria-pressed", "false");
                         viewModeBtn.setAttribute(
@@ -2490,10 +2520,16 @@ import "../styles/gallery.css";
                     applyViewModeUI();
                     let unsupported = 0;
                     visibleViews().forEach(function (view) {
-                        const supported = supportsViewMode(view, globalViewMode);
+                        const supported = supportsViewMode(
+                            view,
+                            globalViewMode,
+                        );
                         const target = supported ? globalViewMode : "graph";
                         const card = view.closest(".card");
-                        view.toggleAttribute("data-view-mode-unsupported", !supported);
+                        view.toggleAttribute(
+                            "data-view-mode-unsupported",
+                            !supported,
+                        );
                         if (card) {
                             card.classList.toggle(
                                 "is-view-mode-unsupported",
@@ -2510,7 +2546,9 @@ import "../styles/gallery.css";
                                 card.removeAttribute("title");
                             }
                         }
-                        if (view.getAttribute("data-curve-view-mode") !== target) {
+                        if (
+                            view.getAttribute("data-curve-view-mode") !== target
+                        ) {
                             view.setAttribute("data-curve-view-mode", target);
                         }
                         try {
@@ -2537,7 +2575,9 @@ import "../styles/gallery.css";
                 const cycleGlobalViewMode = function () {
                     const idx = VIEW_MODE_ORDER.indexOf(globalViewMode);
                     globalViewMode =
-                        VIEW_MODE_ORDER[(idx < 0 ? 0 : idx + 1) % VIEW_MODE_ORDER.length];
+                        VIEW_MODE_ORDER[
+                            (idx < 0 ? 0 : idx + 1) % VIEW_MODE_ORDER.length
+                        ];
                     try {
                         localStorage.setItem(VIEW_MODE_KEY, globalViewMode);
                     } catch (err) {}
@@ -2551,6 +2591,79 @@ import "../styles/gallery.css";
                     applyGlobalViewMode,
                 );
                 applyGlobalViewMode();
+
+                // --- canvas viewport grid cycle ------------------------------
+                // 3-state cycle for the canvas2d grid:
+                //   full  : grid + subgrid + axis labels + 0..1 frame + endlines
+                //   lines : major grid + axis labels only
+                //   axis  : zero/axis lines only (no labels, no grid, no frame)
+                // Persisted like the other bottom-bar controls and applied
+                // to every visible renderer on cycle.
+                const VIEW_GRID_KEY = wnd.KEY_VIEW_GRID;
+                const VIEW_GRID_LABELS: Record<string, string> = {
+                    full: "grid",
+                    lines: "lines",
+                    axis: "axis",
+                };
+                const gridBtn = document.getElementById(
+                    "view-grid-toggle",
+                ) as HTMLElement | null;
+                const gridState = document.getElementById(
+                    "view-grid-toggle-state",
+                ) as HTMLElement | null;
+                const VIEW_GRID_MODES = ["full", "lines", "axis"] as const;
+                type ViewGridMode = (typeof VIEW_GRID_MODES)[number];
+                let viewGridMode: ViewGridMode = "full";
+                const applyViewGridUI = function () {
+                    if (gridState)
+                        gridState.textContent =
+                            VIEW_GRID_LABELS[viewGridMode] || viewGridMode;
+                    if (gridBtn) {
+                        gridBtn.setAttribute("aria-pressed", "true");
+                        gridBtn.setAttribute(
+                            "title",
+                            "grid mode: " + viewGridMode,
+                        );
+                    }
+                };
+                const applyGlobalViewGrid = function () {
+                    applyViewGridUI();
+                    document
+                        .querySelectorAll("[data-curve-view]")
+                        .forEach(function (el) {
+                            try {
+                                rendererFor(el as HTMLElement).setViewGridMode(
+                                    viewGridMode,
+                                );
+                            } catch (err) {}
+                        });
+                };
+                try {
+                    const stored = localStorage.getItem(VIEW_GRID_KEY);
+                    if (
+                        stored &&
+                        (VIEW_GRID_MODES as readonly string[]).indexOf(
+                            stored,
+                        ) >= 0
+                    ) {
+                        viewGridMode = stored as ViewGridMode;
+                    }
+                } catch (err) {}
+                const cycleGlobalViewGrid = function () {
+                    const idx = VIEW_GRID_MODES.indexOf(viewGridMode);
+                    viewGridMode =
+                        VIEW_GRID_MODES[
+                            (idx < 0 ? 0 : idx + 1) % VIEW_GRID_MODES.length
+                        ];
+                    try {
+                        localStorage.setItem(VIEW_GRID_KEY, viewGridMode);
+                    } catch (err) {}
+                    applyGlobalViewGrid();
+                };
+                if (gridBtn) {
+                    gridBtn.addEventListener("click", cycleGlobalViewGrid);
+                }
+                applyGlobalViewGrid();
                 const broadcastView = function (
                     sourceView: HTMLElement,
                     st: CurveViewportState,

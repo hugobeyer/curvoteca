@@ -16,7 +16,7 @@ export type RendererColors = {
 };
 
 const CSS_VARS = [
-  "--bg",
+  "--canvas-bg-0",
   "--grid",
   "--subgrid",
   "--axis",
@@ -28,7 +28,7 @@ const CSS_VARS = [
 export const readColors = (root: HTMLElement): RendererColors => {
   const style = getComputedStyle(root);
   return {
-    bg: style.getPropertyValue("--bg"),
+    bg: style.getPropertyValue("--canvas-bg-0"),
     grid: style.getPropertyValue("--grid"),
     subgrid: style.getPropertyValue("--subgrid"),
     axis: style.getPropertyValue("--axis"),
@@ -58,8 +58,7 @@ const extractRgbChannels = (value: string): string | null => {
   // "#rgb" or "#rrggbb"
   if (/^#[0-9a-fA-F]{3,6}$/.test(v)) {
     let hex = v.slice(1);
-    if (hex.length === 3)
-      hex = hex.replace(/./g, (c) => c + c);
+    if (hex.length === 3) hex = hex.replace(/./g, (c) => c + c);
     if (hex.length === 6) {
       const r = parseInt(hex.slice(0, 2), 16);
       const g = parseInt(hex.slice(2, 4), 16);

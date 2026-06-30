@@ -36,10 +36,12 @@
     /* --- semantic aliases ---------------------------------------------
        The names below are the API surface. The renderer and the rest
        of the app should reference these, never the ladder directly. */
-    --body-bg: var(--bg-step-0); /* outermost app background */
-    --bg: var(--bg-step-1); /* curve canvas, app fallback */
+    --body-bg: var(--bg-step-1); /* outermost app background */
+    --bg: var(--bg-step-1); /* app fallback */
+    --canvas-bg-0: #0a0b0c; /* main curve canvas (card .graph) */
+    --canvas-bg-1: #0a0b0c; /* mini-graph in compare tray */
     --panel3: var(--bg-step-1); /* wall chrome (matches curve canvas) */
-    --mini-graph-bg: var(--bg-step-1); /* mini graph in compare tray */
+    --mini-graph-bg: var(--canvas-bg-1); /* mini graph in compare tray */
     --mini-card-bg: var(--bg-step-2); /* mini compare card body */
     --panel: var(--bg-step-3); /* bar / rail / tray chrome */
     --panel2: var(--bg-step-4); /* card body + pager base */

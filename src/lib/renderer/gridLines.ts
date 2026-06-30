@@ -21,6 +21,13 @@ export type DrawGridLinesArgs = {
   colors: RendererColors;
   tokens: RendererTokens;
   screenPoint: (point: CurvePoint) => CurvePoint;
+  /**
+   * Whether to draw the subgrid (minor) lines. Defaults to true so
+   * the existing call sites are unchanged; the renderer's grid-mode
+   * cycle sets it to false in the "lines" mode to drop the subgrid
+   * while keeping the major grid + axis labels.
+   */
+  subgrid?: boolean;
 };
 
 // Minimum screen-space gap (CSS px) between adjacent subgrid lines.
@@ -71,6 +78,7 @@ export const drawGridLines = ({
   colors,
   tokens,
   screenPoint,
+  subgrid = true,
 }: DrawGridLinesArgs) => {
   const major = gridStepForWidth(visible.w, DIVISORS_252);
   // Halve the horizontal line count: pick the next-coarser supported step
@@ -122,8 +130,9 @@ export const drawGridLines = ({
   // is gated by the screen-space budget above; major lines always
   // run. The surviving subgrid offsets are fractions of one major
   // step — for each, we draw the subgrid lines at exactly those
-  // positions across the visible range.
-  if (subgridOffsets.length > 0) {
+  // positions across the visible range. The "lines" grid mode
+  // (subgrid: false) drops the subgrid pass entirely.
+  if (subgrid && subgridOffsets.length > 0) {
     drawSubgridLines({
       ctx,
       baseRect,
