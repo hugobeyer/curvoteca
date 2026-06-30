@@ -36,16 +36,25 @@ export function signedScaleCurve(
       glsl: "float signedScale(float x, float p) { return sign(x) * pow(abs(x), p); }",
       vex: "float signedScale(float x; float p) { return sign(x) * pow(abs(x), p); }",
       ts: "function signedScale(x: number, p: number): number { return Math.sign(x) * Math.pow(Math.abs(x), p); }",
-      csharp: "float SignedScale(float x, float p) { return MathF.Sign(x) * MathF.Pow(MathF.Abs(x), p); }",
+      csharp:
+        "float SignedScale(float x, float p) { return MathF.Sign(x) * MathF.Pow(MathF.Abs(x), p); }",
       rust: "fn signed_scale(x: f64, p: f64) -> f64 { x.signum() * x.abs().powf(p) }",
       hlsl: "float signedScale(float x, float p) { return sign(x) * pow(abs(x), p); }",
       wgsl: "fn signedScale(x: f32, p: f32) -> f32 { return sign(x) * pow(abs(x), p); }",
       python: "def signed_scale(x, p): return math.copysign(abs(x) ** p, x)",
       cpp: "float signedScale(float x, float p) { return (x >= 0.0f ? 1.0f : -1.0f) * std::pow(std::abs(x), p); }",
       lua: "function signedScale(x, p) return (x >= 0 and 1 or -1) * math.abs(x) ^ p end",
-      gdscript: "func signedScale(x: float, p: float) -> float: return (1.0 if x >= 0.0 else -1.0) * pow(abs(x), p)",
+      gdscript:
+        "func signedScale(x: float, p: float) -> float: return (1.0 if x >= 0.0 else -1.0) * pow(abs(x), p)",
       cuda: "__device__ float signedScale(float x, float p) { return (x >= 0.0f ? 1.0f : -1.0f) * powf(fabsf(x), p); }",
       c: "double signedScale(double x, double p) { return (x >= 0.0 ? 1.0 : -1.0) * pow(fabs(x), p); }",
+      metal:
+        "float signedScale(float x, float p) { return sign(x) * pow(abs(x), p); }",
+      opencl:
+        "float signedScale(float x, float p) { return (x >= 0.0f ? 1.0f : -1.0f) * pow(fabs(x), p); }",
+      unity:
+        "public static float SignedScale(float x, float p) { return Mathf.Sign(x) * Mathf.Pow(Mathf.Abs(x), p); }",
+      matlab: "y = @(x, p) sign(x) * abs(x)^p;",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

@@ -1,4 +1,8 @@
-import { DEFAULT_SAMPLING, cubicInOutKernel, type CurveKernel } from "../curveMath";
+import {
+  DEFAULT_SAMPLING,
+  cubicInOutKernel,
+  type CurveKernel,
+} from "../curveMath";
 import type { CurveDefinition } from "../../data/curves";
 
 export const defaultParams = {} as const;
@@ -27,18 +31,36 @@ export function cubicInOutCurve(
       glsl: "float cubicInOut(float x) { return x < 0.5 ? 4.0 * x * x * x : 1.0 - pow(-2.0 * x + 2.0, 3.0) / 2.0; }",
       vex: "float cubicInOut(float x) { return x < 0.5 ? 4 * x * x * x : 1 - pow(-2 * x + 2, 3) / 2; }",
       ts: "function cubicInOut(x: number): number { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }",
-      csharp: "float CubicInOut(float x) { return x < 0.5f ? 4.0f * x * x * x : 1.0f - MathF.Pow(-2.0f * x + 2.0f, 3.0f) / 2.0f; }",
+      csharp:
+        "float CubicInOut(float x) { return x < 0.5f ? 4.0f * x * x * x : 1.0f - MathF.Pow(-2.0f * x + 2.0f, 3.0f) / 2.0f; }",
       rust: "fn cubic_in_out(x: f64) -> f64 { if x < 0.5 { 4.0 * x * x * x } else { 1.0 - (-2.0 * x + 2.0).powi(3) / 2.0 } }",
       hlsl: "float cubicInOut(float x) { return x < 0.5 ? 4.0 * x * x * x : 1.0 - pow(-2.0 * x + 2.0, 3.0) / 2.0; }",
       wgsl: "fn cubicInOut(x: f32) -> f32 { return select(1.0 - pow(-2.0 * x + 2.0, 3.0) / 2.0, 4.0 * x * x * x, x < 0.5); }",
-      python: "def cubic_in_out(x): return 4 * x * x * x if x < 0.5 else 1 - math.pow(-2 * x + 2, 3) / 2",
+      python:
+        "def cubic_in_out(x): return 4 * x * x * x if x < 0.5 else 1 - math.pow(-2 * x + 2, 3) / 2",
       css: "cubic-bezier(0.645, 0.045, 0.355, 1)",
       cpp: "#include <cmath>\nfloat cubicInOut(float x) { return x < 0.5f ? 4.0f * x * x * x : 1.0f - std::pow(-2.0f * x + 2.0f, 3.0f) / 2.0f; }",
       lua: "function cubicInOut(x) return x < 0.5 and 4 * x * x * x or 1 - (-2 * x + 2) ^ 3 / 2 end",
-      gdscript: "func cubic_in_out(x: float) -> float: return 4.0 * x * x * x if x < 0.5 else 1.0 - pow(-2.0 * x + 2.0, 3.0) / 2.0",
+      gdscript:
+        "func cubic_in_out(x: float) -> float: return 4.0 * x * x * x if x < 0.5 else 1.0 - pow(-2.0 * x + 2.0, 3.0) / 2.0",
       cuda: "__device__ float cubicInOut(float x) { return x < 0.5f ? 4.0f * x * x * x : 1.0f - powf(-2.0f * x + 2.0f, 3.0f) / 2.0f; }",
       c: "#include <math.h>\ndouble cubicInOut(double x) { return x < 0.5 ? 4.0 * x * x * x : 1.0 - pow(-2.0 * x + 2.0, 3.0) / 2.0; }",
       json: '{"name": "Cubic In Out", "formula": "y = 4x^3 if x < 0.5 else 1 - (-2x + 2)^3 / 2", "params": {}}',
+      metal:
+        "float cubicInOut(float x) { return x < 0.5 ? 4.0 * x * x * x : 1.0 - pow(-2.0 * x + 2.0, 3.0) / 2.0; }",
+      opencl:
+        "float cubicInOut(float x) { return x < 0.5f ? 4.0f * x * x * x : 1.0f - pow(-2.0f * x + 2.0f, 3.0f) / 2.0f; }",
+      unity:
+        "public static float CubicInOut(float x) { return x < 0.5f ? 4.0f * x * x * x : 1.0f - MathF.Pow(-2.0f * x + 2.0f, 3.0f) / 2.0f; }",
+      shadertoy:
+        "return x < 0.5 ? 4.0 * x * x * x : 1.0 - pow(-2.0 * x + 2.0, 3.0) / 2.0;",
+      svelte:
+        "export const cubicInOut = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;",
+      matlab:
+        "y = @(x) (x < 0.5) * (4 * x^3) + (x >= 0.5) * (1 - (-2*x + 2)^3 / 2);",
+      excel: "=IF(A1<0.5,4*A1^3,1-(-2*A1+2)^3/2)",
+      desmos:
+        "y = \\left\\{4x^3 \\text{ if } x<0.5, 1-(-2x+2)^3/2 \\text{ else}\\right\\}",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

@@ -35,16 +35,27 @@ export function turbulence1dCurve(
       ts: "function turbulence1d(x: number, seed: number = 1337, octaves: number = 4): number { /* mulberry32 + abs(value-noise) sum */ return turbulence1dImpl(x, seed, octaves); }",
       glsl: "float turbulence1d(float x; float seed; float octaves) { /* abs(value-noise) summed */ return turbulence1dImpl(x, seed, octaves); }",
       vex: "float turbulence1d(float x; float seed; float octaves) { /* abs(value-noise) summed */ return turbulence1dImpl(x, seed, octaves); }",
-      csharp: "float Turbulence1d(float x, float seed = 1337, float octaves = 4) { /* abs(value-noise) summed */ return Turbulence1dImpl(x, seed, octaves); }",
+      csharp:
+        "float Turbulence1d(float x, float seed = 1337, float octaves = 4) { /* abs(value-noise) summed */ return Turbulence1dImpl(x, seed, octaves); }",
       rust: "fn turbulence_1d(x: f64, seed: f64, octaves: f64) -> f64 { /* abs(value-noise) summed */ turbulence_1d_impl(x, seed, octaves) }",
       hlsl: "float turbulence1d(float x, float seed, float octaves) { /* abs(value-noise) summed */ return turbulence1dImpl(x, seed, octaves); }",
       wgsl: "fn turbulence_1d(x: f32, seed: f32, octaves: f32) -> f32 { /* abs(value-noise) summed */ return turbulence_1d_impl(x, seed, octaves); }",
-      python: "def turbulence_1d(x, seed=1337, octaves=4): # abs(value-noise) summed; return turbulence_1d_impl(x, seed, octaves)",
+      python:
+        "def turbulence_1d(x, seed=1337, octaves=4): # abs(value-noise) summed; return turbulence_1d_impl(x, seed, octaves)",
       cpp: "float turbulence1d(float x, float seed = 1337.0f, float octaves = 4.0f) { /* abs(value-noise) summed */ return turbulence1dImpl(x, seed, octaves); }",
       lua: "function turbulence1d(x, seed, octaves) seed = seed or 1337 octaves = octaves or 4 -- abs(value-noise) summed; return turbulence1dImpl(x, seed, octaves) end",
-      gdscript: "func turbulence1d(x: float, seed: float = 1337.0, octaves: float = 4.0) -> float: # abs(value-noise) summed; return turbulence1dImpl(x, seed, octaves)",
+      gdscript:
+        "func turbulence1d(x: float, seed: float = 1337.0, octaves: float = 4.0) -> float: # abs(value-noise) summed; return turbulence1dImpl(x, seed, octaves)",
       cuda: "__device__ float turbulence1d(float x, float seed, float octaves) { /* abs(value-noise) summed */ return turbulence1dImpl(x, seed, octaves); }",
       c: "double turbulence1d(double x, double seed, double octaves) { /* abs(value-noise) summed */ return turbulence1dImpl(x, seed, octaves); }",
+      metal:
+        "float turbulence1d(float x, float seed, float octaves) { /* abs(value-noise) summed */ return turbulence1dImpl(x, seed, octaves); }",
+      opencl:
+        "float turbulence1d(float x, float seed, float octaves) { /* abs(value-noise) summed */ return turbulence1dImpl(x, seed, octaves); }",
+      unity:
+        "public static float Turbulence1d(float x, float seed = 1337, float octaves = 4) { return Turbulence1dImpl(x, seed, octaves); }",
+      shadertoy: "return turbulence1dImpl(x, seed, octaves);",
+      matlab: "y = @(x, seed, octaves) turbulence1dImpl(x, seed, octaves);",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

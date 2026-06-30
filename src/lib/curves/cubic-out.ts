@@ -31,7 +31,8 @@ export function cubicOutCurve(
       glsl: "float cubicOut(float x) { float u = 1.0 - x; return 1.0 - u * u * u; }",
       vex: "float cubicOut(float x) { float u = 1 - x; return 1 - u * u * u; }",
       ts: "function cubicOut(x: number): number { const u = 1 - x; return 1 - u * u * u; }",
-      csharp: "float CubicOut(float x) { float u = 1.0f - x; return 1.0f - u * u * u; }",
+      csharp:
+        "float CubicOut(float x) { float u = 1.0f - x; return 1.0f - u * u * u; }",
       rust: "fn cubic_out(x: f64) -> f64 { let u = 1.0 - x; 1.0 - u * u * u }",
       hlsl: "float cubicOut(float x) { float u = 1.0 - x; return 1.0 - u * u * u; }",
       wgsl: "fn cubicOut(x: f32) -> f32 { let u = 1.0 - x; return 1.0 - u * u * u; }",
@@ -39,10 +40,23 @@ export function cubicOutCurve(
       css: "cubic-bezier(0.215, 0.61, 0.355, 1)",
       cpp: "float cubicOut(float x) { float u = 1.0f - x; return 1.0f - u * u * u; }",
       lua: "function cubicOut(x) local u = 1 - x; return 1 - u * u * u end",
-      gdscript: "func cubic_out(x: float) -> float: var u = 1.0 - x; return 1.0 - u * u * u",
+      gdscript:
+        "func cubic_out(x: float) -> float: var u = 1.0 - x; return 1.0 - u * u * u",
       cuda: "__device__ float cubicOut(float x) { float u = 1.0f - x; return 1.0f - u * u * u; }",
       c: "double cubicOut(double x) { double u = 1.0 - x; return 1.0 - u * u * u; }",
       json: '{"name": "Cubic Out", "formula": "y = 1 - (1 - x)^3", "params": {}}',
+      metal:
+        "float cubicOut(float x) { float u = 1.0 - x; return 1.0 - u * u * u; }",
+      opencl:
+        "float cubicOut(float x) { float u = 1.0f - x; return 1.0f - u * u * u; }",
+      unity:
+        "public static float CubicOut(float x) { float u = 1.0f - x; return 1.0f - u * u * u; }",
+      shadertoy: "float u = 1.0 - x; return 1.0 - u * u * u;",
+      svelte:
+        "export const cubicOut = (x) => { const u = 1 - x; return 1 - u * u * u; };",
+      matlab: "y = @(x) 1 - (1-x)^3;",
+      excel: "=1-(1-A1)^3",
+      desmos: "y = 1 - (1 - x)^3",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

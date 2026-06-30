@@ -1,4 +1,8 @@
-import { DEFAULT_SAMPLING, anticipateKernel, type CurveKernel } from "../curveMath";
+import {
+  DEFAULT_SAMPLING,
+  anticipateKernel,
+  type CurveKernel,
+} from "../curveMath";
 import type { CurveDefinition } from "../../data/curves";
 
 export const defaultParams = {} as const;
@@ -34,10 +38,20 @@ export function anticipateCurve(
       python: "def anticipate(x): return anticipate_kernel(x)",
       cpp: "float anticipate(float x) { return anticipateKernel(x); }",
       lua: "function anticipate(x) return anticipateKernel(x) end",
-      gdscript: "func anticipate(x: float) -> float: return anticipateKernel(x)",
+      gdscript:
+        "func anticipate(x: float) -> float: return anticipateKernel(x)",
       cuda: "__device__ float anticipate(float x) { return anticipateKernel(x); }",
       c: "double anticipate(double x) { return anticipateKernel(x); }",
       json: '{"name": "Anticipate", "formula": "y = 1 - bounceOut(1 - x)", "params": {}}',
+      metal: "float anticipate(float x) { return anticipateKernel(x); }",
+      opencl: "float anticipate(float x) { return anticipateKernel(x); }",
+      unity:
+        "public static float Anticipate(float x) { return AnticipateKernel(x); }",
+      shadertoy: "return anticipateKernel(x);",
+      svelte: "export const anticipate = (x) => anticipateKernel(x);",
+      matlab: "y = @(x) anticipateKernel(x);",
+      excel: "=anticipateKernel(A1)",
+      desmos: "y = \\operatorname{anticipateKernel}(x)",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

@@ -1,4 +1,8 @@
-import { DEFAULT_SAMPLING, cubicInKernel, type CurveKernel } from "../curveMath";
+import {
+  DEFAULT_SAMPLING,
+  cubicInKernel,
+  type CurveKernel,
+} from "../curveMath";
 import type { CurveDefinition } from "../../data/curves";
 
 export const defaultParams = {} as const;
@@ -39,6 +43,14 @@ export function cubicInCurve(
       cuda: "__device__ float cubicIn(float x) { return x * x * x; }",
       c: "double cubicIn(double x) { return x * x * x; }",
       json: '{"name": "Cubic In", "formula": "y = x^3", "params": {}}',
+      metal: "float cubicIn(float x) { return x * x * x; }",
+      opencl: "float cubicIn(float x) { return x * x * x; }",
+      unity: "public static float CubicIn(float x) { return x * x * x; }",
+      shadertoy: "return x * x * x;",
+      svelte: "export const cubicIn = (x) => x * x * x;",
+      matlab: "y = @(x) x^3;",
+      excel: "=A1^3",
+      desmos: "y = x^3",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

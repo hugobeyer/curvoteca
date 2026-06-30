@@ -1,4 +1,8 @@
-import { DEFAULT_SAMPLING, quadraticInKernel, type CurveKernel } from "../curveMath";
+import {
+  DEFAULT_SAMPLING,
+  quadraticInKernel,
+  type CurveKernel,
+} from "../curveMath";
 import type { CurveDefinition } from "../../data/curves";
 
 export const defaultParams = {} as const;
@@ -38,7 +42,15 @@ export function quadraticInCurve(
       gdscript: "func quadraticIn(x: float) -> float: return x * x",
       cuda: "__device__ float quadraticIn(float x) { return x * x; }",
       c: "double quadraticIn(double x) { return x * x; }",
-      json: "{\"name\": \"Quadratic In\", \"formula\": \"y = x^2\", \"params\": {}}",
+      json: '{"name": "Quadratic In", "formula": "y = x^2", "params": {}}',
+      metal: "float quadraticIn(float x) { return x * x; }",
+      opencl: "float quadraticIn(float x) { return x * x; }",
+      unity: "public static float QuadraticIn(float x) { return x * x; }",
+      shadertoy: "return x * x;",
+      svelte: "export const quadraticIn = (x) => x * x;",
+      matlab: "y = @(x) x * x;",
+      excel: "=A1*A1",
+      desmos: "y=x^{2}",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

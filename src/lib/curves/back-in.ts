@@ -26,7 +26,8 @@ export function backInCurve(
       ts: "function backIn(x: number, s: number = 1.70158): number { return x * x * ((s + 1) * x - s); }",
       glsl: "float backIn(float x, float s) { s = (s == 0.0) ? 1.70158 : s; return x * x * ((s + 1.0) * x - s); }",
       vex: "float backIn(float x; float s) { if (s == 0) s = 1.70158; return x * x * ((s + 1) * x - s); }",
-      csharp: "float BackIn(float x, float s = 1.70158f) { return x * x * ((s + 1) * x - s); }",
+      csharp:
+        "float BackIn(float x, float s = 1.70158f) { return x * x * ((s + 1) * x - s); }",
       rust: "fn back_in(x: f64, s: f64) -> f64 { let s = if s == 0.0 { 1.70158 } else { s }; x * x * ((s + 1.0) * x - s) }",
       hlsl: "float backIn(float x, float s) { s = (s == 0.0) ? 1.70158 : s; return x * x * ((s + 1.0) * x - s); }",
       wgsl: "fn back_in(x: f32, s: f32) -> f32 { let s = select(1.70158, s, s != 0.0); return x * x * ((s + 1.0) * x - s); }",
@@ -34,10 +35,20 @@ export function backInCurve(
       css: "cubic-bezier(0.6, -0.28, 0.735, 0.045)",
       cpp: "float backIn(float x, float s = 1.70158f) { return x * x * ((s + 1.0f) * x - s); }",
       lua: "function backIn(x, s) s = s or 1.70158 return x * x * ((s + 1) * x - s) end",
-      gdscript: "func backIn(x: float, s: float = 1.70158) -> float: return x * x * ((s + 1) * x - s)",
+      gdscript:
+        "func backIn(x: float, s: float = 1.70158) -> float: return x * x * ((s + 1) * x - s)",
       cuda: "__device__ float backIn(float x, float s) { return x * x * ((s + 1.0f) * x - s); }",
       c: "double backIn(double x, double s) { return x * x * ((s + 1.0) * x - s); }",
       json: '{"name": "Back In", "formula": "y = x^2 * ((s+1)*x - s)", "params": {"s": 1.70158}}',
+      metal:
+        "float backIn(float x, float s) { s = (s == 0.0) ? 1.70158 : s; return x * x * ((s + 1.0) * x - s); }",
+      opencl:
+        "float backIn(float x, float s) { return x * x * ((s + 1.0f) * x - s); }",
+      unity:
+        "public static float BackIn(float x, float s = 1.70158f) { return x * x * ((s + 1) * x - s); }",
+      shadertoy: "return x * x * ((s + 1.0) * x - s);",
+      svelte: "export const backIn = (x, s) => x * x * ((s + 1) * x - s);",
+      matlab: "y = @(x, s) x * x * ((s + 1) * x - s);",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

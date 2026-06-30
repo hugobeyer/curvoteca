@@ -41,6 +41,16 @@ export function cosineInCurve(
       cuda: "__device__ float cosineIn(float x) { return sinf(x * 3.14159265f / 2.0f); }",
       c: "#include <math.h>\ndouble cosineIn(double x) { return sin(x * M_PI / 2.0); }",
       json: '{"name": "Cosine In", "formula": "y = sin(x * pi / 2)", "params": {}}',
+      metal: "float cosineIn(float x) { return sin(x * 1.57079633); }",
+      opencl:
+        "float cosineIn(float x) { return sinf(x * 3.14159265f / 2.0f); }",
+      unity:
+        "public static float CosineIn(float x) { return MathF.Sin(x * MathF.PI / 2); }",
+      shadertoy: "return sin(x * 1.57079633);",
+      svelte: "export const cosineIn = (x) => Math.sin(x * Math.PI / 2);",
+      matlab: "y = @(x) sin(x * pi / 2);",
+      excel: "=SIN(A1*PI()/2)",
+      desmos: "y = \\sin(x \\pi / 2)",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

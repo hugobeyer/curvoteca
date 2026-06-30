@@ -36,16 +36,27 @@ export function perlinNoise1dCurve(
       ts: "function perlinNoise1d(x: number, seed: number = 1337): number { /* mulberry32 + perlin gradient table */ return perlin1dImpl(x, seed); }",
       glsl: "float perlinNoise1d(float x, float seed) { /* hash + gradient + fade */ return perlin1dImpl(x, seed); }",
       vex: "float perlinNoise1d(float x; float seed) { /* hash + gradient + fade */ return perlin1dImpl(x, seed); }",
-      csharp: "float PerlinNoise1d(float x, float seed = 1337) { /* hash + gradient + fade */ return Perlin1dImpl(x, seed); }",
+      csharp:
+        "float PerlinNoise1d(float x, float seed = 1337) { /* hash + gradient + fade */ return Perlin1dImpl(x, seed); }",
       rust: "fn perlin_noise_1d(x: f64, seed: f64) -> f64 { /* hash + gradient + fade */ perlin_1d_impl(x, seed) }",
       hlsl: "float perlinNoise1d(float x, float seed) { /* hash + gradient + fade */ return perlin1dImpl(x, seed); }",
       wgsl: "fn perlin_noise_1d(x: f32, seed: f32) -> f32 { /* hash + gradient + fade */ return perlin_1d_impl(x, seed); }",
-      python: "def perlin_noise_1d(x, seed=1337): # hash + gradient + fade; return perlin_1d_impl(x, seed)",
+      python:
+        "def perlin_noise_1d(x, seed=1337): # hash + gradient + fade; return perlin_1d_impl(x, seed)",
       cpp: "float perlinNoise1d(float x, float seed = 1337.0f, float scale = 4.0f) { /* mulberry32 + perlin gradient table */ return perlin1dImpl(x, seed, scale); }",
       lua: "function perlinNoise1d(x, seed, scale) seed = seed or 1337; scale = scale or 4; -- hash + gradient + fade; return perlin_1d_impl(x, seed, scale) end",
-      gdscript: "func perlinNoise1d(x: float, seed: float = 1337.0, scale: float = 4.0) -> float: # hash + gradient + fade; return perlin_1d_impl(x, seed, scale)",
+      gdscript:
+        "func perlinNoise1d(x: float, seed: float = 1337.0, scale: float = 4.0) -> float: # hash + gradient + fade; return perlin_1d_impl(x, seed, scale)",
       cuda: "__device__ float perlinNoise1d(float x, float seed, float scale) { /* hash + gradient + fade */ return perlin1dImpl(x, seed, scale); }",
       c: "#include <math.h>\ndouble perlinNoise1d(double x, double seed, double scale) { /* hash + gradient + fade */ return perlin1dImpl(x, seed, scale); }",
+      metal:
+        "float perlinNoise1d(float x, float seed, float scale) { /* hash + gradient + fade */ return perlin1dImpl(x, seed, scale); }",
+      opencl:
+        "float perlinNoise1d(float x, float seed, float scale) { /* hash + gradient + fade */ return perlin1dImpl(x, seed, scale); }",
+      unity:
+        "public static float PerlinNoise1d(float x, float seed, float scale) { /* hash + gradient + fade */ return Perlin1dImpl(x, seed, scale); }",
+      shadertoy: "return perlin1dImpl(x, seed);",
+      matlab: "y = @(x, seed) perlin_1d_impl(x, seed);",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

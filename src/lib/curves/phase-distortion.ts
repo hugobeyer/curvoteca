@@ -40,16 +40,25 @@ export function phaseDistortionCurve(
       ts: "function phaseDistortion(x: number, d: number = 0.5, a: number = 0): number { return Math.cos(2 * Math.PI * (x + d * Math.sin(2 * Math.PI * x * (1 + a)))); }",
       glsl: "float phaseDistortion(float x, float d, float a) { d = (d == 0.0) ? 0.5 : d; a = (a == 0.0) ? 0.0 : a; return cos(2.0 * 3.14159265 * (x + d * sin(2.0 * 3.14159265 * x * (1.0 + a)))); }",
       vex: "float phaseDistortion(float x; float d; float a) { if (d == 0) d = 0.5; return cos(2 * M_PI * (x + d * sin(2 * M_PI * x * (1 + a)))); }",
-      csharp: "float PhaseDistortion(float x, float d = 0.5f, float a = 0) { return MathF.Cos(2 * MathF.PI * (x + d * MathF.Sin(2 * MathF.PI * x * (1 + a)))); }",
+      csharp:
+        "float PhaseDistortion(float x, float d = 0.5f, float a = 0) { return MathF.Cos(2 * MathF.PI * (x + d * MathF.Sin(2 * MathF.PI * x * (1 + a)))); }",
       rust: "fn phase_distortion(x: f64, d: f64, a: f64) -> f64 { let d = if d == 0.0 { 0.5 } else { d }; (2.0 * std::f64::consts::PI * (x + d * (2.0 * std::f64::consts::PI * x * (1.0 + a)).sin())).cos() }",
       hlsl: "float phaseDistortion(float x, float d, float a) { d = (d == 0.0) ? 0.5 : d; a = (a == 0.0) ? 0.0 : a; return cos(2.0 * 3.14159265 * (x + d * sin(2.0 * 3.14159265 * x * (1.0 + a)))); }",
       wgsl: "fn phase_distortion(x: f32, d: f32, a: f32) -> f32 { let d = select(0.5, d, d != 0.0); let a = select(0.0, a, a != 0.0); return cos(2.0 * 3.14159265 * (x + d * sin(2.0 * 3.14159265 * x * (1.0 + a)))); }",
-      python: "def phase_distortion(x, d=0.5, a=0): return math.cos(2 * math.pi * (x + d * math.sin(2 * math.pi * x * (1 + a))))",
+      python:
+        "def phase_distortion(x, d=0.5, a=0): return math.cos(2 * math.pi * (x + d * math.sin(2 * math.pi * x * (1 + a))))",
       cpp: "float phaseDistortion(float x, float d = 0.5f, float a = 0.0f) { return std::cos(2.0f * M_PI * (x + d * std::sin(2.0f * M_PI * x * (1.0f + a)))); }",
       lua: "function phaseDistortion(x, d, a) d = d or 0.5; a = a or 0; return math.cos(2 * math.pi * (x + d * math.sin(2 * math.pi * x * (1 + a)))) end",
-      gdscript: "func phaseDistortion(x: float, d: float = 0.5, a: float = 0.0) -> float: return cos(2 * PI * (x + d * sin(2 * PI * x * (1 + a))))",
+      gdscript:
+        "func phaseDistortion(x: float, d: float = 0.5, a: float = 0.0) -> float: return cos(2 * PI * (x + d * sin(2 * PI * x * (1 + a))))",
       cuda: "__device__ float phaseDistortion(float x, float d, float a) { return cosf(2.0f * 3.14159265f * (x + d * sinf(2.0f * 3.14159265f * x * (1.0f + a)))); }",
       c: "#include <math.h>\ndouble phaseDistortion(double x, double d, double a) { return cos(2.0 * M_PI * (x + d * sin(2.0 * M_PI * x * (1.0 + a)))); }",
+      metal:
+        "float phaseDistortion(float x, float d, float a) { d = (d == 0.0) ? 0.5 : d; a = (a == 0.0) ? 0.0 : a; return cos(2.0 * 1.57079633 * (x + d * sin(2.0 * 1.57079633 * x * (1.0 + a)))); }",
+      opencl:
+        "float phaseDistortion(float x, float d, float a) { d = (d == 0.0f) ? 0.5f : d; a = (a == 0.0f) ? 0.0f : a; return cos(2.0f * 1.57079633f * (x + d * sin(2.0f * 1.57079633f * x * (1.0f + a)))); }",
+      unity:
+        "public static float PhaseDistortion(float x, float d, float a) { return Mathf.Cos(2.0f * Mathf.PI * (x + d * Mathf.Sin(2.0f * Mathf.PI * x * (1.0f + a)))); }",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

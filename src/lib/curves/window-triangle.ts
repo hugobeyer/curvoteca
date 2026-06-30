@@ -30,17 +30,26 @@ export function windowTriangleCurve(
       glsl: "float windowTriangle(float x) { return 1.0 - abs(2.0 * x - 1.0); }",
       vex: "float windowTriangle(float x) { return 1 - abs(2 * x - 1); }",
       ts: "function windowTriangle(x: number): number { return 1 - Math.abs(2 * x - 1); }",
-      csharp: "float WindowTriangle(float x) { return 1.0f - MathF.Abs(2.0f * x - 1.0f); }",
+      csharp:
+        "float WindowTriangle(float x) { return 1.0f - MathF.Abs(2.0f * x - 1.0f); }",
       rust: "fn windowTriangle(x: f64) -> f64 { 1.0 - (2.0 * x - 1.0).abs() }",
       hlsl: "float windowTriangle(float x) { return 1.0 - abs(2.0 * x - 1.0); }",
       wgsl: "fn windowTriangle(x: f32) -> f32 { return 1.0 - abs(2.0 * x - 1.0); }",
       python: "def windowTriangle(x): return 1 - abs(2 * x - 1)",
       cpp: "float windowTriangle(float x) { return 1.0f - std::abs(2.0f * x - 1.0f); }",
       lua: "function windowTriangle(x) return 1 - math.abs(2 * x - 1) end",
-      gdscript: "func windowTriangle(x: float) -> float: return 1.0 - abs(2.0 * x - 1.0)",
+      gdscript:
+        "func windowTriangle(x: float) -> float: return 1.0 - abs(2.0 * x - 1.0)",
       cuda: "__device__ float windowTriangle(float x) { return 1.0f - fabsf(2.0f * x - 1.0f); }",
       c: "double windowTriangle(double x) { return 1.0 - fabs(2.0 * x - 1.0); }",
-      json: "{\"name\": \"Window Triangle\", \"formula\": \"y = 1 - |2x - 1|\", \"params\": {}}",
+      json: '{"name": "Window Triangle", "formula": "y = 1 - |2x - 1|", "params": {}}',
+      metal:
+        "float windowTriangle(float x) { return 1.0 - abs(2.0 * x - 1.0); }",
+      opencl:
+        "float windowTriangle(float x) { return 1.0f - fabs(2.0f * x - 1.0f); }",
+      unity:
+        "public static float WindowTriangle(float x) { return 1.0f - Mathf.Abs(2.0f * x - 1.0f); }",
+      matlab: "y = @(x) 1 - abs(2 * x - 1);",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

@@ -11,7 +11,11 @@ export type DomainWarpParams = { warp: number; freq: number; seed: number };
 export function domainWarpCurve(
   params: DomainWarpParams = defaultParams,
 ): CurveDefinition {
-  const kernel: CurveKernel = domainWarpKernel(params.warp, params.freq, params.seed);
+  const kernel: CurveKernel = domainWarpKernel(
+    params.warp,
+    params.freq,
+    params.seed,
+  );
   return {
     id: "domain-warp",
     name: "Domain Warp",
@@ -35,16 +39,25 @@ export function domainWarpCurve(
       ts: "function domainWarp(x: number, w: number = 0.1, f: number = 4, seed: number = 1337): number { return 0; }",
       glsl: "float domainWarp(float x, float w, float f, int seed) { return 0.0; }",
       vex: "float domainWarp(float x; float w; float f; int seed) { return 0; }",
-      csharp: "float DomainWarp(float x, float w = 0.1f, float f = 4, int seed = 1337) { return 0; }",
+      csharp:
+        "float DomainWarp(float x, float w = 0.1f, float f = 4, int seed = 1337) { return 0; }",
       rust: "fn domain_warp(x: f64, w: f64, f: f64, seed: i32) -> f64 { 0.0 }",
       hlsl: "float domainWarp(float x, float w, float f, int seed) { return 0.0; }",
       wgsl: "fn domain_warp(x: f32, w: f32, f: f32, seed: i32) -> f32 { return 0.0; }",
       python: "def domain_warp(x, w=0.1, f=4, seed=1337): return 0",
       cpp: "float domainWarp(float x, float w = 0.1f, float f = 4.0f, int seed = 1337) { return 0.0f; }",
       lua: "function domainWarp(x, w, f, seed) w = w or 0.1; f = f or 4; seed = seed or 1337; return 0 end",
-      gdscript: "func domain_warp(x: float, w: float = 0.1, f: float = 4.0, seed: int = 1337) -> float: return 0.0",
+      gdscript:
+        "func domain_warp(x: float, w: float = 0.1, f: float = 4.0, seed: int = 1337) -> float: return 0.0",
       cuda: "__device__ float domainWarp(float x, float w, float f, int seed) { return 0.0f; }",
       c: "double domainWarp(double x, double w, double f, int seed) { return 0.0; }",
+      metal:
+        "float domainWarp(float x, float w, float f, int seed) { return 0.0; }",
+      opencl:
+        "float domainWarp(float x, float w, float f, int seed) { return 0.0f; }",
+      unity:
+        "public static float DomainWarp(float x, float w = 0.1f, float f = 4, int seed = 1337) { return 0; }",
+      shadertoy: "return 0.0;",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

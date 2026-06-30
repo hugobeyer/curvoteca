@@ -31,7 +31,8 @@ export function sineInOutCurve(
       glsl: "float sineInOut(float x) { return 0.5 - 0.5 * cos(x * 3.14159265); }",
       vex: "float sineInOut(float x) { return 0.5 - 0.5 * cos(x * M_PI); }",
       ts: "function sineInOut(x: number): number { return 0.5 - 0.5 * Math.cos(x * Math.PI); }",
-      csharp: "float SineInOut(float x) { return 0.5f - 0.5f * MathF.Cos(x * 3.14159265f); }",
+      csharp:
+        "float SineInOut(float x) { return 0.5f - 0.5f * MathF.Cos(x * 3.14159265f); }",
       rust: "fn sine_in_out(x: f64) -> f64 { 0.5 - 0.5 * (x * std::f64::consts::PI).cos() }",
       hlsl: "float sineInOut(float x) { return 0.5 - 0.5 * cos(x * 3.14159265); }",
       wgsl: "fn sineInOut(x: f32) -> f32 { return 0.5 - 0.5 * cos(x * 3.14159265); }",
@@ -39,10 +40,23 @@ export function sineInOutCurve(
       css: "cubic-bezier(0.5, 0, 0.5, 1)",
       cpp: "float sineInOut(float x) { return 0.5f - 0.5f * std::cos(x * M_PI); }",
       lua: "function sineInOut(x) return 0.5 - 0.5 * math.cos(x * math.pi) end",
-      gdscript: "func sineInOut(x: float) -> float: return 0.5 - 0.5 * cos(x * PI)",
+      gdscript:
+        "func sineInOut(x: float) -> float: return 0.5 - 0.5 * cos(x * PI)",
       cuda: "__device__ float sineInOut(float x) { return 0.5f - 0.5f * cosf(x * 3.14159265f); }",
       c: "double sineInOut(double x) { return 0.5 - 0.5 * cos(x * M_PI); }",
-      json: "{\"name\": \"Sine In Out\", \"formula\": \"y = 0.5 - 0.5 * cos(pi * x)\", \"params\": {}}",
+      json: '{"name": "Sine In Out", "formula": "y = 0.5 - 0.5 * cos(pi * x)", "params": {}}',
+      metal:
+        "float sineInOut(float x) { return 0.5 - 0.5 * cos(x * 3.14159265); }",
+      opencl:
+        "float sineInOut(float x) { return 0.5f - 0.5f * cos(x * 3.14159265f); }",
+      unity:
+        "public static float SineInOut(float x) { return 0.5f - 0.5f * Mathf.Cos(x * 3.14159265f); }",
+      shadertoy: "return 0.5 - 0.5 * cos(x * 3.14159265);",
+      svelte:
+        "export const sineInOut = (x) => 0.5 - 0.5 * Math.cos(x * Math.PI);",
+      matlab: "y = @(x) 0.5 - 0.5 * cos(pi * x);",
+      excel: "=0.5-0.5*COS(A1*PI())",
+      desmos: "y = 0.5 - 0.5 \\cos\\left(\\pi x\\right)",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

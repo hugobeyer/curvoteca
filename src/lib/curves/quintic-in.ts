@@ -1,4 +1,8 @@
-import { DEFAULT_SAMPLING, quinticInKernel, type CurveKernel } from "../curveMath";
+import {
+  DEFAULT_SAMPLING,
+  quinticInKernel,
+  type CurveKernel,
+} from "../curveMath";
 import type { CurveDefinition } from "../../data/curves";
 
 export const defaultParams = {} as const;
@@ -27,7 +31,8 @@ export function quinticInCurve(
       glsl: "float quinticIn(float x) { float x2 = x * x; return x2 * x2 * x; }",
       vex: "float quinticIn(float x) { float x2 = x * x; return x2 * x2 * x; }",
       ts: "function quinticIn(x: number): number { const x2 = x * x; return x2 * x2 * x; }",
-      csharp: "float QuinticIn(float x) { float x2 = x * x; return x2 * x2 * x; }",
+      csharp:
+        "float QuinticIn(float x) { float x2 = x * x; return x2 * x2 * x; }",
       rust: "fn quintic_in(x: f64) -> f64 { let x2 = x * x; x2 * x2 * x }",
       hlsl: "float quinticIn(float x) { float x2 = x * x; return x2 * x2 * x; }",
       wgsl: "fn quinticIn(x: f32) -> f32 { let x2 = x * x; return x2 * x2 * x; }",
@@ -35,10 +40,22 @@ export function quinticInCurve(
       css: "cubic-bezier(0.42, 0, 1, 1)",
       cpp: "float quinticIn(float x) { float x2 = x * x; return x2 * x2 * x; }",
       lua: "function quinticIn(x) local x2 = x * x; return x2 * x2 * x end",
-      gdscript: "func quinticIn(x: float) -> float: var x2 = x * x; return x2 * x2 * x",
+      gdscript:
+        "func quinticIn(x: float) -> float: var x2 = x * x; return x2 * x2 * x",
       cuda: "__device__ float quinticIn(float x) { float x2 = x * x; return x2 * x2 * x; }",
       c: "double quinticIn(double x) { double x2 = x * x; return x2 * x2 * x; }",
-      json: "{\"name\": \"Quintic In\", \"formula\": \"y = x^5\", \"params\": {}}",
+      json: '{"name": "Quintic In", "formula": "y = x^5", "params": {}}',
+      metal:
+        "float quinticIn(float x) { float x2 = x * x; return x2 * x2 * x; }",
+      opencl:
+        "float quinticIn(float x) { float x2 = x * x; return x2 * x2 * x; }",
+      unity:
+        "public static float QuinticIn(float x) { float x2 = x * x; return x2 * x2 * x; }",
+      shadertoy: "return x*x*x*x*x;",
+      svelte: "export const quinticIn = (x) => x * x * x * x * x;",
+      matlab: "y = @(x) x^5;",
+      excel: "=A1^5",
+      desmos: "y = x^{5}",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

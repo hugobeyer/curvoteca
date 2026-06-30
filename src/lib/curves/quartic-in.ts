@@ -1,4 +1,8 @@
-import { DEFAULT_SAMPLING, quarticInKernel, type CurveKernel } from "../curveMath";
+import {
+  DEFAULT_SAMPLING,
+  quarticInKernel,
+  type CurveKernel,
+} from "../curveMath";
 import type { CurveDefinition } from "../../data/curves";
 
 export const defaultParams = {} as const;
@@ -35,10 +39,20 @@ export function quarticInCurve(
       css: "cubic-bezier(0.42, 0, 1, 1)",
       cpp: "float quarticIn(float x) { float x2 = x * x; return x2 * x2; }",
       lua: "function quarticIn(x) local x2 = x * x; return x2 * x2 end",
-      gdscript: "func quarticIn(x: float) -> float: var x2 = x * x; return x2 * x2",
+      gdscript:
+        "func quarticIn(x: float) -> float: var x2 = x * x; return x2 * x2",
       cuda: "__device__ float quarticIn(float x) { float x2 = x * x; return x2 * x2; }",
       c: "double quarticIn(double x) { double x2 = x * x; return x2 * x2; }",
-      json: "{\"name\": \"Quartic In\", \"formula\": \"y = x^4\", \"params\": {}}",
+      json: '{"name": "Quartic In", "formula": "y = x^4", "params": {}}',
+      metal: "float quarticIn(float x) { float x2 = x * x; return x2 * x2; }",
+      opencl: "float quarticIn(float x) { float x2 = x * x; return x2 * x2; }",
+      unity:
+        "public static float QuarticIn(float x) { float x2 = x * x; return x2 * x2; }",
+      shadertoy: "return x*x*x*x;",
+      svelte: "export const quarticIn = (x) => x * x * x * x;",
+      matlab: "y = @(x) x^4;",
+      excel: "=A1^4",
+      desmos: "y = x^{4}",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

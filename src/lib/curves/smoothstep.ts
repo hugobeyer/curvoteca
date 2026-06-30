@@ -45,10 +45,16 @@ export function smoothstepCurve(
       css: "cubic-bezier(0.42, 0, 0.58, 1)",
       cpp: "float smoothstep(float x) { return x * x * (3.0f - 2.0f * x); }",
       lua: "function smoothstep(x) return x * x * (3 - 2 * x) end",
-      gdscript: "func smoothstep(x: float) -> float: return x * x * (3.0 - 2.0 * x)",
+      gdscript:
+        "func smoothstep(x: float) -> float: return x * x * (3.0 - 2.0 * x)",
       cuda: "__device__ float smoothstep(float x) { return x * x * (3.0f - 2.0f * x); }",
       c: "double smoothstep(double x) { return x * x * (3.0 - 2.0 * x); }",
-      json: "{\"name\": \"Smoothstep\", \"formula\": \"y = 3x^2 - 2x^3\", \"params\": {}}",
+      json: '{"name": "Smoothstep", "formula": "y = 3x^2 - 2x^3", "params": {}}',
+      metal: "float smoothstep(float x) { return x * x * (3.0 - 2.0 * x); }",
+      opencl: "float smoothstep(float x) { return x * x * (3.0f - 2.0f * x); }",
+      unity:
+        "public static float Smoothstep(float x) { return x * x * (3 - 2 * x); }",
+      matlab: "y = @(x) x^2 * (3 - 2 * x);",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

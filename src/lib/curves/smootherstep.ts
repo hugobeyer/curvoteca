@@ -42,7 +42,8 @@ export function smootherstepCurve(
       glsl: "float smootherstep(float x) { return x*x*x*(x*(x*6.0 - 15.0) + 10.0); }",
       vex: "float smootherstep(float x) { return x*x*x*(x*(x*6 - 15) + 10); }",
       ts: "function smootherstep(x: number): number { return x * x * x * (x * (x * 6 - 15) + 10); }",
-      csharp: "float Smootherstep(float x) { return x * x * x * (x * (x * 6 - 15) + 10); }",
+      csharp:
+        "float Smootherstep(float x) { return x * x * x * (x * (x * 6 - 15) + 10); }",
       rust: "fn smootherstep(x: f64) -> f64 { x * x * x * (x * (x * 6.0 - 15.0) + 10.0) }",
       hlsl: "float smootherstep(float x) { return x * x * x * (x * (x * 6.0 - 15.0) + 10.0); }",
       wgsl: "fn smootherstep(x: f32) -> f32 { return x * x * x * (x * (x * 6.0 - 15.0) + 10.0); }",
@@ -50,10 +51,18 @@ export function smootherstepCurve(
       css: "cubic-bezier(0.42, 0, 0.58, 1)",
       cpp: "float smootherstep(float x) { return x * x * x * (x * (x * 6.0f - 15.0f) + 10.0f); }",
       lua: "function smootherstep(x) return x * x * x * (x * (x * 6 - 15) + 10) end",
-      gdscript: "func smootherstep(x: float) -> float: return x * x * x * (x * (x * 6.0 - 15.0) + 10.0)",
+      gdscript:
+        "func smootherstep(x: float) -> float: return x * x * x * (x * (x * 6.0 - 15.0) + 10.0)",
       cuda: "__device__ float smootherstep(float x) { return x * x * x * (x * (x * 6.0f - 15.0f) + 10.0f); }",
       c: "double smootherstep(double x) { return x * x * x * (x * (x * 6.0 - 15.0) + 10.0); }",
-      json: "{\"name\": \"Smootherstep\", \"formula\": \"y = 6x^5 - 15x^4 + 10x^3\", \"params\": {}}",
+      json: '{"name": "Smootherstep", "formula": "y = 6x^5 - 15x^4 + 10x^3", "params": {}}',
+      metal:
+        "float smootherstep(float x) { return x*x*x*(x*(x*6.0 - 15.0) + 10.0); }",
+      opencl:
+        "float smootherstep(float x) { return x * x * x * (x * (x * 6.0f - 15.0f) + 10.0f); }",
+      unity:
+        "public static float Smootherstep(float x) { return x * x * x * (x * (x * 6 - 15) + 10); }",
+      matlab: "y = @(x) x^3 * (x * (x * 6 - 15) + 10);",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

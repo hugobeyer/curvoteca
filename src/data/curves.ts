@@ -267,7 +267,15 @@ export type SnippetTarget =
   | "cuda"
   | "c"
   | "json"
-  | "svg";
+  | "svg"
+  | "metal"
+  | "opencl"
+  | "unity"
+  | "shadertoy"
+  | "svelte"
+  | "matlab"
+  | "excel"
+  | "desmos";
 
 /**
  * Future-slider hook. The UI ignores this field today; the detail page

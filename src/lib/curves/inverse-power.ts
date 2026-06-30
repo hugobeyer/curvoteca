@@ -35,7 +35,8 @@ export function inversePowerCurve(
       glsl: "float inversePower(float x, float p) { return 1.0 - pow(1.0 - x, p); }",
       vex: "float inversePower(float x; float p) { return 1 - pow(1 - x, p); }",
       ts: "function inversePower(x: number, p: number): number { return 1 - Math.pow(1 - x, p); }",
-      csharp: "float InversePower(float x, float p) { return 1.0f - MathF.Pow(1.0f - x, p); }",
+      csharp:
+        "float InversePower(float x, float p) { return 1.0f - MathF.Pow(1.0f - x, p); }",
       rust: "fn inverse_power(x: f64, p: f64) -> f64 { 1.0 - (1.0 - x).powf(p) }",
       hlsl: "float inversePower(float x, float p) { return 1.0 - pow(1.0 - x, p); }",
       wgsl: "fn inversePower(x: f32, p: f32) -> f32 { return 1.0 - pow(1.0 - x, p); }",
@@ -43,10 +44,20 @@ export function inversePowerCurve(
       css: "cubic-bezier(0, 0, 0.58, 1)",
       cpp: "float inversePower(float x, float p) { return 1.0f - std::pow(1.0f - x, p); }",
       lua: "function inversePower(x, p) return 1 - math.pow(1 - x, p) end",
-      gdscript: "func inverse_power(x: float, p: float) -> float: return 1 - pow(1 - x, p)",
+      gdscript:
+        "func inverse_power(x: float, p: float) -> float: return 1 - pow(1 - x, p)",
       cuda: "__device__ float inversePower(float x, float p) { return 1.0f - powf(1.0f - x, p); }",
       c: "double inverse_power(double x, double p) { return 1 - pow(1 - x, p); }",
-      json: "{\"name\": \"Inverse Power\", \"formula\": \"y = 1 - (1 - x)^p\", \"params\": {\"p\": 2}}",
+      json: '{"name": "Inverse Power", "formula": "y = 1 - (1 - x)^p", "params": {"p": 2}}',
+      metal:
+        "float inversePower(float x, float p) { return 1.0 - pow(1.0 - x, p); }",
+      opencl:
+        "float inversePower(float x, float p) { return 1.0f - pow(1.0f - x, p); }",
+      unity:
+        "public static float InversePower(float x, float p) { return 1.0f - Mathf.Pow(1.0f - x, p); }",
+      matlab: "y = @(x, p) 1 - (1 - x) ^ p;",
+      excel: "=1-POWER(1-A1,A2)",
+      desmos: "y=1-\\left(1-x\\right)^{p}",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

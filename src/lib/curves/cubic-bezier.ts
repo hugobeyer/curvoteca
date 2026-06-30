@@ -38,25 +38,44 @@ export function cubicBezierCurve(
     domain: [0, 1],
     range: [0, 1],
     tags: ["bezier", "css", "ease", "ui"],
-    useCases: ["css-animation", "ui-transitions", "easing-curves", "web-motion"],
+    useCases: [
+      "css-animation",
+      "ui-transitions",
+      "easing-curves",
+      "web-motion",
+    ],
     snippets: {
       equation: "y = cubicBezier(x1, y1, x2, y2)",
       js: "function cubicBezier(x, x1, y1, x2, y2) { /* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2); }",
       glsl: "float cubicBezier(float x, float x1, float y1, float x2, float y2) { /* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2); }",
       vex: "float cubicBezier(float x; float x1; float y1; float x2; float y2) { /* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2); }",
       ts: "function cubicBezier(x: number, x1: number, y1: number, x2: number, y2: number): number { /* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2); }",
-      csharp: "float CubicBezier(float x, float x1, float y1, float x2, float y2) { /* Newton-Raphson solve */ return CubicBezierImpl(x, x1, y1, x2, y2); }",
+      csharp:
+        "float CubicBezier(float x, float x1, float y1, float x2, float y2) { /* Newton-Raphson solve */ return CubicBezierImpl(x, x1, y1, x2, y2); }",
       rust: "fn cubicBezier(x: f64, x1: f64, y1: f64, x2: f64, y2: f64) -> f64 { /* Newton-Raphson solve */ cubic_bezier_impl(x, x1, y1, x2, y2) }",
       hlsl: "float cubicBezier(float x, float x1, float y1, float x2, float y2) { /* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2); }",
       wgsl: "fn cubicBezier(x: f32, x1: f32, y1: f32, x2: f32, y2: f32) -> f32 { /* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2); }",
-      python: "def cubicBezier(x, x1, y1, x2, y2): /* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2)",
+      python:
+        "def cubicBezier(x, x1, y1, x2, y2): /* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2)",
       css: "cubic-bezier(0.25, 0.1, 0.25, 1)",
       cpp: "float cubicBezier(float x, float x1, float y1, float x2, float y2) { /* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2); }",
       lua: "function cubicBezier(x, x1, y1, x2, y2) -- Newton-Raphson solve; return cubicBezierImpl(x, x1, y1, x2, y2) end",
-      gdscript: "func cubic_bezier(x: float, x1: float, y1: float, x2: float, y2: float) -> float: # Newton-Raphson solve; return cubicBezierImpl(x, x1, y1, x2, y2)",
+      gdscript:
+        "func cubic_bezier(x: float, x1: float, y1: float, x2: float, y2: float) -> float: # Newton-Raphson solve; return cubicBezierImpl(x, x1, y1, x2, y2)",
       cuda: "__device__ float cubicBezier(float x, float x1, float y1, float x2, float y2) { /* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2); }",
       c: "double cubicBezier(double x, double x1, double y1, double x2, double y2) { /* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2); }",
       json: '{"name": "Cubic Bezier", "formula": "y = bezier(x1, y1, x2, y2)", "params": {"x1": 0.25, "y1": 0.1, "x2": 0.25, "y2": 1}}',
+      metal:
+        "float cubicBezier(float x, float x1, float y1, float x2, float y2) { /* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2); }",
+      opencl:
+        "float cubicBezier(float x, float x1, float y1, float x2, float y2) { /* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2); }",
+      unity:
+        "public static float CubicBezier(float x, float x1, float y1, float x2, float y2) { /* Newton-Raphson solve */ return CubicBezierImpl(x, x1, y1, x2, y2); }",
+      shadertoy:
+        "/* Newton-Raphson solve */ return cubicBezierImpl(x, x1, y1, x2, y2);",
+      svelte:
+        "export const cubicBezier = (x, x1, y1, x2, y2) => /* Newton-Raphson solve */ cubicBezierImpl(x, x1, y1, x2, y2);",
+      matlab: "y = @(x, x1, y1, x2, y2) cubicBezierImpl(x, x1, y1, x2, y2);",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

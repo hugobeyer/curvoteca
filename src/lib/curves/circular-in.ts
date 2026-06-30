@@ -30,17 +30,31 @@ export function circularInCurve(
       ts: "function circularIn(x: number): number { return 1 - Math.sqrt(Math.max(0, 1 - x * x)); }",
       glsl: "float circularIn(float x) { return 1.0 - sqrt(max(0.0, 1.0 - x * x)); }",
       vex: "float circularIn(float x) { return 1 - sqrt(max(0, 1 - x * x)); }",
-      csharp: "float CircularIn(float x) { return 1 - MathF.Sqrt(Math.Max(0.0f, 1 - x * x)); }",
+      csharp:
+        "float CircularIn(float x) { return 1 - MathF.Sqrt(Math.Max(0.0f, 1 - x * x)); }",
       rust: "fn circular_in(x: f64) -> f64 { 1.0 - (1.0 - x * x).max(0.0).sqrt() }",
       hlsl: "float circularIn(float x) { return 1.0 - sqrt(max(0.0, 1.0 - x * x)); }",
       wgsl: "fn circular_in(x: f32) -> f32 { return 1.0 - sqrt(max(0.0, 1.0 - x * x)); }",
       python: "def circular_in(x): return 1 - math.sqrt(max(0, 1 - x * x))",
       cpp: "float circularIn(float x) { return 1.0f - std::sqrt(std::max(0.0f, 1.0f - x * x)); }",
       lua: "function circularIn(x) return 1 - math.sqrt(math.max(0, 1 - x * x)) end",
-      gdscript: "func circularIn(x: float) -> float: return 1 - sqrt(max(0, 1 - x * x))",
+      gdscript:
+        "func circularIn(x: float) -> float: return 1 - sqrt(max(0, 1 - x * x))",
       cuda: "__device__ float circularIn(float x) { return 1.0f - sqrtf(fmaxf(0.0f, 1.0f - x * x)); }",
       c: "double circularIn(double x) { return 1.0 - sqrt(fmax(0.0, 1.0 - x * x)); }",
       json: '{"name": "Circular In", "formula": "y = 1 - sqrt(1 - x^2)", "params": {}}',
+      metal:
+        "float circularIn(float x) { return 1.0 - sqrt(max(0.0, 1.0 - x * x)); }",
+      opencl:
+        "float circularIn(float x) { return 1.0f - sqrt(fmax(0.0f, 1.0f - x * x)); }",
+      unity:
+        "public static float CircularIn(float x) { return 1 - MathF.Sqrt(Math.Max(0.0f, 1 - x * x)); }",
+      shadertoy: "return 1.0 - sqrt(max(0.0, 1.0 - x * x));",
+      svelte:
+        "export const circularIn = (x) => 1 - Math.sqrt(Math.max(0, 1 - x * x));",
+      matlab: "y = @(x) 1 - sqrt(max(0, 1 - x * x));",
+      excel: "=1-SQRT(MAX(0,1-A1*A1))",
+      desmos: "y = 1 - \\sqrt{\\max(0, 1 - x^2)}",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

@@ -31,18 +31,34 @@ export function quinticOutCurve(
       glsl: "float quinticOut(float x) { float u = 1.0 - x; float u2 = u * u; return 1.0 - u2 * u2 * u; }",
       vex: "float quinticOut(float x) { float u = 1 - x; float u2 = u * u; return 1 - u2 * u2 * u; }",
       ts: "function quinticOut(x: number): number { const u = 1 - x; const u2 = u * u; return 1 - u2 * u2 * u; }",
-      csharp: "float QuinticOut(float x) { float u = 1.0f - x; float u2 = u * u; return 1.0f - u2 * u2 * u; }",
+      csharp:
+        "float QuinticOut(float x) { float u = 1.0f - x; float u2 = u * u; return 1.0f - u2 * u2 * u; }",
       rust: "fn quintic_out(x: f64) -> f64 { let u = 1.0 - x; let u2 = u * u; 1.0 - u2 * u2 * u }",
       hlsl: "float quinticOut(float x) { float u = 1.0 - x; float u2 = u * u; return 1.0 - u2 * u2 * u; }",
       wgsl: "fn quinticOut(x: f32) -> f32 { let u = 1.0 - x; let u2 = u * u; return 1.0 - u2 * u2 * u; }",
-      python: "def quintic_out(x): u = 1 - x; u2 = u * u; return 1 - u2 * u2 * u",
+      python:
+        "def quintic_out(x): u = 1 - x; u2 = u * u; return 1 - u2 * u2 * u",
       css: "cubic-bezier(0, 0, 0.58, 1)",
       cpp: "float quinticOut(float x) { float u = 1.0f - x; float u2 = u * u; return 1.0f - u2 * u2 * u; }",
       lua: "function quinticOut(x) local u = 1 - x; local u2 = u * u; return 1 - u2 * u2 * u end",
-      gdscript: "func quinticOut(x: float) -> float: var u = 1 - x; var u2 = u * u; return 1 - u2 * u2 * u",
+      gdscript:
+        "func quinticOut(x: float) -> float: var u = 1 - x; var u2 = u * u; return 1 - u2 * u2 * u",
       cuda: "__device__ float quinticOut(float x) { float u = 1.0f - x; float u2 = u * u; return 1.0f - u2 * u2 * u; }",
       c: "double quinticOut(double x) { double u = 1.0 - x; double u2 = u * u; return 1.0 - u2 * u2 * u; }",
-      json: "{\"name\": \"Quintic Out\", \"formula\": \"y = 1 - (1 - x)^5\", \"params\": {}}",
+      json: '{"name": "Quintic Out", "formula": "y = 1 - (1 - x)^5", "params": {}}',
+      metal:
+        "float quinticOut(float x) { float u = 1.0 - x; float u2 = u * u; return 1.0 - u2 * u2 * u; }",
+      opencl:
+        "float quinticOut(float x) { float u = 1.0f - x; float u2 = u * u; return 1.0f - u2 * u2 * u; }",
+      unity:
+        "public static float QuinticOut(float x) { float u = 1.0f - x; float u2 = u * u; return 1.0f - u2 * u2 * u; }",
+      shadertoy:
+        "float u = 1.0 - x; float u2 = u * u; return 1.0 - u2 * u2 * u;",
+      svelte:
+        "export const quinticOut = (x) => { const u = 1 - x; return 1 - u * u * u * u * u; };",
+      matlab: "y = @(x) 1 - (1 - x)^5;",
+      excel: "=1-(1-A1)^5",
+      desmos: "y = 1 - \\left(1 - x\\right)^{5}",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

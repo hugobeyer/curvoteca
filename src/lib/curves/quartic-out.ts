@@ -31,7 +31,8 @@ export function quarticOutCurve(
       glsl: "float quarticOut(float x) { float u = 1.0 - x; float u2 = u * u; return 1.0 - u2 * u2; }",
       vex: "float quarticOut(float x) { float u = 1 - x; float u2 = u * u; return 1 - u2 * u2; }",
       ts: "function quarticOut(x: number): number { const u = 1 - x; const u2 = u * u; return 1 - u2 * u2; }",
-      csharp: "float QuarticOut(float x) { float u = 1.0f - x; float u2 = u * u; return 1.0f - u2 * u2; }",
+      csharp:
+        "float QuarticOut(float x) { float u = 1.0f - x; float u2 = u * u; return 1.0f - u2 * u2; }",
       rust: "fn quartic_out(x: f64) -> f64 { let u = 1.0 - x; let u2 = u * u; 1.0 - u2 * u2 }",
       hlsl: "float quarticOut(float x) { float u = 1.0 - x; float u2 = u * u; return 1.0 - u2 * u2; }",
       wgsl: "fn quarticOut(x: f32) -> f32 { let u = 1.0 - x; let u2 = u * u; return 1.0 - u2 * u2; }",
@@ -39,10 +40,23 @@ export function quarticOutCurve(
       css: "cubic-bezier(0, 0, 0.58, 1)",
       cpp: "float quarticOut(float x) { float u = 1.0f - x; float u2 = u * u; return 1.0f - u2 * u2; }",
       lua: "function quarticOut(x) local u = 1 - x; local u2 = u * u; return 1 - u2 * u2 end",
-      gdscript: "func quarticOut(x: float) -> float: var u = 1 - x; var u2 = u * u; return 1 - u2 * u2",
+      gdscript:
+        "func quarticOut(x: float) -> float: var u = 1 - x; var u2 = u * u; return 1 - u2 * u2",
       cuda: "__device__ float quarticOut(float x) { float u = 1.0f - x; float u2 = u * u; return 1.0f - u2 * u2; }",
       c: "double quarticOut(double x) { double u = 1.0 - x; double u2 = u * u; return 1.0 - u2 * u2; }",
-      json: "{\"name\": \"Quartic Out\", \"formula\": \"y = 1 - (1 - x)^4\", \"params\": {}}",
+      json: '{"name": "Quartic Out", "formula": "y = 1 - (1 - x)^4", "params": {}}',
+      metal:
+        "float quarticOut(float x) { float u = 1.0 - x; float u2 = u * u; return 1.0 - u2 * u2; }",
+      opencl:
+        "float quarticOut(float x) { float u = 1.0f - x; float u2 = u * u; return 1.0f - u2 * u2; }",
+      unity:
+        "public static float QuarticOut(float x) { float u = 1.0f - x; float u2 = u * u; return 1.0f - u2 * u2; }",
+      shadertoy: "float u = 1.0 - x; float u2 = u * u; return 1.0 - u2 * u2;",
+      svelte:
+        "export const quarticOut = (x) => { const u = 1 - x; return 1 - u * u * u * u; };",
+      matlab: "y = @(x) 1 - (1 - x)^4;",
+      excel: "=1-(1-A1)^4",
+      desmos: "y = 1 - \\left(1 - x\\right)^{4}",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,

@@ -38,18 +38,28 @@ export function septicSmoothstepCurve(
       glsl: "float septicSmoothstep(float x) { float x2 = x*x, x3 = x2*x; return x3*x2*x2 * (35.0 - 84.0*x + 70.0*x2 - 20.0*x3); }",
       vex: "float septicSmoothstep(float x) { float x2 = x*x, x3 = x2*x; return x3*x2*x2 * (35 - 84*x + 70*x2 - 20*x3); }",
       ts: "function septicSmoothstep(x: number): number { const x2 = x * x, x3 = x2 * x; return x3 * x2 * x2 * (35 - 84 * x + 70 * x2 - 20 * x3); }",
-      csharp: "float SepticSmoothstep(float x) { float x2 = x * x, x3 = x2 * x; return x3 * x2 * x2 * (35 - 84 * x + 70 * x2 - 20 * x3); }",
+      csharp:
+        "float SepticSmoothstep(float x) { float x2 = x * x, x3 = x2 * x; return x3 * x2 * x2 * (35 - 84 * x + 70 * x2 - 20 * x3); }",
       rust: "fn septic_smoothstep(x: f64) -> f64 { let x2 = x * x; let x3 = x2 * x; x3 * x2 * x2 * (35.0 - 84.0 * x + 70.0 * x2 - 20.0 * x3) }",
       hlsl: "float septicSmoothstep(float x) { float x2 = x * x, x3 = x2 * x; return x3 * x2 * x2 * (35.0 - 84.0 * x + 70.0 * x2 - 20.0 * x3); }",
       wgsl: "fn septicSmoothstep(x: f32) -> f32 { let x2 = x * x; let x3 = x2 * x; return x3 * x2 * x2 * (35.0 - 84.0 * x + 70.0 * x2 - 20.0 * x3); }",
-      python: "def septic_smoothstep(x): x2 = x * x; x3 = x2 * x; return x3 * x2 * x2 * (35 - 84 * x + 70 * x2 - 20 * x3)",
+      python:
+        "def septic_smoothstep(x): x2 = x * x; x3 = x2 * x; return x3 * x2 * x2 * (35 - 84 * x + 70 * x2 - 20 * x3)",
       css: "cubic-bezier(0.4, 0, 0.6, 1)",
       cpp: "float septicSmoothstep(float x) { float x2 = x * x, x3 = x2 * x; return x3 * x2 * x2 * (35.0f - 84.0f * x + 70.0f * x2 - 20.0f * x3); }",
       lua: "function septicSmoothstep(x) local x2 = x * x; local x3 = x2 * x; return x3 * x2 * x2 * (35 - 84 * x + 70 * x2 - 20 * x3) end",
-      gdscript: "func septicSmoothstep(x: float) -> float: var x2 = x * x; var x3 = x2 * x; return x3 * x2 * x2 * (35.0 - 84.0 * x + 70.0 * x2 - 20.0 * x3)",
+      gdscript:
+        "func septicSmoothstep(x: float) -> float: var x2 = x * x; var x3 = x2 * x; return x3 * x2 * x2 * (35.0 - 84.0 * x + 70.0 * x2 - 20.0 * x3)",
       cuda: "__device__ float septicSmoothstep(float x) { float x2 = x * x, x3 = x2 * x; return x3 * x2 * x2 * (35.0f - 84.0f * x + 70.0f * x2 - 20.0f * x3); }",
       c: "double septicSmoothstep(double x) { double x2 = x*x, x3 = x2*x; return x3*x2*x2 * (35.0 - 84.0*x + 70.0*x2 - 20.0*x3); }",
-      json: "{\"name\": \"Septic Smoothstep\", \"formula\": \"y = 20x^7 - 70x^6 + 84x^5 - 35x^4\", \"params\": {}}",
+      json: '{"name": "Septic Smoothstep", "formula": "y = 20x^7 - 70x^6 + 84x^5 - 35x^4", "params": {}}',
+      metal:
+        "float septicSmoothstep(float x) { float x2 = x*x, x3 = x2*x; return x3*x2*x2 * (35.0 - 84.0*x + 70.0*x2 - 20.0*x3); }",
+      opencl:
+        "float septicSmoothstep(float x) { float x2 = x * x, x3 = x2 * x; return x3 * x2 * x2 * (35.0f - 84.0f * x + 70.0f * x2 - 20.0f * x3); }",
+      unity:
+        "public static float SepticSmoothstep(float x) { float x2 = x * x, x3 = x2 * x; return x3 * x2 * x2 * (35 - 84 * x + 70 * x2 - 20 * x3); }",
+      matlab: "y = @(x) x^3 * x^2 * x^2 * (35 - 84*x + 70*x^2 - 20*x^3);",
     },
     kernel,
     sampling: DEFAULT_SAMPLING,
