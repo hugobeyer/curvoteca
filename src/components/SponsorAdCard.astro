@@ -1,4 +1,6 @@
 ---
+import TopbarSponsor from "./TopbarSponsor.astro";
+
 export interface SponsorAd {
     id: string;
     name: string;
@@ -16,23 +18,15 @@ const { sponsor } = Astro.props as Props;
 ---
 
 <aside class="sponsor-ad-card">
-    <span class="sponsor-ad-label">{sponsor?.label ?? "Ad slot"}</span>
-    {
-        sponsor ? (
-            <a
-                class="sponsor-ad-link"
-                href={sponsor.url}
-                target="_blank"
-                rel="sponsored nofollow noopener noreferrer"
-            >
-                <strong>{sponsor.name}</strong>
-                <span>{sponsor.description}</span>
-            </a>
-        ) : (
-            <button class="sponsor-ad-link is-empty" type="button" data-rail-view="sponsor">
-                <strong>Available</strong>
-                <span>One small native card below the sponsor block.</span>
-            </button>
-        )
-    }
+    <div class="sponsor-ad-body">
+        <TopbarSponsor
+            sponsor={sponsor
+                ? {
+                      name: sponsor.name,
+                      description: sponsor.description,
+                      url: sponsor.url,
+                  }
+                : null}
+        />
+    </div>
 </aside>

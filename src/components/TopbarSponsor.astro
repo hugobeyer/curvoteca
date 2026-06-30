@@ -1,0 +1,77 @@
+---
+export interface TopbarSponsor {
+    name: string;
+    description: string;
+    url: string;
+}
+
+interface Props {
+    sponsor: TopbarSponsor | null;
+}
+
+const { sponsor } = Astro.props as Props;
+---
+
+<div class="topbar-sponsor">
+    <img class="topbar-sponsor-logo" src="/logo.svg" alt="" />
+    {
+        sponsor ? (
+            <a
+                class="topbar-sponsor-btn"
+                href={sponsor.url}
+                target="_blank"
+                rel="sponsored nofollow noopener noreferrer"
+                title={sponsor.description}
+            >
+                Supported by {sponsor.name}
+            </a>
+        ) : (
+            <button
+                class="topbar-sponsor-btn"
+                type="button"
+                data-rail-view="sponsor"
+            >
+                Sponsor this slot
+            </button>
+        )
+    }
+</div>
+
+<style>
+    .topbar-sponsor {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        height: 100%;
+    }
+    .topbar-sponsor-logo {
+        height: var(--topbar-sponsor-logo-h);
+        width: auto;
+        display: block;
+    }
+    .topbar-sponsor-btn {
+        height: 28px;
+        padding: 0 12px;
+        border: 0;
+        border-radius: var(--pill-radius);
+        background: color-mix(in srgb, var(--white) 6%, transparent);
+        color: var(--muted);
+        font-family: var(--font-family);
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-medium);
+        letter-spacing: var(--letter-spacing-wide);
+        text-transform: var(--text-transform-uppercase);
+        cursor: pointer;
+        transition:
+            background 0.12s ease,
+            color 0.12s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+    .topbar-sponsor-btn:hover {
+        background: color-mix(in srgb, var(--accent) 18%, transparent);
+        color: var(--white);
+    }
+</style>
