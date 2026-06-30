@@ -1,32 +1,43 @@
 ---
 import sponsorsData from "../data/sponsors.json";
 
-const topbarSlot = sponsorsData.slots?.topbar;
-const topbarSponsor = topbarSlot?.slotId
-    ? (sponsorsData.sponsors.find(
-          (s) => s.id === topbarSlot.slotId && s.active,
-      ) ?? null)
-    : null;
+interface SponsorEntry {
+    id: string;
+    name: string;
+    label: string;
+    description: string;
+    url: string;
+    active: boolean;
+}
+interface SponsorsData {
+    slots: { topbar?: { enabled?: boolean; sponsorId?: string | null } };
+    sponsors: SponsorEntry[];
+}
+const data = sponsorsData as unknown as SponsorsData;
+
+const topbarSlot = data.slots?.topbar;
 const showTopbarSponsor = topbarSlot?.enabled;
+const topbarSponsor = topbarSlot?.sponsorId
+    ? (data.sponsors.find((s) => s.id === topbarSlot.sponsorId && s.active) ??
+      null)
+    : null;
+
+const headLabel = topbarSponsor ? topbarSponsor.label : "Sponsor";
 ---
 
 <header class="bar" id="curve-bar">
-    <a class="brand" href="/" aria-label="Curvoteca home">
-        <img
-            class="brand-mark"
-            src="/favicon.svg"
-            alt=""
-            width="13"
-            height="13"
-        />
-        <h1>curvoteca</h1>
-    </a>
-    <div class="tools">
+    <div class="bar-cell bar-cell--brand">
+        <a class="brand" href="/" aria-label="Curvoteca home">
+            <img class="brand-logo" src="/logo.svg" alt="" />
+        </a>
+    </div>
+    <div class="bar-cell bar-cell--sponsor tools">
+        <img class="sponsor-logo" src="/logo.svg" alt="" />
         {
             showTopbarSponsor &&
                 (topbarSponsor ? (
                     <a
-                        class="sponsor-badge"
+                        class="sponsor-btn"
                         href={topbarSponsor.url}
                         target="_blank"
                         rel="sponsored nofollow noopener noreferrer"
@@ -36,7 +47,7 @@ const showTopbarSponsor = topbarSlot?.enabled;
                     </a>
                 ) : (
                     <button
-                        class="sponsor-badge"
+                        class="sponsor-btn"
                         type="button"
                         data-rail-view="sponsor"
                     >
@@ -48,38 +59,77 @@ const showTopbarSponsor = topbarSlot?.enabled;
 </header>
 
 <style>
-    .tools {
-        width: 100%;
-        min-width: 0;
-        justify-content: flex-end;
+    :global(.bar:has(.tools)) {
+        grid-template-columns: auto 1fr 33%;
+        align-items: stretch;
+        padding: 0;
+        gap: 0;
+        height: var(--topbar-height);
     }
-    .sponsor-badge {
-        height: 22px;
-        max-width: min(38vw, 220px);
-        padding: 0 8px;
+    .bar-cell {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+    }
+    .bar-cell--brand {
+        justify-content: flex-start;
+        padding: 0 6px;
+    }
+    .bar-cell--brand .brand {
+        height: 100%;
+        display: flex;
+        align-items: center;
+    }
+    .brand-logo {
+        height: var(--topbar-logo-h);
+        width: auto;
+        display: block;
+    }
+    .bar-cell--sponsor {
+        justify-content: flex-end;
+        grid-column: 3;
+        align-items: center;
+        align-self: stretch;
+        width: 100%;
+        max-width: none;
+        --layer-title: var(--text-card);
+        background:
+            var(--layer-body, none), var(--card-bg-gradient), var(--panel2);
+        border-radius: var(--pill-radius);
+        padding: 0 12px;
+        margin: 0 6px 0 0;
+    }
+    .sponsor-logo {
+        height: var(--topbar-sponsor-logo-h);
+        width: auto;
+        display: block;
+    }
+    .tools {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-width: 0;
+        height: 100%;
+        padding-right: 8px;
+    }
+    .sponsor-btn {
+        height: 28px;
+        padding: 0 12px;
         border: 0;
         border-radius: var(--pill-radius);
-        background: color-mix(in srgb, var(--white) 4%, transparent);
+        background: color-mix(in srgb, var(--white) 6%, transparent);
         color: var(--muted);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
         font-family: var(--font-family);
         font-size: var(--font-size-xs);
         font-weight: var(--font-weight-medium);
-        letter-spacing: var(--letter-spacing-mid);
-        line-height: 1;
-        text-decoration: none;
-        text-overflow: ellipsis;
+        letter-spacing: var(--letter-spacing-wide);
         text-transform: var(--text-transform-uppercase);
-        white-space: nowrap;
         cursor: pointer;
         transition:
             background 0.12s ease,
             color 0.12s ease;
     }
-    .sponsor-badge:hover {
+    .sponsor-btn:hover {
         background: color-mix(in srgb, var(--accent) 18%, transparent);
         color: var(--white);
     }

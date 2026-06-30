@@ -98,6 +98,11 @@
     --info-label-color: var(--muted);
     --info-label-opacity: 1;
     --info-key-color: var(--soft);
+
+    /* Topbar geometry */
+    --topbar-height: 40px;
+    --topbar-logo-h: 24px;
+    --topbar-sponsor-logo-h: 16px;
 }
 
 * {

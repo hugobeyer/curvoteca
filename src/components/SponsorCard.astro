@@ -18,14 +18,14 @@ interface Props {
 const { sponsorId, sponsors } = Astro.props as Props;
 
 const activeSponsor = sponsorId
-    ? sponsors.find((s) => s.id === sponsorId && s.active) ?? null
+    ? (sponsors.find((s) => s.id === sponsorId && s.active) ?? null)
     : null;
 
 const headLabel = activeSponsor ? activeSponsor.label : "Sponsor";
-const bodyTitle = activeSponsor ? activeSponsor.name : "Sponsor Curvoteca";
+const bodyTitle = activeSponsor ? activeSponsor.name : "Sponsor";
 const bodyDescription = activeSponsor
     ? activeSponsor.description
-    : "Reach procedural artists, creative coders, and technical artists.";
+    : "Reach procedural artists, creative coders, and technical artists. A small native slot in a focused curve reference.";
 ---
 
 <article
@@ -49,9 +49,16 @@ const bodyDescription = activeSponsor
                     {bodyTitle}
                 </a>
             ) : (
-                <div class="sponsor-cta">
-                    <span class="sponsor-title">{bodyTitle}</span>
-                    <span class="sponsor-desc">{bodyDescription}</span>
+                <div class="sponsor-empty" data-sponsor-empty>
+                    <img class="sponsor-body-logo" src="/logo2.svg" alt="" />
+                    <div class="sponsor-head">
+                        <span class="sponsor-title" data-sponsor-title>
+                            {bodyTitle}
+                        </span>
+                    </div>
+                    <span class="sponsor-desc" data-sponsor-desc>
+                        {bodyDescription}
+                    </span>
                     <button
                         class="sponsor-btn"
                         type="button"
@@ -63,91 +70,157 @@ const bodyDescription = activeSponsor
             )
         }
     </div>
-</article>
 
-<style>
-    .card.is-sponsor {
-        --layer-head: radial-gradient(
-            ellipse 80% 130% at 50% 100%,
-            color-mix(in srgb, var(--accent) 14%, transparent) 0%,
-            color-mix(in srgb, var(--accent) 8%, transparent) 25%,
-            color-mix(in srgb, var(--accent) 3%, transparent) 60%,
-            transparent 100%
-        );
-    }
-    .card.is-sponsor:hover {
-        --layer-head: radial-gradient(
-            ellipse 80% 130% at 50% 100%,
-            color-mix(in srgb, var(--accent2) 10%, transparent) 0%,
-            color-mix(in srgb, var(--accent2) 5%, transparent) 25%,
-            color-mix(in srgb, var(--accent2) 2%, transparent) 60%,
-            transparent 100%
-        );
-    }
-    .sponsor-head-title {
-        padding: 0 8px;
-        font-size: var(--font-size-xs);
-        letter-spacing: var(--letter-spacing-wide);
-        text-transform: var(--text-transform-uppercase);
-        color: var(--muted);
-        opacity: 0.6;
-    }
-    .sponsor-body {
-        display: grid;
-        place-items: center;
-        align-content: center;
-        gap: 8px;
-        padding: 12px;
-        min-width: 0;
-        overflow: hidden;
-    }
-    .sponsor-cta {
-        display: grid;
-        gap: 6px;
-        text-align: center;
-        max-width: 100%;
-    }
-    .sponsor-title {
-        font-size: var(--font-size-sm);
-        font-weight: var(--font-weight-medium);
-        letter-spacing: var(--letter-spacing-normal);
-        color: var(--text-soft);
-        line-height: 1.2;
-    }
-    .sponsor-desc {
-        font-size: var(--font-size-xs);
-        letter-spacing: var(--letter-spacing-tight);
-        color: var(--muted);
-        line-height: 1.3;
-    }
-    .sponsor-btn {
-        justify-self: center;
-        height: 26px;
-        padding: 0 10px;
-        border: 0;
-        border-radius: var(--pill-radius);
-        background: color-mix(in srgb, var(--white) 6%, transparent);
-        color: var(--muted);
-        font-family: var(--font-family);
-        font-size: var(--font-size-xs);
-        font-weight: var(--font-weight-medium);
-        letter-spacing: var(--letter-spacing-mid);
-        text-transform: var(--text-transform-uppercase);
-        cursor: pointer;
-        transition: background 0.12s ease, color 0.12s ease;
-    }
-    .sponsor-btn:hover {
-        background: color-mix(in srgb, var(--accent) 18%, transparent);
-        color: var(--white);
-    }
-    .sponsor-link {
-        color: var(--accent);
-        font-size: var(--font-size-sm);
-        letter-spacing: var(--letter-spacing-normal);
-        text-decoration: underline;
-        text-align: center;
-    }
-    .sponsor-link:hover {
-        color: var(--white);
-    }
-</style>
+    <style>
+        .card.is-sponsor {
+            --layer-head: radial-gradient(
+                ellipse 80% 130% at 50% 100%,
+                color-mix(in srgb, var(--accent) 14%, transparent) 0%,
+                color-mix(in srgb, var(--accent) 8%, transparent) 25%,
+                color-mix(in srgb, var(--accent) 3%, transparent) 60%,
+                transparent 100%
+            );
+        }
+        .card.is-sponsor:hover {
+            --layer-head: radial-gradient(
+                ellipse 80% 130% at 50% 100%,
+                color-mix(in srgb, var(--accent2) 10%, transparent) 0%,
+                color-mix(in srgb, var(--accent2) 5%, transparent) 25%,
+                color-mix(in srgb, var(--accent2) 2%, transparent) 60%,
+                transparent 100%
+            );
+        }
+        .sponsor-head-title {
+            padding: 0 8px;
+            font-size: var(--font-size-xs);
+            letter-spacing: var(--letter-spacing-wide);
+            text-transform: var(--text-transform-uppercase);
+            color: var(--muted);
+            opacity: 0.6;
+        }
+        .sponsor-body {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: right;
+            justify-content: flex-end;
+            gap: 24px;
+            padding: 32px;
+            min-width: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        .sponsor-body-logo {
+            position: absolute;
+            top: 32px;
+            left: 24px;
+            height: 64%;
+
+            max-width: 100%;
+            width: auto;
+            display: block;
+            opacity: 0.02;
+            pointer-events: none;
+        }
+        .sponsor-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: flex-end;
+            row-gap: 8px;
+            text-align: right;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            margin-bottom: 14px;
+        }
+        .sponsor-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+        }
+        .sponsor-title {
+            display: block;
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-medium);
+            letter-spacing: var(--letter-spacing-wide);
+            text-transform: var(--text-transform-uppercase);
+            color: var(--text-soft);
+            opacity: 0.6;
+            line-height: 1.15;
+            text-align: left;
+            align-self: flex-start;
+            white-space: nowrap;
+        }
+        .sponsor-desc {
+            display: block;
+            font-size: var(--font-size-xs);
+            letter-spacing: var(--letter-spacing-tight);
+            color: var(--muted);
+            line-height: 1.4;
+            text-align: justify;
+            hyphens: auto;
+        }
+        .sponsor-btn {
+            align-self: stretch;
+            height: 28px;
+            padding: 0 12px;
+            border: 0;
+            border-radius: var(--pill-radius);
+            background: color-mix(in srgb, var(--white) 6%, transparent);
+            color: var(--muted);
+            font-family: var(--font-family);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-medium);
+            letter-spacing: var(--letter-spacing-wide);
+            text-transform: var(--text-transform-uppercase);
+            cursor: pointer;
+            transition:
+                background 0.12s ease,
+                color 0.12s ease;
+        }
+        .sponsor-btn:hover {
+            background: color-mix(in srgb, var(--accent) 18%, transparent);
+            color: var(--white);
+        }
+        .sponsor-link {
+            color: var(--accent);
+            font-size: var(--font-size-sm);
+            letter-spacing: var(--letter-spacing-normal);
+            text-decoration: underline;
+            text-align: center;
+        }
+        .sponsor-link:hover {
+            color: var(--white);
+        }
+    </style>
+
+    <script>
+        function syncSponsorCellWidth() {
+            const cells = document.querySelectorAll<HTMLElement>(
+                "[data-sponsor-empty]",
+            );
+            cells.forEach((cell) => {
+                const card = cell.closest<HTMLElement>(".card.is-sponsor");
+                if (!card) return;
+                const body = cell.parentElement;
+                const bodyPad = body ? 24 : 0;
+                const cardW = card.clientWidth;
+                const cardH = card.clientHeight;
+                cell.style.width = `${cardW - bodyPad}px`;
+                cell.style.paddingLeft = `${cardW * 0.12}px`;
+                cell.style.marginRight = `${cardW * 0.06}px`;
+                cell.style.marginBottom = `${Math.max(14, cardH * 0.08)}px`;
+            });
+        }
+        syncSponsorCellWidth();
+        window.addEventListener("resize", syncSponsorCellWidth);
+        new MutationObserver(syncSponsorCellWidth).observe(document.body, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+        });
+    </script>
+</article>
