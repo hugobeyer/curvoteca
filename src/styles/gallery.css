@@ -759,6 +759,7 @@
     --ramp-pos-alpha: 0.92;
     --ramp-neg-alpha: 0.92;
     --ramp-frame-alpha: 0.06;
+    --ramp-gradient-floor: 0.25;
 }
 .curve-view .curve-view-canvas {
     position: absolute;

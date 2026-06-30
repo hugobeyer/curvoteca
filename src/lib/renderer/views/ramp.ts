@@ -55,6 +55,8 @@ export type RampTokens = {
   negAlpha: number;
   // Frame / surrounding tint.
   frameAlpha: number;
+  // Gradient floor: minimum alpha at Y=0 (bottom of ramp strip).
+  gradientFloor: number;
 };
 
 export type RampColors = {
@@ -79,6 +81,7 @@ const RAMP_CSS_VARS: Readonly<Record<keyof RampTokens, string>> = {
   posAlpha: "--ramp-pos-alpha",
   negAlpha: "--ramp-neg-alpha",
   frameAlpha: "--ramp-frame-alpha",
+  gradientFloor: "--ramp-gradient-floor",
 };
 
 const RAMP_COLOR_VARS: Readonly<Record<keyof RampColors, string>> = {
@@ -257,7 +260,7 @@ export const renderRamp = ({
         const topY = Math.min(a.y, b.y);
         const grad = ctx.createLinearGradient(midX, topY, midX, zeroScreenY);
         grad.addColorStop(0, withAlpha(color, (a1 + a2) / 2));
-        grad.addColorStop(1, withAlpha(color, 0));
+        grad.addColorStop(1, withAlpha(color, tokens.gradientFloor));
         ctx.fillStyle = grad;
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
@@ -271,7 +274,7 @@ export const renderRamp = ({
         const mx = (a.x + b.x) / 2;
         const g1 = ctx.createLinearGradient(a.x, a.y, a.x, zeroScreenY);
         g1.addColorStop(0, withAlpha(color, a1));
-        g1.addColorStop(1, withAlpha(color, 0));
+        g1.addColorStop(1, withAlpha(color, tokens.gradientFloor));
         ctx.fillStyle = g1;
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
@@ -282,7 +285,7 @@ export const renderRamp = ({
         ctx.fill();
         const g2 = ctx.createLinearGradient(b.x, b.y, b.x, zeroScreenY);
         g2.addColorStop(0, withAlpha(color, a2));
-        g2.addColorStop(1, withAlpha(color, 0));
+        g2.addColorStop(1, withAlpha(color, tokens.gradientFloor));
         ctx.fillStyle = g2;
         ctx.beginPath();
         ctx.moveTo(mx, b.y);
