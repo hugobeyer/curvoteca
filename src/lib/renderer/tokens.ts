@@ -58,6 +58,35 @@ export type RendererTokens = {
   // Motion view: ms per sweep of the probe across the polyline's X
   // span. One cycle = probe moves from points[0].x to points[last].x.
   motionPeriodMs: number;
+  // Motion view: glow alpha multiplier range, scaled by the
+  // probe's world velocity (|dy/dx| at the probe's X). Flat
+  // sections (|dy/dx| = 0) → min; steep sections (|dy/dx| >=
+  // motionGlowVelocityScale) → max. The halo's three color-stop
+  // alphas are multiplied by lerp(min, max, min(1, |dy/dx| / scale)).
+  motionGlowMin: number;
+  motionGlowMax: number;
+  // World-velocity scale for the glow ramp. The curve's |dy/dx|
+  // is divided by this value (and clamped to 1) to produce the
+  // glow multiplier's t parameter. 1.0 is a reasonable default:
+  // a 45° slope gives t=1 (max glow), a 30° slope gives t≈0.58.
+  motionGlowVelocityScale: number;
+  // Motion view: focus disc radius range, in screen pixels,
+  // tightened by velocity. The disc around the probe that
+  // restores the curve's full intensity is wide on flat sections
+  // (radius = max) and tight on steep sections (radius = min).
+  // The bright band follows the probe more closely when the
+  // curve is moving fast, so the dim / bright transition feels
+  // like motion blur, not a static spotlight.
+  motionFocusRadiusMin: number;
+  motionFocusRadiusMax: number;
+  // Motion view: focus stroke line-width range, scaled by
+  // velocity. The re-stroke inside the focus disc is thinner
+  // on flat sections (width = min) and thicker on steep sections
+  // (width = max). Pairs with the alpha / radius ramp so the
+  // probe reads as a moving "slug" of intensity, not a fixed
+  // marker.
+  motionFocusLineWidthMin: number;
+  motionFocusLineWidthMax: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -118,6 +147,18 @@ const DEFAULTS = {
 
   // Motion view: ms per sweep of the probe across the polyline.
   motionPeriodMs: 1200,
+  // Motion view: glow range, scaled by the probe's Y. Below
+  // the curve's range bottom = min; above the top = max.
+  motionGlowMin: 0.01,
+  motionGlowMax: 1.4,
+  // Motion view: world-velocity scale for the glow ramp.
+  motionGlowVelocityScale: 1.0,
+  // Motion view: focus disc radius range, tightened by velocity.
+  motionFocusRadiusMin: 24,
+  motionFocusRadiusMax: 4,
+  // Motion view: focus stroke line-width range, scaled by velocity.
+  motionFocusLineWidthMin: 1.25,
+  motionFocusLineWidthMax: 3.5,
 } as const;
 
 const JS_ONLY_KEYS: ReadonlySet<keyof RendererTokens> = new Set([
@@ -163,6 +204,15 @@ const JS_ONLY_KEYS: ReadonlySet<keyof RendererTokens> = new Set([
   "fitPadding",
   // Motion view period (no CSS source; read via readTokens -> DEFAULTS).
   "motionPeriodMs",
+  // Motion view glow range (no CSS source; read via readTokens -> DEFAULTS).
+  "motionGlowMin",
+  "motionGlowMax",
+  "motionGlowVelocityScale",
+  // Motion view focus ramp (no CSS source; read via readTokens -> DEFAULTS).
+  "motionFocusRadiusMin",
+  "motionFocusRadiusMax",
+  "motionFocusLineWidthMin",
+  "motionFocusLineWidthMax",
 ]);
 
 // ---------------------------------------------------------------------------

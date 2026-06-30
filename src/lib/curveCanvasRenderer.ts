@@ -500,6 +500,18 @@ export const createCurveCanvasRenderer = (
           screen,
           screenPoint: sp,
         });
+      } else if (motionMode) {
+        // The motion view's curve lives in the per-frame path so the
+        // probe can vignette it (dim far, bright near). The static
+        // layer here draws only the grid chrome; the curve is drawn
+        // every frame by renderMotion with the distance-to-probe
+        // alpha modulation baked in.
+        void points;
+        void metrics;
+        void colors;
+        void tokens;
+        void state;
+        void visible;
       } else {
         drawCurve({
           ctx,

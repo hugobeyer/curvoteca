@@ -122,6 +122,10 @@ export type DrawCurveArgs = {
   colors: RendererColors;
   tokens: RendererTokens;
   screenPoint: (point: CurvePoint) => CurvePoint;
+  /** Optional override for the curve's stroke color. Defaults to `colors.curve`. */
+  curveColor?: string;
+  /** Optional override for the curve's stroke width. Defaults to `tokens.curveLineWidth`. */
+  curveLineWidth?: number;
 };
 
 export const drawCurve = ({
@@ -130,16 +134,19 @@ export const drawCurve = ({
   metrics,
   visible,
   state,
+  screen,
   colors,
   tokens,
   screenPoint,
+  curveColor,
+  curveLineWidth,
 }: DrawCurveArgs) => {
   if (points.length < 2) return;
   // Reset to a known-clean state so the curve is always solid: no shadow,
   // no filter, no globalAlpha carry-over from a previous draw call.
   resetCtx(ctx);
-  ctx.strokeStyle = colors.curve;
-  ctx.lineWidth = tokens.curveLineWidth;
+  ctx.strokeStyle = curveColor ?? colors.curve;
+  ctx.lineWidth = curveLineWidth ?? tokens.curveLineWidth;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.beginPath();
