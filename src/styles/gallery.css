@@ -1646,6 +1646,26 @@
     border-top: 1px solid var(--line-soft);
     margin: 8px 0;
 }
+.detail-share-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 8px 2px;
+    border-top: 1px solid var(--line-soft);
+    margin-top: 2px;
+}
+.detail-share-btn {
+    margin-left: 0;
+}
+.detail-share-btn.is-copied {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    pointer-events: none;
+}
+.detail-share-btn[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
 .view-overlay-content h3 {
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-regular);

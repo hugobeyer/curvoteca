@@ -414,6 +414,12 @@ const ogTitle = curveForSeo
                         </pre>
                     </div>
                     <SnippetOptionBar />
+                    <div class="detail-share-row" aria-label="Share actions">
+                        <button class="link-toggle detail-share-btn" type="button" data-share-link title="Copy curve URL" aria-label="Copy curve link to clipboard">Copy link</button>
+                        <button class="link-toggle detail-share-btn" type="button" data-share-native title="Share via system" aria-label="Share curve">Share</button>
+                        <button class="link-toggle detail-share-btn" type="button" data-share-markdown title="Copy markdown link" aria-label="Copy link as markdown">Markdown</button>
+                        <button class="link-toggle detail-share-btn" type="button" data-share-embed disabled title="Embeds coming soon" aria-label="Embed curve">Embed</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1189,6 +1195,49 @@ const ogTitle = curveForSeo
                                     JSON.stringify(opts),
                                 );
                             }
+
+                            // --- share row wiring ---
+                            (function () {
+                                var shareRow = document.querySelector(".detail-share-row");
+                                if (!shareRow) return;
+                                var shareUrl = window.location.origin + "/curve/" + entry.id + "/";
+                                var linkBtn = shareRow.querySelector("[data-share-link]");
+                                var nativeBtn = shareRow.querySelector("[data-share-native]");
+                                var mdBtn = shareRow.querySelector("[data-share-markdown]");
+                                var ov = window.__detailOverlay;
+                                if (nativeBtn && typeof navigator.share !== "function") {
+                                    nativeBtn.style.display = "none";
+                                }
+                                if (linkBtn) {
+                                    linkBtn.onclick = function (e) {
+                                        e.preventDefault();
+                                        if (!ov) return;
+                                        ov.copyDetailCode(shareUrl).then(function () {
+                                            ov.flashCopied(linkBtn);
+                                        });
+                                    };
+                                }
+                                if (nativeBtn && typeof navigator.share === "function") {
+                                    nativeBtn.onclick = function (e) {
+                                        e.preventDefault();
+                                        navigator.share({
+                                            title: entry.name + " \u2014 Curvoteca",
+                                            text: entry.summary || "Curve reference from Curvoteca",
+                                            url: shareUrl
+                                        }).catch(function () {});
+                                    };
+                                }
+                                if (mdBtn) {
+                                    mdBtn.onclick = function (e) {
+                                        e.preventDefault();
+                                        if (!ov) return;
+                                        var md = "[" + entry.name + " \u2014 Curvoteca](" + shareUrl + ")";
+                                        ov.copyDetailCode(md).then(function () {
+                                            ov.flashCopied(mdBtn);
+                                        });
+                                    };
+                                }
+                            })();
 
                             openOverlay("detail");
                             syncCurveUrl(
