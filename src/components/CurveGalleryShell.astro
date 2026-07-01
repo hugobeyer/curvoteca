@@ -21,6 +21,7 @@ import SponsorAdCard from "./SponsorAdCard.astro";
 import CopyIcon from "./CopyIcon.astro";
 import SnippetOptionBar from "./SnippetOptionBar.astro";
 import { curves } from "../data/curves";
+import { LANG_ICONS, LANG_LABELS } from "../lib/langIcons";
 import popupContent from "../data/popup-content.json";
 import sponsorsData from "../data/sponsors.json";
 import {
@@ -32,6 +33,21 @@ import {
 } from "../lib/curveSeo";
 
 const { about: aboutContent, sponsor: sponsorContent } = popupContent;
+
+// Dynamically derive implemented languages from curves that have snippets.
+const implementedLangSet = new Set<string>();
+for (const c of curves) {
+    if (c.snippets) {
+        for (const key of Object.keys(c.snippets)) {
+            if (key !== "equation") {
+                implementedLangSet.add(key);
+            }
+        }
+    }
+}
+const implementedLanguages = Array.from(implementedLangSet).sort((a, b) =>
+    (LANG_LABELS[a] ?? a).localeCompare(LANG_LABELS[b] ?? b),
+);
 type Sponsor = {
   id: string;
   name: string;
@@ -355,7 +371,9 @@ const ogTitle = curveForSeo
                     <h2>{aboutContent.title}</h2>
                     <p>{aboutContent.body}</p>
                     <ul class="lang-list">
-                        {aboutContent.languages.map((lang) => <li>{lang}</li>)}
+                        {implementedLanguages.map((key) => (
+                            <li class="chip"><span set:html={LANG_ICONS[key] ?? ""}></span> <span>{LANG_LABELS[key] ?? key}</span></li>
+                        ))}
                     </ul>
                     <p>{aboutContent.closing}</p>
                     <p class="micro note">

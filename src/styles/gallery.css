@@ -1628,12 +1628,19 @@
     color: var(--muted);
     display: inline-flex;
     align-items: center;
+    gap: var(--chip-gap);
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-regular);
     letter-spacing: var(--letter-spacing-mid);
     text-transform: var(--text-transform-uppercase);
     line-height: var(--line-height-compact);
     white-space: nowrap;
+}
+.lang-list li.chip {
+    text-transform: none;
+}
+.lang-list li.chip svg {
+    flex-shrink: 0;
 }
 
 .overlay-sep {
