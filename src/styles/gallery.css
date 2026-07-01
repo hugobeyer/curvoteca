@@ -252,7 +252,7 @@
     align-items: center;
     /* Reserve space for the absolutely-positioned actions on the right
        so the title doesn't overlap them. */
-    padding-right: 60px;
+    padding-right: calc(var(--card-head-h) * 4 + 3px);
 }
 
 .card p {
@@ -276,46 +276,17 @@
     z-index: 9;
 }
 
-/* Cell: the 1:1 square that holds each action. Sized by the actions row. */
+/* Cell: square action button sized by --card-head-h. Icon sits inside with padding. */
 .actions .action {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100%;
-    aspect-ratio: 1;
-    padding: 2px;
+    width: var(--card-head-h);
+    height: var(--card-head-h);
+    padding: 0;
+    flex-shrink: 0;
 }
 
-/* Dense grid: at 4+ columns the card header is smaller, so the
-   title bar and action icons recurse 20% smaller. The values
-   come from --card-head-h (22px) and the action padding (3px).
-   Scaling both by 0.8 keeps the action cells square at the new
-   size. The CSS variable override cascades into the icon's
-   aspect-ratio sizing automatically. */
-.grid[data-cols="4"] .card,
-.grid[data-cols="5"] .card,
-.grid[data-cols="6"] .card,
-.grid[data-cols="7"] .card,
-.grid[data-cols="8"] .card {
-    --card-head-h: 19.2px;
-}
-/* Action cells: inner padding recurses tighter at each column
-   step so icons pack closer horizontally. Each step reduces by
-   ~0.6px. At 8 cols the cell is 1.2px on each side (almost
-   touching the icon edge). The icons themselves stay readable
-   because the cells are still square and the icons inherit
-   the smaller head height. */
-.grid[data-cols="4"] .actions .action {
-    padding: 1.8px;
-}
-.grid[data-cols="5"] .actions .action,
-.grid[data-cols="6"] .actions .action {
-    padding: 1.4px;
-}
-.grid[data-cols="7"] .actions .action,
-.grid[data-cols="8"] .actions .action {
-    padding: 1px;
-}
 /* Title text: keep a readable size even at 4+ cols.
    Only the tracking adjusts; the size stays the same as the base
    .card-title so wheel-resize doesn't change font sizing. */
@@ -335,7 +306,8 @@
     height: 100%;
     border: none;
     border-radius: 0;
-    padding: 0;
+    padding: var(--icon-inset);
+    box-sizing: border-box;
     margin: 0;
     background: transparent;
     color: inherit;

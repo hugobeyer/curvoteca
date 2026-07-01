@@ -66,7 +66,8 @@
        ratio locks drag w/h. */
     --card-min-w: 240px;
     --card-row-h: 170px;
-    --card-head-h: 24px;
+    --card-head-h: 22px;
+    --icon-inset: 3px;
     --card-ratio: 1.2;
     --card-min-w-min: 182px;
     --card-min-w-max: 378px;
