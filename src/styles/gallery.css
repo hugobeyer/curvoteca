@@ -1425,22 +1425,30 @@
 .detail-controls {
     position: absolute;
     right: 6px;
-    bottom: 6px;
+    top: 6px;
     z-index: 6;
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 4px;
+    gap: 3px;
 }
 .detail-control {
-    height: 24px;
-    padding: 0 6px;
-    gap: 4px;
-    font-size: var(--font-size-xs);
+    height: 18px;
+    padding: 0 5px;
+    gap: 3px;
+    font-size: 10px;
     letter-spacing: var(--letter-spacing-mid);
+    opacity: 0.55;
+    border: 1px solid color-mix(in srgb, var(--white) 15%, transparent);
+    border-radius: 3px;
+    background: transparent;
+    transition: opacity 0.15s ease;
+}
+.detail-control:hover {
+    opacity: 1;
 }
 .detail-control[disabled] {
-    opacity: 0.4;
+    opacity: 0.25;
     cursor: not-allowed;
 }
 .detail-tabs-row {

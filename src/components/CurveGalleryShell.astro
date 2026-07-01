@@ -1000,26 +1000,7 @@ const ogTitle = curveForSeo
                                     });
                                     relBody.appendChild(relWrap);
                                 }
-                                // f. View modes (informational only)
-                                if (
-                                    Array.isArray(entry.views) &&
-                                    entry.views.length
-                                ) {
-                                    var vmBody = mkSection("views");
-                                    var vmWrap = document.createElement("div");
-                                    vmWrap.className = "detail-view-modes";
-                                    entry.views.forEach(function (m) {
-                                        var isDef = m === entry.defaultView;
-                                        vmWrap.appendChild(
-                                            mkChip(
-                                                m,
-                                                "detail-view-mode",
-                                                isDef ? "is-default" : null,
-                                            ),
-                                        );
-                                    });
-                                    vmBody.appendChild(vmWrap);
-                                }
+
                             }
 
                             var vpEl = document.getElementById(
