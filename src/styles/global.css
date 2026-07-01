@@ -509,7 +509,7 @@ p {
 .tray-head {
     display: flex;
     align-items: baseline;
-    gap: 5px;
+    gap: 3px;
     min-width: 0;
 }
 
@@ -531,8 +531,8 @@ p {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 6px;
-    padding: 0 6px;
+    gap: 4px;
+    padding: 0 4px;
     color: var(--soft);
     pointer-events: none;
 }
@@ -540,7 +540,7 @@ p {
 .tray-empty-hint b {
     color: var(--muted);
     font-weight: var(--font-weight-bold);
-    padding: 0 3px;
+    padding: 0 2px;
     border-radius: 2px;
     background: color-mix(in srgb, var(--white) 5%, transparent);
 }
@@ -605,7 +605,7 @@ p {
     background: var(--mini-card-bg);
     box-shadow: inset 0 0 0 1px
         color-mix(in srgb, var(--line2) 39%, transparent);
-    padding: 5px;
+    padding: 3px;
     min-width: 0;
 }
 
