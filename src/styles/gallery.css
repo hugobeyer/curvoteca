@@ -13,6 +13,13 @@
        on the curve viewport and card meta). */
     --text-label-inset-x: 12px;
     --text-label-inset-y: 8px;
+    /* Pager shadow tokens: close (tight drop) + wide (broad ambient).
+       High alpha so the floating bar separates clearly from the wall. */
+    --pager-shadow-close: 0 4px 18px
+        color-mix(in srgb, var(--black) 60%, transparent);
+    --pager-shadow-wide: 0 36px 96px
+        color-mix(in srgb, var(--black) 50%, transparent);
+    --pager-shadow: var(--pager-shadow-close), var(--pager-shadow-wide);
     /* Card body gradient stack. Two static radial highlights (curve2
        top-left + accent bottom-right) that give cards their depth.
        Reused by the pager so the bottom bar picks up the same
@@ -866,12 +873,12 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 4px 6px;
+    padding: 6px 8px;
     border-radius: 5px;
     background:
         var(--card-bg-gradient),
         color-mix(in srgb, var(--panel2) 94%, transparent);
-    box-shadow: var(--shadow-panel);
+    box-shadow: var(--pager-shadow);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     user-select: none;
@@ -902,7 +909,8 @@
 .pager-compare,
 .pager-wrap,
 .pager-view,
-.pager-grid {
+.pager-grid,
+.pager-cols {
     height: 26px;
     padding: 0 8px;
 }
@@ -944,7 +952,7 @@
     letter-spacing: var(--letter-spacing-wide);
     text-transform: var(--text-transform-uppercase);
 }
-/* The pager cluster's three cycle buttons (wrap, view-mode, view-grid)
+/* The pager cluster's four cycle buttons (wrap, view-mode, view-grid, cols)
    use .link-toggle styling but are not on/off toggles. Suppress the
    .link-toggle[aria-pressed="true"] accent background so they keep the
    same neutral link-toggle chrome in both states. The :hover override
@@ -953,13 +961,15 @@
    .link-toggle:hover and the button would never highlight. */
 .pager-wrap[aria-pressed="true"],
 .pager-view[aria-pressed="true"],
-.pager-grid[aria-pressed="true"] {
+.pager-grid[aria-pressed="true"],
+.pager-cols[aria-pressed="true"] {
     color: var(--muted);
     background: color-mix(in srgb, var(--white) 4.5%, transparent);
 }
 .pager-wrap:hover,
 .pager-view:hover,
-.pager-grid:hover {
+.pager-grid:hover,
+.pager-cols:hover {
     color: var(--white);
     background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
