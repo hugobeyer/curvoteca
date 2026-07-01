@@ -443,12 +443,14 @@ const ogTitle = curveForSeo
                             id="detail-overlay-code">
                         </pre>
                     </div>
-                    <SnippetOptionBar />
-                    <div class="detail-share-row" aria-label="Share actions">
-                        <button class="link-toggle detail-share-btn" type="button" data-share-link title="Copy curve URL" aria-label="Copy curve link to clipboard">Copy link</button>
-                        <button class="link-toggle detail-share-btn" type="button" data-share-native title="Share via system" aria-label="Share curve">Share</button>
-                        <button class="link-toggle detail-share-btn" type="button" data-share-markdown title="Copy markdown link" aria-label="Copy link as markdown">Markdown</button>
-                        <button class="link-toggle detail-share-btn" type="button" data-share-embed disabled title="Embeds coming soon" aria-label="Embed curve">Embed</button>
+                    <div class="detail-snippet-bar">
+                        <SnippetOptionBar />
+                        <div class="detail-share-cluster" aria-label="Share actions">
+                            <button class="link-toggle detail-share-btn" type="button" data-share-link title="Copy curve URL" aria-label="Copy curve link to clipboard" set:html={LANG_ICONS.link}></button>
+                            <button class="link-toggle detail-share-btn" type="button" data-share-native title="Share via system" aria-label="Share curve" set:html={LANG_ICONS.share}></button>
+                            <button class="link-toggle detail-share-btn" type="button" data-share-markdown title="Copy markdown link" aria-label="Copy link as markdown" set:html={LANG_ICONS.markdown}></button>
+                            <button class="link-toggle detail-share-btn" type="button" data-share-embed disabled title="Embeds coming soon" aria-label="Embed curve">Embed</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -840,7 +842,7 @@ const ogTitle = curveForSeo
                                 "fr) 24px 6px minmax(120px, ",
                             ) +
                             (TOTAL_FR - newVpFr) +
-                            "fr) auto 24px";
+                            "fr) auto";
                     });
                     handle.addEventListener("pointerup", function (e) {
                         if (!drag) return;
