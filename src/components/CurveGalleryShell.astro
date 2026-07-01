@@ -424,6 +424,7 @@ const ogTitle = curveForSeo
                         </div>
                     </div>
                     <div class="detail-tabs-row" id="detail-overlay-tabs"></div>
+                    <div class="detail-code-resize-handle" data-detail-code-resize title="Resize code panel"></div>
                     <div class="detail-code-panel">
                         <button
                             class="icon copy-btn detail-code-copy"
@@ -792,6 +793,59 @@ const ogTitle = curveForSeo
                     handle.addEventListener("pointerup", function (e) {
                         drag = null;
                         box.classList.remove("is-dragging");
+                        try {
+                            handle.releasePointerCapture(e.pointerId);
+                        } catch (err) {}
+                    });
+                })();
+
+                // --- code panel resize handle ---
+                (function () {
+                    var handle = document.querySelector(
+                        "[data-detail-code-resize]",
+                    );
+                    var content = document.querySelector(
+                        '[data-overlay-content="detail"]',
+                    );
+                    var viewportCol = document.getElementById(
+                        "detail-overlay-viewport",
+                    );
+                    if (!handle || !content || !viewportCol) return;
+                    var TOTAL_FR = 10;
+                    var drag = null;
+                    var startVpFr = 0;
+                    handle.addEventListener("pointerdown", function (e) {
+                        if (e.target.closest("button, a")) return;
+                        drag = { y: e.clientY };
+                        var vpH = viewportCol.getBoundingClientRect().height;
+                        var ch = content.getBoundingClientRect().height;
+                        startVpFr = (vpH / ch) * TOTAL_FR;
+                        handle.classList.add("is-active");
+                        try {
+                            handle.setPointerCapture(e.pointerId);
+                        } catch (err) {}
+                    });
+                    handle.addEventListener("pointermove", function (e) {
+                        if (!drag) return;
+                        var delta = e.clientY - drag.y;
+                        var ch = content.getBoundingClientRect().height;
+                        var deltaFr = (delta / ch) * TOTAL_FR;
+                        var newVpFr = Math.max(
+                            2,
+                            Math.min(TOTAL_FR - 2, startVpFr + deltaFr),
+                        );
+                        content.style.gridTemplateRows =
+                            "28px minmax(200px, ".concat(
+                                newVpFr,
+                                "fr) 24px 6px minmax(120px, ",
+                            ) +
+                            (TOTAL_FR - newVpFr) +
+                            "fr) auto 24px";
+                    });
+                    handle.addEventListener("pointerup", function (e) {
+                        if (!drag) return;
+                        drag = null;
+                        handle.classList.remove("is-active");
                         try {
                             handle.releasePointerCapture(e.pointerId);
                         } catch (err) {}
