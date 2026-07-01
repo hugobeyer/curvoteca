@@ -20,9 +20,10 @@ const options = [
                 class="chip snippet-option"
                 type="button"
                 data-snippet-option-key={option}
+                aria-pressed="false"
                 disabled
                 aria-disabled="true"
-                title={`${option} option coming soon`}
+                title={`Toggle ${option}`}
             >
                 {option}
             </button>
@@ -34,29 +35,62 @@ const options = [
     (function () {
         const host = document.querySelector("[data-snippet-bar]");
         if (!host) return;
+        const buttons = host.querySelectorAll("[data-snippet-option-key]");
+        let available = {};
+        let active = {};
 
-        const apply = function () {
-            const raw = host.getAttribute("data-snippet-options");
-            if (!raw) return;
-            let options;
-            try {
-                options = JSON.parse(raw);
-            } catch (err) {
-                return;
-            }
-            if (!options || typeof options !== "object") return;
-            Object.keys(options).forEach(function (key) {
-                const btn = host.querySelector(
-                    '[data-snippet-option-key="' + key + '"]',
+        const emit = function () {
+            host.dispatchEvent(
+                new CustomEvent("curvoteca:snippet-options-change", {
+                    bubbles: true,
+                    detail: { active: active, available: available },
+                }),
+            );
+        };
+
+        const syncButtons = function () {
+            buttons.forEach(function (btn) {
+                const key = btn.getAttribute("data-snippet-option-key");
+                const enabled = !!available[key];
+                btn.disabled = !enabled;
+                btn.setAttribute("aria-disabled", enabled ? "false" : "true");
+                if (!enabled) active[key] = false;
+                btn.classList.toggle("active", !!active[key] && enabled);
+                btn.setAttribute(
+                    "aria-pressed",
+                    !!active[key] && enabled ? "true" : "false",
                 );
-                if (btn) btn.disabled = !options[key];
             });
         };
 
-        apply();
+        const apply = function (resetActive) {
+            const raw = host.getAttribute("data-snippet-options");
+            available = {};
+            try {
+                available = raw ? JSON.parse(raw) : {};
+            } catch (err) {
+                available = {};
+            }
+            if (!available || typeof available !== "object") available = {};
+            if (resetActive) active = {};
+            syncButtons();
+            emit();
+        };
+
+        buttons.forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                const key = btn.getAttribute("data-snippet-option-key");
+                if (!key || btn.disabled || !available[key]) return;
+                active[key] = !active[key];
+                syncButtons();
+                emit();
+            });
+        });
+
+        apply(true);
         new MutationObserver(apply).observe(host, {
             attributes: true,
-            attributeFilter: ["data-snippet-options"],
+            attributeFilter: ["data-snippet-options", "data-snippet-curve-id"],
         });
     })();
 </script>

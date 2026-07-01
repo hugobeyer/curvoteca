@@ -767,6 +767,23 @@ const ogTitle = curveForSeo
                 var hashView = hashMap[window.location.hash.replace("#", "")];
                 if (hashView) openOverlay(hashView);
 
+                if (!window.__curvotecaSnippetOptionListener) {
+                    window.__curvotecaSnippetOptionListener = true;
+                    window.addEventListener(
+                        "curvoteca:snippet-options-change",
+                        function (event) {
+                            var state = window.__curvotecaSnippetState;
+                            if (!state || typeof state.render !== "function") {
+                                return;
+                            }
+                            var detail = event.detail || {};
+                            state.activeOptions = detail.active || {};
+                            state.availableOptions = detail.available || {};
+                            state.render();
+                        },
+                    );
+                }
+
                 window.__appClickHandlers.push(function (e) {
                     const close = e.target.closest("[data-overlay-close]");
                     if (close) {
@@ -1108,21 +1125,65 @@ const ogTitle = curveForSeo
                                 "detail-overlay-tabs",
                             );
                             var ov = window.__detailOverlay;
+                            var snippetState =
+                                ov && codeEl && copyEl
+                                    ? {
+                                          entry: entry,
+                                          lang: "equation",
+                                          code: entry.equation,
+                                          activeOptions: {},
+                                          availableOptions:
+                                              entry.snippetOptions || {},
+                                          render: function () {
+                                              var nextCode =
+                                                  ov.transformSnippet
+                                                      ? ov.transformSnippet({
+                                                            code: this.code,
+                                                            lang: this.lang,
+                                                            entry: this.entry,
+                                                            activeOptions:
+                                                                this
+                                                                    .activeOptions,
+                                                            availableOptions:
+                                                                this
+                                                                    .availableOptions,
+                                                        })
+                                                      : this.code;
+                                              ov.showCode(
+                                                  codeEl,
+                                                  copyEl,
+                                                  nextCode,
+                                              );
+                                          },
+                                      }
+                                    : null;
+                            window.__curvotecaSnippetState = snippetState;
                             if (ov && tabsEl && codeEl && copyEl) {
                                 ov.buildSnippetTabs(
                                     tabsEl,
                                     entry,
-                                    function (_, code) {
-                                        ov.showCode(codeEl, copyEl, code);
+                                    function (key, code) {
+                                        if (snippetState) {
+                                            snippetState.lang = key;
+                                            snippetState.code = code;
+                                            snippetState.render();
+                                        } else {
+                                            ov.showCode(codeEl, copyEl, code);
+                                        }
                                     },
                                 );
-                                ov.showCode(codeEl, copyEl, entry.equation);
+                                if (snippetState) snippetState.render();
+                                else ov.showCode(codeEl, copyEl, entry.equation);
                             }
 
                             var snippetBar =
                                 document.querySelector("[data-snippet-bar]");
                             if (snippetBar) {
                                 var opts = entry.snippetOptions || {};
+                                snippetBar.setAttribute(
+                                    "data-snippet-curve-id",
+                                    entry.id,
+                                );
                                 snippetBar.setAttribute(
                                     "data-snippet-options",
                                     JSON.stringify(opts),
@@ -1271,13 +1332,36 @@ const ogTitle = curveForSeo
                     var openInitialCurve = function () {
                         openRouteCurve(initialCurveId);
                     };
-                    if (window.__curvotecaViewportReady) {
+                    var openWhenReady = function () {
+                        if (
+                            !window.__curvotecaViewportReady ||
+                            !window.__curvotecaDetailCodeReady
+                        ) {
+                            return;
+                        }
+                        window.removeEventListener(
+                            "curvoteca:viewport-ready",
+                            openWhenReady,
+                        );
+                        window.removeEventListener(
+                            "curvoteca:detail-code-ready",
+                            openWhenReady,
+                        );
+                        setTimeout(openInitialCurve, 0);
+                    };
+                    if (
+                        window.__curvotecaViewportReady &&
+                        window.__curvotecaDetailCodeReady
+                    ) {
                         setTimeout(openInitialCurve, 0);
                     } else {
                         window.addEventListener(
                             "curvoteca:viewport-ready",
-                            openInitialCurve,
-                            { once: true },
+                            openWhenReady,
+                        );
+                        window.addEventListener(
+                            "curvoteca:detail-code-ready",
+                            openWhenReady,
                         );
                     }
                 }
@@ -3687,17 +3771,21 @@ const ogTitle = curveForSeo
                 flashCopied,
             } from "../lib/detailCodeField";
             import { cycleViewMode } from "../lib/curveViewMode";
+            import { transformSnippet } from "../lib/snippetTransforms";
             window.__detailOverlay = {
                 buildSnippetTabs,
                 showCode,
                 copyDetailCode,
                 flashCopied,
+                transformSnippet,
             };
             // Expose the pure view-cycle helper to the page-level
             // inline script (which runs before this module script).
             // The detail popup's view-cycle button calls this on click
             // to advance the viewport's data-curve-view-mode.
             window.__cycleCurveView = cycleViewMode;
+            window.__curvotecaDetailCodeReady = true;
+            window.dispatchEvent(new Event("curvoteca:detail-code-ready"));
         </script>
     </body>
 </html>

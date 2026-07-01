@@ -20,6 +20,9 @@
 
 :root {
     --font-family: Roboto, sans-serif;
+    --font-family-mono:
+        "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas,
+        "Liberation Mono", monospace;
 
     /* --- size tiers ---------------------------------------------------
        6 steps, each ~1–2px apart. Names describe the role, not the

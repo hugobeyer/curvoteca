@@ -4,8 +4,28 @@
 // Consumed via window.__detailOverlay from inline index.astro scripts.
 // ---------------------------------------------------------------------------
 
+const textNode = (value: string): Text => document.createTextNode(value);
+
 export function showCode(codeEl: HTMLElement, copyEl: HTMLElement, code: string): void {
-  codeEl.textContent = code;
+  codeEl.textContent = "";
+  const lines = code.split(/\r?\n/);
+  const codeWrap = document.createElement("code");
+  codeWrap.className = "detail-code-lines";
+  lines.forEach((line, index) => {
+    const row = document.createElement("span");
+    row.className = "detail-code-line";
+    const number = document.createElement("span");
+    number.className = "detail-code-line-number";
+    number.setAttribute("aria-hidden", "true");
+    number.textContent = String(index + 1);
+    const text = document.createElement("span");
+    text.className = "detail-code-line-text";
+    text.appendChild(textNode(line || " "));
+    row.appendChild(number);
+    row.appendChild(text);
+    codeWrap.appendChild(row);
+  });
+  codeEl.appendChild(codeWrap);
   copyEl.setAttribute("data-copy", code);
 }
 

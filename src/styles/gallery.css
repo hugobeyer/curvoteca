@@ -1487,6 +1487,13 @@
     min-width: 0;
     overflow: hidden;
 }
+.snippet-option {
+    cursor: pointer;
+}
+.snippet-option[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    color: var(--white);
+}
 .snippet-option[disabled] {
     opacity: 0.42;
     cursor: not-allowed;
@@ -1553,19 +1560,43 @@
     min-width: 0;
     min-height: 0;
     margin: 0;
-    padding: 10px 38px 10px 10px;
+    padding: 0 38px 0 0;
     border: 0;
     border-radius: 3px;
     background: var(--bg-step-1);
     box-shadow: inset 0 0 0 1px var(--line-soft);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: var(--font-family-mono);
     color: var(--text-soft);
-    font-size: var(--font-size-xs);
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow-y: auto;
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
+    white-space: pre;
+    tab-size: 2;
+    overflow: auto;
     max-height: none;
+}
+.detail-code-lines {
+    display: grid;
+    min-width: max-content;
+    padding: 10px 0;
+}
+.detail-code-line {
+    display: grid;
+    grid-template-columns: 4ch minmax(0, 1fr);
+    min-height: 1.55em;
+}
+.detail-code-line-number {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    padding: 0 8px 0 6px;
+    border-right: 1px solid var(--line-soft);
+    background: var(--bg-step-1);
+    color: color-mix(in srgb, var(--muted) 55%, transparent);
+    text-align: right;
+    user-select: none;
+}
+.detail-code-line-text {
+    padding: 0 10px;
 }
 @media (max-width: 660px) {
     .detail-main {
