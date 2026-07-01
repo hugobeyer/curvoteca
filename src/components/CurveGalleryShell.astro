@@ -423,8 +423,8 @@ const ogTitle = curveForSeo
                         <div class="detail-info-col">
                         </div>
                     </div>
-                    <div class="detail-tabs-row" id="detail-overlay-tabs"></div>
                     <div class="detail-code-resize-handle" data-detail-code-resize title="Resize code panel"></div>
+                    <div class="detail-tabs-row" id="detail-overlay-tabs"></div>
                     <div class="detail-code-panel">
                         <button
                             class="icon copy-btn detail-code-copy"
@@ -447,6 +447,7 @@ const ogTitle = curveForSeo
                         <SnippetOptionBar />
                         <div class="detail-share-cluster" aria-label="Share actions">
                             <button class="link-toggle detail-share-btn" type="button" data-share-link title="Copy curve URL" aria-label="Copy curve link to clipboard" set:html={LANG_ICONS.link}></button>
+                            <button class="link-toggle detail-share-btn" type="button" data-share-x title="Share on X" aria-label="Share curve on X" set:html={LANG_ICONS.x}></button>
                             <button class="link-toggle detail-share-btn" type="button" data-share-native title="Share via system" aria-label="Share curve" set:html={LANG_ICONS.share}></button>
                             <button class="link-toggle detail-share-btn" type="button" data-share-markdown title="Copy markdown link" aria-label="Copy link as markdown" set:html={LANG_ICONS.markdown}></button>
                             <button class="link-toggle detail-share-btn" type="button" data-share-embed disabled title="Embeds coming soon" aria-label="Embed curve">Embed</button>
@@ -837,12 +838,12 @@ const ogTitle = curveForSeo
                             Math.min(TOTAL_FR - 2, startVpFr + deltaFr),
                         );
                         content.style.gridTemplateRows =
-                            "28px minmax(200px, ".concat(
-                                newVpFr,
-                                "fr) 24px 6px minmax(120px, ",
-                            ) +
-                            (TOTAL_FR - newVpFr) +
-                            "fr) auto";
+                                "22px minmax(200px, ".concat(
+                                    newVpFr,
+                                    "fr) 6px 24px minmax(120px, ",
+                                ) +
+                                (TOTAL_FR - newVpFr) +
+                                "fr) auto";
                     });
                     handle.addEventListener("pointerup", function (e) {
                         if (!drag) return;
@@ -1269,11 +1270,20 @@ const ogTitle = curveForSeo
                                 if (!shareRow) return;
                                 var shareUrl = window.location.origin + "/curve/" + entry.id + "/";
                                 var linkBtn = shareRow.querySelector("[data-share-link]");
+                                var xBtn = shareRow.querySelector("[data-share-x]");
                                 var nativeBtn = shareRow.querySelector("[data-share-native]");
                                 var mdBtn = shareRow.querySelector("[data-share-markdown]");
                                 var ov = window.__detailOverlay;
                                 if (nativeBtn && typeof navigator.share !== "function") {
                                     nativeBtn.style.display = "none";
+                                }
+                                if (xBtn) {
+                                    xBtn.onclick = function (e) {
+                                        e.preventDefault();
+                                        var text = encodeURIComponent(entry.name + " — Curvoteca");
+                                        var url = encodeURIComponent(shareUrl);
+                                        window.open("https://twitter.com/intent/tweet?text=" + text + "&url=" + url, "_blank", "noopener,noreferrer");
+                                    };
                                 }
                                 if (linkBtn) {
                                     linkBtn.onclick = function (e) {

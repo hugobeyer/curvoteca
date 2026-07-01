@@ -9,6 +9,11 @@
    --------------------------------------------------------------------------- */
 
 :root {
+    /* Pager screen-glued shadow. Centered, broad, intense — no y-offset
+       so the pager reads as floating rather than lit from above. */
+    --shadow-pager:
+        0 0 40px color-mix(in srgb, var(--black) var(--fx-strong), transparent),
+        0 0 32px color-mix(in srgb, var(--black) var(--fx-full), transparent);
     /* Text label inset offsets (used by absolute-positioned readouts
        on the curve viewport and card meta). */
     --text-label-inset-x: 12px;
@@ -878,9 +883,7 @@
     background:
         var(--card-bg-gradient),
         color-mix(in srgb, var(--panel2) 100%, transparent);
-    box-shadow:
-        0 4px 4px color-mix(in srgb, var(--black) var(--fx-sml), transparent),
-        0 4px 4px color-mix(in srgb, var(--black) var(--fx-sml), transparent);
+    box-shadow: var(--shadow-pager);
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(6px);
     user-select: none;
@@ -1231,9 +1234,7 @@
 }
 .view-overlay-content[data-overlay-content="detail"] {
     display: grid;
-    grid-template-rows:
-        28px minmax(200px, 1fr) 24px 6px minmax(120px, 1fr)
-        auto 24px;
+    grid-template-rows: 22px minmax(200px, 1fr) 6px 24px minmax(120px, 1fr) auto;
     gap: 6px;
     height: 100%;
     overflow: hidden;
@@ -1246,7 +1247,7 @@
     display: flex;
     align-items: center;
     min-width: 0;
-    height: 28px;
+    height: 22px;
     padding: 0 30px 0 6px;
     cursor: grab;
     user-select: none;
@@ -1743,6 +1744,8 @@
 }
 .detail-share-btn svg {
     display: block;
+    width: 16px;
+    height: 16px;
 }
 .detail-share-btn.is-copied {
     color: var(--accent);

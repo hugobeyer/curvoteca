@@ -51,6 +51,7 @@
     --shadow-panel:
         0 2px 6px color-mix(in srgb, var(--black) var(--fx-lg), transparent),
         0 12px 32px color-mix(in srgb, var(--black) var(--fx-mid), transparent);
+
     --shadow-card-drop: 0 0 0 1px var(--line);
     --shadow-card-glow-accent:
         0 0 var(--glow-blur-sm) var(--glow-spread)
