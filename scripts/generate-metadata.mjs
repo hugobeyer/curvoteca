@@ -282,6 +282,8 @@ export const ${info.metaName} = {
   roleTags: ${asConstArray(mapped.roleTags)} as readonly CurveRoleTag[],
   snippetOptions: {
     constants: true,
+    params: true,
+    bindings: true,
     clamp: ${info.family !== "sdf"},
     fit: ${info.family !== "sdf"},
     function: true,
