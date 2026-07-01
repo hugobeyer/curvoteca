@@ -22,6 +22,8 @@ export const expMeta = {
   roleTags: ["falloff", "remap"] as readonly CurveRoleTag[],
   snippetOptions: {
     constants: true,
+    params: true,
+    bindings: true,
     clamp: true,
     fit: true,
     function: true,

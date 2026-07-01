@@ -16,6 +16,8 @@ export const linearMeta = {
   roleTags: ["remap", "interpolation"] as readonly CurveRoleTag[],
   snippetOptions: {
     constants: true,
+    params: true,
+    bindings: true,
     clamp: true,
     fit: true,
     function: true,

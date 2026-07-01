@@ -40,6 +40,8 @@ export const sdfSubtractMeta = {
   roleTags: ["sdf", "mask"] as readonly CurveRoleTag[],
   snippetOptions: {
     constants: true,
+    params: true,
+    bindings: true,
     clamp: false,
     fit: false,
     function: true,

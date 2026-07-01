@@ -27,6 +27,8 @@ export const logisticMeta = {
   roleTags: ["sigmoid", "remap"] as readonly CurveRoleTag[],
   snippetOptions: {
     constants: true,
+    params: true,
+    bindings: true,
     clamp: true,
     fit: true,
     function: true,

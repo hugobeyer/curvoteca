@@ -31,6 +31,8 @@ export const worleyF2F1Meta = {
   roleTags: ["noise"] as readonly CurveRoleTag[],
   snippetOptions: {
     constants: true,
+    params: true,
+    bindings: true,
     clamp: true,
     fit: true,
     function: true,

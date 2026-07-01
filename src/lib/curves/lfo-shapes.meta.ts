@@ -32,6 +32,8 @@ export const lfoShapesMeta = {
   roleTags: ["wave"] as readonly CurveRoleTag[],
   snippetOptions: {
     constants: true,
+    params: true,
+    bindings: true,
     clamp: true,
     fit: true,
     function: true,
