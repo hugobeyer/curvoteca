@@ -60,6 +60,8 @@ const curveIndex = curves.map((c) => {
         name: c.name,
         family: c.family,
         summary: c.summary,
+        domain: c.domain,
+        range: c.range,
         previewPoints: projected.map((p) => [p.x, p.y] as [number, number]),
         equation: c.snippets?.equation ?? c.formula,
         snippets: c.snippets ?? {},
@@ -99,6 +101,13 @@ const sponsorCardProps = {
                 </button>
                 <button
                     class="chip active"
+                    type="button"
+                    data-filter="random"
+                    data-filter-value=""
+                    aria-label="Randomize curve order">random</button
+                >
+                <button
+                    class="chip"
                     type="button"
                     data-filter="all"
                     data-filter-value=""

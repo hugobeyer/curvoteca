@@ -3,6 +3,7 @@ import { getZeroWorldX, getZeroWorldY } from "./curve";
 import { withAlpha, type RendererColors } from "./colors";
 import { resetCtx } from "./ctxState";
 import type { RendererTokens } from "./tokens";
+import { wantsZeroAxis, type RendererViewHints } from "./viewHints";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -27,6 +28,7 @@ export type DrawBoundsArgs = {
   range: [number, number] | null;
   colors: RendererColors;
   tokens: RendererTokens;
+  viewHints?: RendererViewHints;
   screenPoint: (point: CurvePoint) => CurvePoint;
 };
 
@@ -70,6 +72,7 @@ export const drawZeroLines = ({
   range,
   colors,
   tokens,
+  viewHints,
   screenPoint,
 }: DrawBoundsArgs) => {
   const lines = buildZeroBounds(
@@ -79,6 +82,7 @@ export const drawZeroLines = ({
     range,
     colors,
     tokens,
+    viewHints,
   );
   if (lines.length === 0) return;
   resetCtx(ctx);
@@ -146,6 +150,7 @@ const buildZeroBounds = (
   range: [number, number] | null,
   colors: RendererColors,
   tokens: RendererTokens,
+  viewHints?: RendererViewHints,
 ): Bound[] => {
   // Zero lines = the world x=0 vertical and y=0 horizontal, drawn only when
   // 0 lies within the curve's domain/range. Each carries its own width +
@@ -163,7 +168,7 @@ const buildZeroBounds = (
       width: tokens.zeroLineWidth,
     });
   }
-  const zeroY = getZeroWorldY(baseRect, range);
+  const zeroY = wantsZeroAxis(viewHints) ? getZeroWorldY(baseRect, range) : null;
   if (zeroY !== null) {
     out.push({
       a: { x: visible.x, y: zeroY },

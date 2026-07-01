@@ -10,7 +10,10 @@ export const sincMeta = {
   views: ["graph", "motion", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {
-  bounded: true
+  bounded: true,
+  signed: true,
+  centerY: true,
+  zeroAxis: true
 } satisfies CurveViewHints,
   roleTags: ["falloff", "mask"] as readonly CurveRoleTag[],
   snippetOptions: {

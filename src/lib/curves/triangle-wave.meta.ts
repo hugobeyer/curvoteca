@@ -10,7 +10,12 @@ export const triangleWaveMeta = {
   views: ["graph", "motion", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {
-  periodic: true
+  periodic: true,
+  signed: true,
+  centerY: true,
+  zeroAxis: true,
+  bipolar: true,
+  centerQuadY: true
 } satisfies CurveViewHints,
   params: {
   freq: {

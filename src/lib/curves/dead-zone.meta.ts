@@ -10,7 +10,12 @@ export const deadZoneMeta = {
   views: ["graph", "motion", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {
-  bounded: true
+  bounded: true,
+  signed: true,
+  centerY: true,
+  zeroAxis: true,
+  bipolar: true,
+  centerQuadY: true
 } satisfies CurveViewHints,
   params: {
   d: {

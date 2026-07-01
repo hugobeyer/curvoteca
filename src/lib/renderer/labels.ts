@@ -13,7 +13,7 @@
 // should not dissolve with the grid/curve at the canvas edges.
 // ---------------------------------------------------------------------------
 
-import { getZeroWorldX } from "./curve";
+import { getZeroWorldX, getZeroWorldY } from "./curve";
 import type {
   CurvePoint,
   CurveRect,
@@ -22,16 +22,19 @@ import type {
 import { withAlpha, type RendererColors } from "./colors";
 import { resetCtx } from "./ctxState";
 import type { RendererTokens } from "./tokens";
+import { wantsCenteredY, type RendererViewHints } from "./viewHints";
 
 export type DrawAxisLabelsArgs = {
   ctx: CanvasRenderingContext2D;
   baseRect: CurveRect;
   visible: CurveRect;
   domain: [number, number] | null;
+  range: [number, number] | null;
   state: CurveViewportState;
   screen: { width: number; height: number };
   colors: RendererColors;
   tokens: RendererTokens;
+  viewHints?: RendererViewHints;
   screenPoint: (point: CurvePoint) => CurvePoint;
 };
 
@@ -91,10 +94,12 @@ export const drawAxisLabels = ({
   baseRect,
   visible,
   domain,
+  range,
   state,
   screen,
   colors,
   tokens,
+  viewHints,
   screenPoint,
 }: DrawAxisLabelsArgs) => {
   // Reset to a known-clean state. Same pattern as bounds / grid so the
@@ -106,9 +111,14 @@ export const drawAxisLabels = ({
   ctx.fillStyle = withAlpha(colors.axis, tokens.labelAlpha);
 
   // Bottom horizontal axis line — labels sit just below it.
+  const zeroWorldY = getZeroWorldY(baseRect, range);
+  const labelWorldY =
+    wantsCenteredY(viewHints) && zeroWorldY !== null
+      ? zeroWorldY
+      : baseRect.y + baseRect.h;
   const axisBottom = screenPoint({
     x: baseRect.x,
-    y: baseRect.y + baseRect.h,
+    y: labelWorldY,
   });
   const y = axisBottom.y + tokens.labelInsetY;
 

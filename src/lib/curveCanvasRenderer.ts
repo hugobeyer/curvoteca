@@ -45,6 +45,7 @@ import {
   updateProbeText,
   type ProbeState,
 } from "./renderer/probe";
+import { parseRendererViewHints } from "./renderer/viewHints";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -122,6 +123,9 @@ export const createCurveCanvasRenderer = (
   const metrics = getTileMetrics(points, baseRect);
   const domain = parseInterval(root.getAttribute("data-curve-domain"));
   const range = parseInterval(root.getAttribute("data-curve-range"));
+  const viewHints = parseRendererViewHints(
+    root.getAttribute("data-curve-view-hints"),
+  );
 
   let state: CurveViewportState = {
     zoomX: 1,
@@ -402,6 +406,8 @@ export const createCurveCanvasRenderer = (
         baseRect,
         screen,
         tokens,
+        range,
+        viewHints,
         screenPoint: sp,
       });
     }
@@ -413,6 +419,7 @@ export const createCurveCanvasRenderer = (
       range,
       colors,
       tokens,
+      viewHints,
       screenPoint: sp,
     });
     // Axis labels run at every column count — drawAxisLabels itself
@@ -429,6 +436,8 @@ export const createCurveCanvasRenderer = (
         screen,
         colors,
         tokens,
+        range,
+        viewHints,
         screenPoint: sp,
       });
     }

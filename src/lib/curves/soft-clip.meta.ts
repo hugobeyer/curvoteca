@@ -9,7 +9,13 @@ import type {
 export const softClipMeta = {
   views: ["graph", "motion", "field", "heightStrip"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
-  viewHints: {} satisfies CurveViewHints,
+  viewHints: {
+  signed: true,
+  centerY: true,
+  zeroAxis: true,
+  bipolar: true,
+  centerQuadY: true
+} satisfies CurveViewHints,
   params: {
   threshold: {
     label: "Threshold",

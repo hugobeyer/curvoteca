@@ -9,7 +9,11 @@ import type {
 export const rubberBandMeta = {
   views: ["graph", "motion", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
-  viewHints: {} satisfies CurveViewHints,
+  viewHints: {
+  signed: true,
+  centerY: true,
+  zeroAxis: true
+} satisfies CurveViewHints,
   params: {
   stiffness: {
     label: "Stiffness",

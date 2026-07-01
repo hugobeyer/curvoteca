@@ -9,7 +9,13 @@ import type {
 export const whiteNoise1dMeta = {
   views: ["graph", "motion", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
-  viewHints: {} satisfies CurveViewHints,
+  viewHints: {
+  signed: true,
+  centerY: true,
+  zeroAxis: true,
+  bipolar: true,
+  centerQuadY: true
+} satisfies CurveViewHints,
   params: {
   seed: {
     label: "Seed",

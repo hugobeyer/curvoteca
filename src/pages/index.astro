@@ -892,6 +892,18 @@ import "../styles/gallery.css";
                                     "data-curve-view-default",
                                     "0 0 252 128",
                                 );
+                                wrap.setAttribute(
+                                    "data-curve-domain",
+                                    JSON.stringify(entry.domain || [0, 1]),
+                                );
+                                wrap.setAttribute(
+                                    "data-curve-range",
+                                    JSON.stringify(entry.range || [0, 1]),
+                                );
+                                wrap.setAttribute(
+                                    "data-curve-view-hints",
+                                    JSON.stringify(entry.viewHints || {}),
+                                );
                                 // Honor the curve's defaultView so the
                                 // detail popup starts in the same view
                                 // the wall card uses. The view-toggle
@@ -1215,6 +1227,7 @@ import "../styles/gallery.css";
             (function () {
                 const search = document.getElementById("curve-search");
                 const chips = document.querySelectorAll(".chips .chip");
+                const grid = document.getElementById("wall-grid");
                 const cards = document.querySelectorAll(".wall .grid .card");
                 const empty = document.getElementById("wall-empty");
                 const totalCountEl = document.getElementById("total-count");
@@ -1229,7 +1242,7 @@ import "../styles/gallery.css";
                     document.getElementById("filter-state-clear");
                 const railBtn = document.querySelector("[data-fav-filter]");
 
-                if (!search || !cards.length) {
+                if (!search || !grid || !cards.length) {
                     return;
                 }
 
@@ -1257,7 +1270,48 @@ import "../styles/gallery.css";
                     } catch (e) {}
                 };
 
-                const state = { query: "", filter: "all", value: "" };
+                const DEFAULT_FILTER = "random";
+                const sourceOrder = Array.prototype.slice.call(
+                    grid.querySelectorAll(".card[data-curve-id]"),
+                );
+                const state = { query: "", filter: DEFAULT_FILTER, value: "" };
+
+                const shuffleCards = function (items) {
+                    const out = items.slice();
+                    for (let i = out.length - 1; i > 0; i -= 1) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        const t = out[i];
+                        out[i] = out[j];
+                        out[j] = t;
+                    }
+                    return out;
+                };
+                let randomOrder = shuffleCards(sourceOrder);
+
+                const renderCurveOrder = function (orderedCards) {
+                    const slots = Array.prototype.slice.call(grid.children);
+                    const queue = orderedCards.slice();
+                    const frag = document.createDocumentFragment();
+                    slots.forEach(function (child) {
+                        if (
+                            child.matches &&
+                            child.matches(".card[data-curve-id]")
+                        ) {
+                            frag.appendChild(queue.shift());
+                        } else {
+                            frag.appendChild(child);
+                        }
+                    });
+                    grid.appendChild(frag);
+                };
+
+                const applyCardOrder = function () {
+                    renderCurveOrder(
+                        state.filter === DEFAULT_FILTER
+                            ? randomOrder
+                            : sourceOrder,
+                    );
+                };
 
                 const norm = function (s) {
                     return (s || "").toString().toLowerCase().trim();
@@ -1268,7 +1322,12 @@ import "../styles/gallery.css";
                     if (state.query) {
                         if (hay.indexOf(state.query) === -1) return false;
                     }
-                    if (!state.filter || state.filter === "all") return true;
+                    if (
+                        !state.filter ||
+                        state.filter === "all" ||
+                        state.filter === DEFAULT_FILTER
+                    )
+                        return true;
                     if (state.filter === "fav") {
                         const id = card.getAttribute("data-curve-id");
                         return favState.ids.indexOf(id) !== -1;
@@ -1283,7 +1342,8 @@ import "../styles/gallery.css";
                 };
 
                 const labelForFilter = function (filter, value) {
-                    if (!filter || filter === "all") return null;
+                    if (!filter || filter === "all" || filter === DEFAULT_FILTER)
+                        return null;
                     if (filter === "fav") return "favorites";
                     if (filter === "family") return "family: " + value;
                     return filter;
@@ -1300,20 +1360,21 @@ import "../styles/gallery.css";
                 };
 
                 const clearFilter = function () {
-                    state.filter = "all";
+                    state.filter = DEFAULT_FILTER;
                     state.value = "";
                     chips.forEach(function (c) {
                         c.classList.remove("active");
                     });
-                    const allChip = document.querySelector(
-                        '.chip[data-filter="all"]',
+                    const defaultChip = document.querySelector(
+                        '.chip[data-filter="' + DEFAULT_FILTER + '"]',
                     );
-                    if (allChip) allChip.classList.add("active");
+                    if (defaultChip) defaultChip.classList.add("active");
                     renderFilterState();
                     apply();
                 };
 
                 const apply = function () {
+                    applyCardOrder();
                     let shown = 0;
                     cards.forEach(function (card) {
                         if (card.classList.contains("is-sponsor")) {
@@ -1390,6 +1451,9 @@ import "../styles/gallery.css";
                             chip.getAttribute("data-filter") || "all";
                         state.value =
                             chip.getAttribute("data-filter-value") || "";
+                        if (state.filter === DEFAULT_FILTER) {
+                            randomOrder = shuffleCards(sourceOrder);
+                        }
                         renderFilterState();
                         apply();
                     });
@@ -1415,9 +1479,13 @@ import "../styles/gallery.css";
                             c.classList.remove("active");
                         });
                         if (isFav) {
-                            state.filter = "all";
+                            state.filter = DEFAULT_FILTER;
                             document
-                                .querySelector('.chip[data-filter="all"]')
+                                .querySelector(
+                                    '.chip[data-filter="' +
+                                        DEFAULT_FILTER +
+                                        '"]',
+                                )
                                 .classList.add("active");
                         } else {
                             state.filter = "fav";
@@ -1434,6 +1502,7 @@ import "../styles/gallery.css";
 
                 renderFavs();
                 renderFilterState();
+                apply();
             })();
         </script>
 
@@ -1456,9 +1525,13 @@ import "../styles/gallery.css";
                 const sizeValEl = document.getElementById("pager-size-val");
                 const pageEl = document.getElementById("pager-page");
                 const totalEl = document.getElementById("pager-total");
-                const cards = document.querySelectorAll("#wall-grid .card");
-                if (!pagerEl || !prevBtn || !nextBtn || !sizeBtn) return;
-                if (!cards.length) {
+                const grid = document.getElementById("wall-grid");
+                const getCards = function () {
+                    return grid ? grid.querySelectorAll(".card") : [];
+                };
+                if (!pagerEl || !prevBtn || !nextBtn || !sizeBtn || !grid)
+                    return;
+                if (!getCards().length) {
                     pagerEl.classList.add("is-hidden");
                     return;
                 }
@@ -1490,6 +1563,7 @@ import "../styles/gallery.css";
                 // filter predicate.
                 const filterVisible = function () {
                     const out = [];
+                    const cards = getCards();
                     for (let i = 0; i < cards.length; i += 1) {
                         const c = cards[i];
                         if (c.classList.contains("is-hidden")) continue;
@@ -1510,6 +1584,7 @@ import "../styles/gallery.css";
                     // Reset paged-out, then re-mark the slice that is not
                     // in the current page window. Filter-hiding is layered
                     // on top via .is-hidden (separate concern).
+                    const cards = getCards();
                     for (let i = 0; i < cards.length; i += 1) {
                         cards[i].classList.remove("is-paged-out");
                     }
@@ -1673,6 +1748,18 @@ import "../styles/gallery.css";
                     wrap.setAttribute("data-curve-view", "");
                     wrap.setAttribute("data-curve-id", id);
                     wrap.setAttribute("data-curve-view-default", "0 0 252 128");
+                    wrap.setAttribute(
+                        "data-curve-domain",
+                        JSON.stringify(reg.domain || [0, 1]),
+                    );
+                    wrap.setAttribute(
+                        "data-curve-range",
+                        JSON.stringify(reg.range || [0, 1]),
+                    );
+                    wrap.setAttribute(
+                        "data-curve-view-hints",
+                        JSON.stringify(reg.viewHints || {}),
+                    );
                     wrap.setAttribute(
                         "data-curve-points",
                         JSON.stringify(reg.previewPoints || []),

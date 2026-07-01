@@ -11,7 +11,11 @@ export const sdfSphereMeta = {
   defaultView: "graph" as CurveViewMode,
   viewHints: {
   signed: true,
-  bounded: true
+  bounded: true,
+  centerY: true,
+  zeroAxis: true,
+  bipolar: true,
+  centerQuadY: true
 } satisfies CurveViewHints,
   params: {
   radius: {

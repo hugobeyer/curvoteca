@@ -1,5 +1,7 @@
 import type { CurvePoint, CurveRect } from "../curveViewportMath";
+import { getZeroWorldY } from "./curve";
 import type { RendererTokens } from "./tokens";
+import { wantsCenteredQuadY, type RendererViewHints } from "./viewHints";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -20,6 +22,8 @@ export type DrawViewportQuadArgs = {
   baseRect: CurveRect;
   screen: { width: number; height: number };
   tokens: RendererTokens;
+  range?: [number, number] | null;
+  viewHints?: RendererViewHints;
   screenPoint: (point: CurvePoint) => CurvePoint;
 };
 
@@ -27,15 +31,22 @@ export const drawViewportQuad = ({
   ctx,
   baseRect,
   tokens,
+  range,
+  viewHints,
   screenPoint,
 }: DrawViewportQuadArgs) => {
-  const tl = screenPoint({ x: baseRect.x, y: baseRect.y });
-  const tr = screenPoint({ x: baseRect.x + baseRect.w, y: baseRect.y });
+  const zeroY = getZeroWorldY(baseRect, range || null);
+  const y =
+    wantsCenteredQuadY(viewHints) && zeroY !== null
+      ? zeroY - baseRect.h / 2
+      : baseRect.y;
+  const tl = screenPoint({ x: baseRect.x, y });
+  const tr = screenPoint({ x: baseRect.x + baseRect.w, y });
   const br = screenPoint({
     x: baseRect.x + baseRect.w,
-    y: baseRect.y + baseRect.h,
+    y: y + baseRect.h,
   });
-  const bl = screenPoint({ x: baseRect.x, y: baseRect.y + baseRect.h });
+  const bl = screenPoint({ x: baseRect.x, y: y + baseRect.h });
   ctx.save();
   ctx.fillStyle = `${FILL_BLACK}${tokens.viewportQuadAlpha})`;
   ctx.beginPath();

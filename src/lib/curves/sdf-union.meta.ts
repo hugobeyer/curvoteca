@@ -11,7 +11,9 @@ export const sdfUnionMeta = {
   defaultView: "graph" as CurveViewMode,
   viewHints: {
   signed: true,
-  bounded: true
+  bounded: true,
+  centerY: true,
+  zeroAxis: true
 } satisfies CurveViewHints,
   params: {
   radius1: {

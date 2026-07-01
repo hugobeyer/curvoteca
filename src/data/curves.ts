@@ -333,6 +333,12 @@ export const CURVE_VIEW_MODES: readonly CurveViewMode[] = [
 export type CurveViewHints = {
   signed?: boolean;
   bipolar?: boolean;
+  // Center Y-sensitive viewport chrome around y=0.
+  centerY?: boolean;
+  // Center the canonical quad vertically around y=0.
+  centerQuadY?: boolean;
+  // Treat the zero axis as a semantic reference line.
+  zeroAxis?: boolean;
   periodic?: boolean;
   monotonic?: boolean;
   bounded?: boolean;

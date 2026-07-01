@@ -11,7 +11,10 @@ export const signedQuinticMeta = {
   defaultView: "graph" as CurveViewMode,
   viewHints: {
   signed: true,
-  bipolar: true
+  bipolar: true,
+  centerY: true,
+  zeroAxis: true,
+  centerQuadY: true
 } satisfies CurveViewHints,
   params: {
   p: {

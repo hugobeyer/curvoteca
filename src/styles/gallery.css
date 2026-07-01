@@ -571,6 +571,7 @@
 
 .wall-head {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
@@ -578,12 +579,22 @@
     flex: 0 0 auto;
 }
 
-/* Search input lives in the wall-head. Flexes to fill the space
-   between the chips and the info bar. */
-.wall-head .search {
+.wall-head > :first-child {
+    order: 1;
     flex: 1 1 auto;
     min-width: 0;
-    margin: 0 4px;
+}
+
+.wall-head .layout-note {
+    order: 1;
+}
+
+/* Search input lives on its own row below chips + info. */
+.wall-head .search {
+    order: 2;
+    flex: 0 0 100%;
+    min-width: 0;
+    margin: 0;
 }
 
 /* Wall-area wraps the wall-head (chips + status bar) and the wall itself.
