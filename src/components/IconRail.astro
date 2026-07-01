@@ -4,6 +4,23 @@ import GalleryIcon from "./GalleryIcon.astro";
 import DonateIcon from "./DonateIcon.astro";
 import InfoIcon from "./InfoIcon.astro";
 import SvgFilters from "./SvgFilters.astro";
+import RailAd from "./RailAd.astro";
+import adsData from "../data/ads.json";
+import type { AdEntry } from "../data/ads";
+
+interface AdsData {
+    slots?: { "rail-bottom"?: { enabled?: boolean; adIds?: string[] } };
+    ads?: AdEntry[];
+}
+
+const data = adsData as unknown as AdsData;
+const railBottomSlot = data.slots?.["rail-bottom"];
+const showRailAds = railBottomSlot?.enabled;
+const railAdIds = railBottomSlot?.adIds ?? [];
+const railAds = railAdIds
+    .map((id) => data.ads?.find((a) => a.id === id && a.active) ?? null)
+    .filter((a): a is AdEntry => a !== null)
+    .slice(0, 3);
 ---
 
 <SvgFilters />
@@ -71,4 +88,23 @@ import SvgFilters from "./SvgFilters.astro";
         <InfoIcon size={20} class="is-info" />
         <span class="rail-label">About</span>
     </button>
+    {
+        showRailAds && railAds.length > 0 && (
+            <div class="rail-ad-row">
+                {railAds.map((ad) => (
+                    <RailAd ad={ad} key={ad.id} />
+                ))}
+            </div>
+        )
+    }
 </nav>
+
+<style>
+    .rail-ad-row {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: auto;
+        padding: 4px 0 0;
+    }
+</style>

@@ -67,7 +67,7 @@
     --card-min-w: 240px;
     --card-row-h: 170px;
     --card-head-h: 24px;
-    --card-ratio: 1.4;
+    --card-ratio: 1.2;
     --card-min-w-min: 182px;
     --card-min-w-max: 378px;
     --card-row-h-min: 130px;
@@ -85,14 +85,14 @@
 
     /* Pill geometry (chips / search / info bar). Single source of
        truth so all three chrome elements look like the same family. */
-    --pill-height: 26px;
-    --pill-radius: 3px;
+    --pill-height: 22px;
+    --pill-radius: 2px;
     --pill-padding-x: 12px;
-    --pill-bg-alpha: 5%;
+    --pill-bg-alpha: 6%;
     /* Chip-specific overrides. Chips are tighter than the generic pill
        (used by search / info bar) so the toolbar stays compact. */
     --chip-padding-x: 7px;
-    --chip-gap: 4px;
+    --chip-gap: 2px;
     /* Info label color/opacity (consumed by .layout-status in this file).
        The matching font-size/weight live in font.css. */
     --info-label-color: var(--muted);
@@ -168,8 +168,8 @@ p {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr) 134px;
     grid-template-rows: auto minmax(0, 1fr) 66px;
-    gap: 6px;
-    padding: 6px;
+    gap: 4px;
+    padding: 4px;
     background: var(--bg);
 }
 
@@ -353,7 +353,7 @@ p {
 .icons {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 2px;
 }
 
 .chip,
@@ -394,11 +394,10 @@ p {
 .rail {
     grid-column: 1;
     grid-row: 2 / 4;
-    border-radius: 3px;
-    padding: 5px;
+    padding: 1px 3px 5px 3px;
     display: grid;
     align-content: start;
-    gap: 8px;
+    gap: 1px;
 }
 
 .rail .icon {

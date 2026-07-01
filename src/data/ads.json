@@ -1,0 +1,42 @@
+{
+    "active": true,
+    "slots": {
+        "rail-bottom": {
+            "enabled": true,
+            "adIds": ["preview-ad-1", "preview-ad-2", "preview-ad-3"]
+        },
+        "gallery-inline": {
+            "enabled": true,
+            "adId": "preview-ad"
+        }
+    },
+    "ads": [
+        {
+            "id": "preview-ad-1",
+            "name": "Ad 1",
+            "label": "Ad",
+            "description": "Preview ad placeholder",
+            "url": "https://example.com",
+            "logo": "/logo2.svg",
+            "active": true
+        },
+        {
+            "id": "preview-ad-2",
+            "name": "Ad 2",
+            "label": "Ad",
+            "description": "Preview ad placeholder",
+            "url": "https://example.com",
+            "logo": "/logo2.svg",
+            "active": true
+        },
+        {
+            "id": "preview-ad-3",
+            "name": "Ad 3",
+            "label": "Ad",
+            "description": "Preview ad placeholder",
+            "url": "https://example.com",
+            "logo": "/logo2.svg",
+            "active": true
+        }
+    ]
+}

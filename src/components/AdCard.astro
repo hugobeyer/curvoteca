@@ -1,0 +1,50 @@
+---
+import type { AdEntry } from "../data/ads";
+
+interface Props {
+    ad: AdEntry | null;
+}
+
+const { ad } = Astro.props as Props;
+---
+
+<article
+    class="card is-ad is-sponsor"
+    data-ad-card
+    data-family="ad"
+    data-search={`${ad?.label ?? "Ad"} ${ad?.name ?? "Advertisement"} sponsor support`}
+>
+    <img class="ad-logo" src={ad?.logo ?? "/logo2.svg"} alt="" />
+    <span class="ad-badge">ad</span>
+</article>
+
+<style>
+    .card.is-ad {
+        position: relative;
+        opacity: 0.92;
+    }
+    .card.is-ad:hover {
+        opacity: 1;
+    }
+    .ad-logo {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        opacity: 0.03;
+        pointer-events: none;
+    }
+    .ad-badge {
+        position: absolute;
+        top: 50%;
+        right: 6px;
+        transform: translateY(-50%);
+        font-size: var(--font-size-xs);
+        letter-spacing: var(--letter-spacing-wide);
+        text-transform: var(--text-transform-uppercase);
+        color: var(--muted);
+        opacity: 0.5;
+    }
+</style>

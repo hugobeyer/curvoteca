@@ -1,6 +1,7 @@
 ---
 import CurveCard from "./CurveCard.astro";
 import SponsorCard from "./SponsorCard.astro";
+import AdCard from "./AdCard.astro";
 import StarIcon from "./StarIcon.astro";
 import {
     DEFAULT_SNIPPET_OPTIONS,
@@ -8,7 +9,21 @@ import {
     type CurveDefinition,
 } from "../data/curves";
 import sponsorsData from "../data/sponsors.json";
+import adsData from "../data/ads.json";
 import { projectToViewBox, sampleKernel } from "../lib/curveMath";
+import type { AdEntry } from "../data/ads";
+
+interface AdsData {
+    slots?: { "gallery-inline"?: { enabled?: boolean; adId?: string | null } };
+    ads?: AdEntry[];
+}
+
+const ads = adsData as unknown as AdsData;
+const galleryInlineSlot = ads.slots?.["gallery-inline"];
+const showInlineAd = galleryInlineSlot?.enabled;
+const inlineAd = galleryInlineSlot?.adId
+    ? (ads.ads?.find((a) => a.id === galleryInlineSlot.adId && a.active) ?? null)
+    : null;
 
 interface Props {
     curves: CurveDefinition[];
@@ -202,6 +217,9 @@ const sponsorCardProps = {
                         <CurveCard curve={curve} />
                         {showSponsorCard && index === sponsorInsertIndex && (
                             <SponsorCard {...sponsorCardProps} />
+                        )}
+                        {showInlineAd && index === sponsorInsertIndex && (
+                            <AdCard ad={inlineAd} />
                         )}
                     </Fragment>
                 ))

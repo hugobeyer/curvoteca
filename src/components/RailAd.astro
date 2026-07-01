@@ -1,0 +1,57 @@
+---
+import type { AdEntry } from "../data/ads";
+
+interface Props {
+    ad: AdEntry;
+}
+
+const { ad } = Astro.props as Props;
+---
+
+<a
+    href={ad.url}
+    class="icon rail-ad-icon"
+    target="_blank"
+    rel="sponsored nofollow noopener noreferrer"
+    title={ad.name}
+    aria-label={ad.name}
+>
+    <img class="rail-ad-logo" src={ad.logo} alt="" />
+    <span class="rail-ad-badge">ad</span>
+</a>
+
+<style>
+    .rail-ad-icon {
+        position: relative;
+        padding: 0;
+        min-height: 28px;
+        width: 100%;
+        grid-template-columns: 1fr;
+        justify-items: center;
+        overflow: hidden;
+    }
+    .rail-ad-icon:hover {
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+    }
+    .rail-ad-logo {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        opacity: 0.03;
+        pointer-events: none;
+    }
+    .rail-ad-badge {
+        position: absolute;
+        top: 50%;
+        right: 6px;
+        transform: translateY(-50%);
+        font-size: var(--font-size-xs);
+        letter-spacing: var(--letter-spacing-wide);
+        text-transform: var(--text-transform-uppercase);
+        color: var(--muted);
+        opacity: 0.5;
+    }
+</style>
