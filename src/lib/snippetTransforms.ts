@@ -178,7 +178,9 @@ const constantsBlock = (entry: SnippetCurveEntry, lang: string): string => {
   rows.push(`const ${type}RANGE_MIN = ${n(range[0], shader)};`);
   rows.push(`const ${type}RANGE_MAX = ${n(range[1], shader)};`);
   Object.keys(params).forEach((key) => {
-    rows.push(`const ${type}${upperName(key)} = ${n(params[key].default, shader)};`);
+    rows.push(
+      `const ${type}${upperName(key)} = ${n(params[key].default, shader)};`,
+    );
   });
   return rows.join("\n");
 };
@@ -217,7 +219,10 @@ const vexParamsBlock = (entry: SnippetCurveEntry): string => {
 };
 
 // Houdini OpenCL binding block: uses #bind parm + @KERNEL + @name style
-const openclBindingsBlock = (entry: SnippetCurveEntry): string => {
+const openclBindingsBlock = (
+  entry: SnippetCurveEntry,
+  helperCode: string,
+): string => {
   const params = entry.params || {};
   const bindRows: string[] = [];
   const kernelRows: string[] = [];
@@ -226,6 +231,7 @@ const openclBindingsBlock = (entry: SnippetCurveEntry): string => {
   bindRows.push(`#bind parm domain_max float`);
   bindRows.push(`#bind parm range_min float`);
   bindRows.push(`#bind parm range_max float`);
+
   kernelRows.push(`    float domain_min = @domain_min;`);
   kernelRows.push(`    float domain_max = @domain_max;`);
   kernelRows.push(`    float range_min = @range_min;`);
@@ -237,15 +243,34 @@ const openclBindingsBlock = (entry: SnippetCurveEntry): string => {
     kernelRows.push(`    float ${paramName} = @${paramName};`);
   });
 
-  return `${bindRows.join("\n")}\n\n@KERNEL\n{\n${kernelRows.join("\n")}\n}`;
+  kernelRows.push("");
+  kernelRows.push(
+    "    // Bind geometry or sample input above, then call the curve helper.",
+  );
+  kernelRows.push("    // Example: float y = curve(x);");
+
+  const helpers = helperCode.trim();
+
+  return [
+    bindRows.join("\n"),
+    helpers,
+    `@KERNEL\n{\n${kernelRows.join("\n")}\n}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 };
 
 const clampBlock = (lang: string): string => {
-  if (lang === "python") return "def saturate(v):\n    return max(0.0, min(1.0, v))";
-  if (lang === "lua") return "function saturate(v) return math.max(0, math.min(1, v)) end";
-  if (lang === "rust") return "fn saturate(v: f64) -> f64 { v.max(0.0).min(1.0) }";
-  if (lang === "gdscript") return "func saturate(v: float) -> float:\n    return clamp(v, 0.0, 1.0)";
-  if (SHADER_LANGS.has(lang)) return "float saturate(float v) { return clamp(v, 0.0, 1.0); }";
+  if (lang === "python")
+    return "def saturate(v):\n    return max(0.0, min(1.0, v))";
+  if (lang === "lua")
+    return "function saturate(v) return math.max(0, math.min(1, v)) end";
+  if (lang === "rust")
+    return "fn saturate(v: f64) -> f64 { v.max(0.0).min(1.0) }";
+  if (lang === "gdscript")
+    return "func saturate(v: float) -> float:\n    return clamp(v, 0.0, 1.0)";
+  if (SHADER_LANGS.has(lang))
+    return "float saturate(float v) { return clamp(v, 0.0, 1.0); }";
   return "const saturate = (v) => Math.max(0, Math.min(1, v));";
 };
 
@@ -279,8 +304,10 @@ const wrapExpressionAsFunction = (
   if (lang === "python") return `def ${name}(x):\n    return ${body}`;
   if (lang === "lua") return `function ${name}(x) return ${body} end`;
   if (lang === "rust") return `fn ${name}(x: f64) -> f64 { ${body} }`;
-  if (lang === "gdscript") return `func ${name}(x: float) -> float:\n    return ${body}`;
-  if (SHADER_LANGS.has(lang)) return `float ${name}(float x) { return ${body}; }`;
+  if (lang === "gdscript")
+    return `func ${name}(x: float) -> float:\n    return ${body}`;
+  if (SHADER_LANGS.has(lang))
+    return `float ${name}(float x) { return ${body}; }`;
   return `function ${name}(x) { return ${body}; }`;
 };
 
@@ -346,11 +373,39 @@ const formatCompactCode = (code: string, lang: string): string => {
 export function transformSnippet(input: SnippetTransformInput): string {
   const lang = input.lang || "text";
   const options = normalizeOptions(input.activeOptions, input.availableOptions);
+
+  if (HOUDINI_OPENCL_LANGS.has(lang) && options.bindings) {
+    const blocks: string[] = [];
+
+    if (options.comments) blocks.push(commentBlock(input.entry, lang));
+
+    const helperBlocks: string[] = [];
+    if (options.clamp) helperBlocks.push(clampBlock(lang));
+    if (options.fit) {
+      if (!options.clamp) helperBlocks.push(clampBlock(lang));
+      helperBlocks.push(fitBlock(lang));
+    }
+
+    const helperBody = formatCompactCode(
+      wrapExpressionAsFunction(input.code, input.entry, lang),
+      lang,
+    );
+
+    helperBlocks.push(helperBody);
+    blocks.push(
+      openclBindingsBlock(
+        input.entry,
+        helperBlocks.filter(Boolean).join("\n\n"),
+      ),
+    );
+
+    return blocks.filter(Boolean).join("\n\n");
+  }
+
   const blocks: string[] = [];
 
   if (options.comments) blocks.push(commentBlock(input.entry, lang));
 
-  // VEX params mode: prefer params over constants for Houdini bindings
   if (HOUDINI_VEX_LANGS.has(lang) && options.params) {
     blocks.push(vexParamsBlock(input.entry));
   } else if (options.constants) {
@@ -360,11 +415,6 @@ export function transformSnippet(input: SnippetTransformInput): string {
   if (options.uniforms) {
     const uniforms = uniformsBlock(input.entry, lang);
     if (uniforms) blocks.push(uniforms);
-  }
-
-  // OpenCL bindings mode: prefer bindings over uniforms/constants
-  if (HOUDINI_OPENCL_LANGS.has(lang) && options.bindings) {
-    blocks.push(openclBindingsBlock(input.entry));
   }
 
   if (options.clamp) blocks.push(clampBlock(lang));
