@@ -96,6 +96,7 @@
     /* Shared gallery edge inset: chips, search/info row, curve wall, and rail. */
     --gallery-edge-padding: 0px;
     --wall-head-padding-top: 3px;
+    --wall-head-gap: 6px;
     --rail-top-padding: 6px;
     --rail-button-offset-x: -8px;
     --rail-button-content-inset: 16px;

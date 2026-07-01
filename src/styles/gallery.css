@@ -571,7 +571,7 @@
 
 .wall-head {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 8px;
     padding: var(--wall-head-padding-top) var(--gallery-edge-padding) 4px
@@ -582,14 +582,24 @@
 .wall-head .helper-tips {
     grid-column: 1;
     grid-row: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--wall-head-gap);
     min-width: 0;
+}
+
+.wall-head .helper-tips .layout-status {
+    white-space: nowrap;
+    background: color-mix(in srgb, var(--white) 3%, transparent);
+}
+
+.wall-head .helper-tips .tips-label {
+    color: var(--soft);
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-regular);
-    color: var(--soft);
-    opacity: 0.9;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: var(--text-transform-uppercase);
+    margin-right: 2px;
 }
 .wall-head .chips-wrap {
     grid-column: 1 / -1;
@@ -636,7 +646,7 @@
    separated by the flex gap on the parent .layout-note. */
 .layout-note {
     display: flex;
-    gap: 6px;
+    gap: var(--wall-head-gap);
     align-items: center;
     color: var(--soft);
     font-size: var(--font-size-sm);
