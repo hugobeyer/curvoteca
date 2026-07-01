@@ -361,6 +361,8 @@ export type CurveParamSchema = Record<string, CurveParamDefinition>;
 // --- snippet options (per-curve opt-in for the disabled snippet bar) --
 export type CurveSnippetOptions = {
   constants?: boolean;
+  params?: boolean;
+  bindings?: boolean;
   clamp?: boolean;
   fit?: boolean;
   function?: boolean;
@@ -370,6 +372,8 @@ export type CurveSnippetOptions = {
 
 export const DEFAULT_SNIPPET_OPTIONS: Required<CurveSnippetOptions> = {
   constants: true,
+  params: false,
+  bindings: false,
   clamp: true,
   fit: true,
   function: true,

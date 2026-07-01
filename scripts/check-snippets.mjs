@@ -207,6 +207,12 @@ function validateByTarget(file, curveId, target, code, knownTargets) {
     if (/\buniform\s+float\b/.test(code)) {
       fail(`${where}: VEX snippet contains GLSL-style uniform.`);
     }
+    if (/#bind\s+parm\b/.test(code)) {
+      fail(`${where}: VEX snippet contains OpenCL-style #bind syntax.`);
+    }
+    if (/\b@KERNEL\b/.test(code)) {
+      fail(`${where}: VEX snippet contains OpenCL-style @KERNEL syntax.`);
+    }
   }
 
   if (target === "opencl") {
@@ -215,6 +221,9 @@ function validateByTarget(file, curveId, target, code, knownTargets) {
     }
     if (/;\s*float\s+\w+\s*\)/.test(code)) {
       fail(`${where}: OpenCL function args look like VEX semicolon args.`);
+    }
+    if (/\bchf\s*\(/.test(code) || /\bchi\s*\(/.test(code) || /\bchv\s*\(/.test(code) || /\bchs\s*\(/.test(code)) {
+      fail(`${where}: OpenCL snippet contains VEX-style chf/chi/chv/chs syntax.`);
     }
   }
 }

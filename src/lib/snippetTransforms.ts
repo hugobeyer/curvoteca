@@ -7,6 +7,8 @@
 
 export type SnippetOptionKey =
   | "constants"
+  | "params"
+  | "bindings"
   | "clamp"
   | "fit"
   | "function"
@@ -46,6 +48,8 @@ export interface SnippetTransformInput {
 
 const OPTION_KEYS: SnippetOptionKey[] = [
   "constants",
+  "params",
+  "bindings",
   "clamp",
   "fit",
   "function",
@@ -62,6 +66,9 @@ const SHADER_LANGS = new Set([
   "vex",
   "shadertoy",
 ]);
+
+const HOUDINI_VEX_LANGS = new Set(["vex"]);
+const HOUDINI_OPENCL_LANGS = new Set(["opencl"]);
 
 const FUNCTION_LIKE: Record<string, RegExp> = {
   js: /\bfunction\b|=>/,
@@ -177,6 +184,8 @@ const constantsBlock = (entry: SnippetCurveEntry, lang: string): string => {
 };
 
 const uniformsBlock = (entry: SnippetCurveEntry, lang: string): string => {
+  // VEX and OpenCL use their own binding/param styles, not GLSL uniforms
+  if (HOUDINI_VEX_LANGS.has(lang) || HOUDINI_OPENCL_LANGS.has(lang)) return "";
   if (!SHADER_LANGS.has(lang)) return "";
   const params = entry.params || {};
   const rows = [
@@ -189,6 +198,46 @@ const uniformsBlock = (entry: SnippetCurveEntry, lang: string): string => {
     rows.push(`uniform float u_${safeName(key)};`);
   });
   return rows.join("\n");
+};
+
+// VEX parameter block: reads Houdini wrangle parameters via chf()/chi()/chv()/chs()
+const vexParamsBlock = (entry: SnippetCurveEntry): string => {
+  const params = entry.params || {};
+  const rows: string[] = [];
+
+  rows.push(`float domain_min = chf("domain_min");`);
+  rows.push(`float domain_max = chf("domain_max");`);
+  rows.push(`float range_min = chf("range_min");`);
+  rows.push(`float range_max = chf("range_max");`);
+  Object.keys(params).forEach((key) => {
+    const paramName = safeName(key).toLowerCase();
+    rows.push(`float ${paramName} = chf("${paramName}");`);
+  });
+  return rows.join("\n");
+};
+
+// Houdini OpenCL binding block: uses #bind parm + @KERNEL + @name style
+const openclBindingsBlock = (entry: SnippetCurveEntry): string => {
+  const params = entry.params || {};
+  const bindRows: string[] = [];
+  const kernelRows: string[] = [];
+
+  bindRows.push(`#bind parm domain_min float`);
+  bindRows.push(`#bind parm domain_max float`);
+  bindRows.push(`#bind parm range_min float`);
+  bindRows.push(`#bind parm range_max float`);
+  kernelRows.push(`    float domain_min = @domain_min;`);
+  kernelRows.push(`    float domain_max = @domain_max;`);
+  kernelRows.push(`    float range_min = @range_min;`);
+  kernelRows.push(`    float range_max = @range_max;`);
+
+  Object.keys(params).forEach((key) => {
+    const paramName = safeName(key).toLowerCase();
+    bindRows.push(`#bind parm ${paramName} float`);
+    kernelRows.push(`    float ${paramName} = @${paramName};`);
+  });
+
+  return `${bindRows.join("\n")}\n\n@KERNEL\n{\n${kernelRows.join("\n")}\n}`;
 };
 
 const clampBlock = (lang: string): string => {
@@ -300,11 +349,24 @@ export function transformSnippet(input: SnippetTransformInput): string {
   const blocks: string[] = [];
 
   if (options.comments) blocks.push(commentBlock(input.entry, lang));
-  if (options.constants) blocks.push(constantsBlock(input.entry, lang));
+
+  // VEX params mode: prefer params over constants for Houdini bindings
+  if (HOUDINI_VEX_LANGS.has(lang) && options.params) {
+    blocks.push(vexParamsBlock(input.entry));
+  } else if (options.constants) {
+    blocks.push(constantsBlock(input.entry, lang));
+  }
+
   if (options.uniforms) {
     const uniforms = uniformsBlock(input.entry, lang);
     if (uniforms) blocks.push(uniforms);
   }
+
+  // OpenCL bindings mode: prefer bindings over uniforms/constants
+  if (HOUDINI_OPENCL_LANGS.has(lang) && options.bindings) {
+    blocks.push(openclBindingsBlock(input.entry));
+  }
+
   if (options.clamp) blocks.push(clampBlock(lang));
   if (options.fit) {
     if (!options.clamp) blocks.push(clampBlock(lang));
