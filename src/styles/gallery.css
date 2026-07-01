@@ -570,29 +570,31 @@
 }
 
 .wall-head {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
     gap: 8px;
-    padding: 6px 12px 4px 4px;
+    padding: 6px var(--gallery-edge-padding) 4px
+        var(--gallery-edge-padding);
     flex: 0 0 auto;
 }
 
 .wall-head > :first-child {
-    order: 1;
-    flex: 1 1 auto;
+    grid-column: 1 / -1;
+    grid-row: 2;
     min-width: 0;
 }
 
 .wall-head .layout-note {
-    order: 1;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
 }
 
-/* Search input lives on its own row below chips + info. */
+/* Search and info share the row above the filter chips. */
 .wall-head .search {
-    order: 2;
-    flex: 0 0 100%;
+    grid-column: 1;
+    grid-row: 1;
     min-width: 0;
     margin: 0;
 }

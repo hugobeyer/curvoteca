@@ -6,7 +6,7 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: var(--rail-button-gap);
 }
 
 .rail .icon {
@@ -17,8 +17,9 @@
     gap: 5px;
     width: 100%;
     height: 28px;
-    padding: 0 21px 0 0;
-    border-radius: 0;
+    padding: 0 21px 0 var(--rail-button-content-inset);
+    transform: translateX(var(--rail-button-offset-x));
+    border-radius: 0 var(--pill-radius) var(--pill-radius) 0;
     color: var(--muted);
     border: 0;
     outline: 1px solid transparent;

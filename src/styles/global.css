@@ -85,7 +85,7 @@
 
     /* Pill geometry (chips / search / info bar). Single source of
        truth so all three chrome elements look like the same family. */
-    --pill-height: 22px;
+    --pill-height: 24px;
     --pill-radius: 2px;
     --pill-padding-x: 12px;
     --pill-bg-alpha: 6%;
@@ -93,6 +93,12 @@
        (used by search / info bar) so the toolbar stays compact. */
     --chip-padding-x: 7px;
     --chip-gap: 2px;
+    /* Shared gallery edge inset: chips, search/info row, curve wall, and rail. */
+    --gallery-edge-padding: 0px;
+    --rail-top-padding: 6px;
+    --rail-button-offset-x: -8px;
+    --rail-button-content-inset: 16px;
+    --rail-button-gap: 8px;
     /* Info label color/opacity (consumed by .layout-status in this file).
        The matching font-size/weight live in font.css. */
     --info-label-color: var(--muted);
@@ -394,7 +400,7 @@ p {
 .rail {
     grid-column: 1;
     grid-row: 2 / 4;
-    padding: 1px 3px 5px 3px;
+    padding: var(--rail-top-padding) 3px 5px var(--gallery-edge-padding);
     display: grid;
     align-content: start;
     gap: 1px;
@@ -409,7 +415,7 @@ p {
 .wall {
     position: relative;
     border-radius: 3px;
-    padding: 8px;
+    padding: var(--gallery-edge-padding);
     min-width: 0;
     min-height: 0;
     overflow: auto;
