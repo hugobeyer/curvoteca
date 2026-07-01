@@ -35,7 +35,13 @@ const snippetsJson = JSON.stringify(curve.snippets ?? {});
     title="RMB opens context actions: copy, paste, compare, pin"
 >
     <header class="card-head">
-        <span class="card-title">{curve.name}</span>
+        <a
+            class="card-title"
+            href={`/curve/${curve.id}`}
+            data-open-detail={curve.id}
+        >
+            {curve.name}
+        </a>
 
         <div class="actions" aria-label="Icon actions">
             <span class="action">
@@ -85,15 +91,15 @@ const snippetsJson = JSON.stringify(curve.snippets ?? {});
                 </button>
             </span>
             <span class="action">
-                <button
+                <a
                     class="icon info-btn"
-                    type="button"
+                    href={`/curve/${curve.id}`}
                     data-open-detail={curve.id}
                     title="Open detail"
                     aria-label={`Open ${curve.name} detail`}
                 >
                     <ExpandIcon size={16} />
-                </button>
+                </a>
             </span>
         </div>
     </header>

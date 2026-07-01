@@ -1,0 +1,23 @@
+---
+import CurveGalleryShell from "../../components/CurveGalleryShell.astro";
+import { curves } from "../../data/curves";
+import { toCurveSeo, type CurveSeo } from "../../lib/curveSeo";
+
+export function getStaticPaths() {
+    return curves.map((curve) => {
+        const curveSeo = toCurveSeo(curve);
+        return {
+            params: { id: curveSeo.id },
+            props: { curveSeo },
+        };
+    });
+}
+
+interface Props {
+    curveSeo: CurveSeo;
+}
+
+const { curveSeo } = Astro.props as Props;
+---
+
+<CurveGalleryShell activeCurveId={curveSeo.id} curveForSeo={curveSeo} />

@@ -1,0 +1,3706 @@
+---
+// ---------------------------------------------------------------------------
+// CurveGalleryShell.astro
+// Curvoteca's main gallery shell. Composes the persistent shell (TopBar,
+// IconRail, CompareTray) around the CurveWall of all curves from
+// `data/curves.ts`, plus the #copy-popover host for snippet copying.
+// Owns the inline client scripts that wire up:
+//   - search box, filter chips, favorites
+//   - compare tray selection + localStorage + ?c= URL sync
+//   - per-card viewport state (zoom/pan/wrap) with shared-view support
+//   - focus / atlas / browse modes and step navigation
+// This file is intentionally long: it is the single integration point
+// for the gallery's interactive behavior.
+// ---------------------------------------------------------------------------
+import TopBar from "./TopBar.astro";
+import IconRail from "./IconRail.astro";
+import CurveWall from "./CurveWall.astro";
+import CompareTray from "./CompareTray.astro";
+import SponsorSlot from "./SponsorSlot.astro";
+import SponsorAdCard from "./SponsorAdCard.astro";
+import CopyIcon from "./CopyIcon.astro";
+import SnippetOptionBar from "./SnippetOptionBar.astro";
+import { curves } from "../data/curves";
+import popupContent from "../data/popup-content.json";
+import sponsorsData from "../data/sponsors.json";
+import {
+    SITE_URL,
+    curveDescription,
+    curveTitle,
+    curveUrl,
+    type CurveSeo,
+} from "../lib/curveSeo";
+
+const { about: aboutContent, sponsor: sponsorContent } = popupContent;
+const popupAdSlot = sponsorsData.slots?.popup;
+const popupAdSponsor = popupAdSlot?.sponsorId
+    ? (sponsorsData.sponsors.find(
+          (s) => s.id === popupAdSlot.sponsorId && s.active,
+      ) ?? null)
+    : null;
+import { PAGER } from "../lib/curveViewportMath";
+import {
+    KEY_FAVORITES,
+    KEY_COMPARE,
+    KEY_TRAY_COLLAPSED,
+    KEY_GALLERY_MODE,
+    KEY_CURVE_VIEW,
+    KEY_VIEW_MODE,
+    KEY_WRAP_MODE,
+    KEY_GRID_SIZE,
+    KEY_GRID_COLS,
+    KEY_PAGER_SIZE,
+    KEY_VIEW_GRID,
+} from "../lib/storageKeys";
+import "../styles/colors.css";
+import "../styles/font.css";
+import "../styles/global.css";
+import "../styles/icons.css";
+import "../styles/globalfx.css";
+import "../styles/viewport-colors.css";
+import "../styles/gallery.css";
+
+interface Props {
+    activeCurveId?: string | null;
+    curveForSeo?: CurveSeo | null;
+}
+
+const { activeCurveId = null, curveForSeo = null } = Astro.props as Props;
+const pageTitle = curveForSeo
+    ? curveTitle(curveForSeo)
+    : "Curvoteca - visual curve reference for animation, shading and UI";
+const pageDescription = curveForSeo
+    ? curveDescription(curveForSeo)
+    : "Curvoteca is a dense visual reference of mathematical curves for UI, shading, animation and tooling. Browse, compare and copy equations for JS, GLSL, VEX and more.";
+const canonicalUrl = curveForSeo ? curveUrl(curveForSeo.id) : SITE_URL;
+const ogTitle = curveForSeo
+    ? curveTitle(curveForSeo)
+    : "Curvoteca - visual curve reference";
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <title>{pageTitle}</title>
+        <meta
+            name="description"
+            content={pageDescription}
+        />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta
+            name="keywords"
+            content="curves, easing, interpolation, animation, UI, GLSL, VEX, math, reference"
+        />
+        <meta property="og:title" content={ogTitle} />
+        <meta
+            property="og:description"
+            content={pageDescription}
+        />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={ogTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <style is:inline>
+            .seo-curve-detail {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip: rect(0 0 0 0);
+                white-space: nowrap;
+            }
+        </style>
+        <script is:inline>
+            // Pre-paint: resolve persisted grid sizing from localStorage
+            // and apply it to <html> as CSS variables. This prevents the
+            // first-paint shift that would otherwise happen when the main
+            // inline script reads localStorage and sets --card-min-w /
+            // --card-row-h / --grid-cols on the grid (Lighthouse CLS).
+            (function () {
+                try {
+                    var KEYS = {
+                        gridSize: "curvoteca:grid-size",
+                        gridCols: "curvoteca:grid-cols",
+                    };
+                    var raw = localStorage.getItem(KEYS.gridSize);
+                    if (raw) {
+                        var p = JSON.parse(raw);
+                        if (
+                            p &&
+                            typeof p.minW === "number" &&
+                            typeof p.rowH === "number"
+                        ) {
+                            document.documentElement.style.setProperty(
+                                "--card-min-w",
+                                p.minW + "px",
+                            );
+                            document.documentElement.style.setProperty(
+                                "--card-row-h",
+                                p.rowH + "px",
+                            );
+                        }
+                    }
+                    var c = parseInt(
+                        localStorage.getItem(KEYS.gridCols) || "0",
+                        10,
+                    );
+                    if (c >= 1 && c <= 8) {
+                        document.documentElement.style.setProperty(
+                            "--grid-cols",
+                            "repeat(" + c + ", minmax(0, 1fr))",
+                        );
+                    }
+                } catch (e) {
+                    /* localStorage may be unavailable; fall through */
+                }
+            })();
+        </script>
+    </head>
+    <body data-active-curve-id={activeCurveId ?? ""}>
+        <main class="app" id="app">
+            <TopBar />
+            <IconRail />
+            <CurveWall curves={curves} />
+            <CompareTray curves={curves} />
+        </main>
+
+        {
+            curveForSeo && (
+                <section
+                    class="seo-curve-detail"
+                    aria-label={`${curveForSeo.name} curve details`}
+                >
+                    <h1>{curveForSeo.name}</h1>
+                    <p>{curveForSeo.summary}</p>
+                    <h2>Formula</h2>
+                    <code>{curveForSeo.formula}</code>
+                    {curveForSeo.useCases.length > 0 && (
+                        <>
+                            <h2>Use Cases</h2>
+                            <ul>
+                                {curveForSeo.useCases.map((item) => (
+                                    <li>{item}</li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
+                    {curveForSeo.tags.length > 0 && (
+                        <>
+                            <h2>Tags</h2>
+                            <ul>
+                                {curveForSeo.tags.map((tag) => (
+                                    <li>{tag}</li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
+                </section>
+            )
+        }
+
+        <div id="view-overlay" data-view-overlay aria-hidden="true">
+            <div class="view-overlay-backdrop" data-overlay-close></div>
+            <div class="view-overlay-box" role="dialog" aria-modal="true">
+                <button
+                    class="icon view-overlay-close"
+                    type="button"
+                    data-overlay-close
+                    aria-label="Close"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="12px"
+                        viewBox="0 -960 960 960"
+                        width="12px"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M480-440 288-248l-88-88 192-192-192-192 88-88 192 192 192-192 88 88-192 192 192 192-88 88-192-192Z"
+                        ></path>
+                    </svg>
+                </button>
+                <div
+                    class="view-overlay-content"
+                    data-overlay-content="sponsor"
+                    aria-hidden="true"
+                >
+                    <h2>{sponsorContent.title}</h2>
+                    <div class="sponsor-layout">
+                        <section class="sponsor-panel sponsor-support">
+                            <p>{sponsorContent.intro}</p>
+                            <p class="section-label">
+                                {sponsorContent.sectionLabel}
+                            </p>
+                            <ul class="sponsor-list">
+                                {
+                                    sponsorContent.items.map((item) => (
+                                        <li>{item}</li>
+                                    ))
+                                }
+                            </ul>
+                            <SponsorSlot />
+                            <div class="pix-qr-wrap">
+                                <img
+                                    class="pix-qr"
+                                    data-qr-for="buyme"
+                                    src="/buyme-qr-code.png"
+                                    alt="Buy Me a Coffee QR code"
+                                    width="200"
+                                    height="200"
+                                    hidden
+                                />
+                                <a
+                                    class="qr-link"
+                                    data-qr-for="buyme"
+                                    href="https://buymeacoffee.com/curvoteca"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    hidden>buymeacoffee.com/curvoteca</a
+                                >
+                                <img
+                                    class="pix-qr"
+                                    data-qr-for="pix"
+                                    src="/pixqrcode.png"
+                                    alt="Pix QR code for donation"
+                                    width="200"
+                                    height="200"
+                                    hidden
+                                />
+                            </div>
+                            <p class="micro note">{sponsorContent.footnote}</p>
+                        </section>
+                        <section class="sponsor-panel sponsor-sales">
+                            <h3>{sponsorContent.sponsorTitle}</h3>
+                            <p>{sponsorContent.sponsorIntro}</p>
+                            <p class="section-label">Available placements</p>
+                            <ul class="sponsor-list">
+                                {
+                                    sponsorContent.sponsorPlacements.map(
+                                        (item) => <li>{item}</li>,
+                                    )
+                                }
+                            </ul>
+                            <p class="section-label">Pricing</p>
+                            <ul class="sponsor-pricing">
+                                {
+                                    sponsorContent.sponsorPricing.map((p) => (
+                                        <li class="pricing-row">
+                                            <span class="pricing-slot">
+                                                {p.slot}
+                                            </span>
+                                            <span class="pricing-price">
+                                                {p.price}
+                                            </span>
+                                        </li>
+                                    ))
+                                }
+                            </ul>
+                            <p class="section-label">Best fit</p>
+                            <ul class="sponsor-list">
+                                {
+                                    sponsorContent.bestFit.map((item) => (
+                                        <li>{item}</li>
+                                    ))
+                                }
+                            </ul>
+                            <p class="micro note">
+                                Contact: <a
+                                    href="mailto:{sponsorContent.contactEmail}?subject=Sponsor Curvoteca"
+                                    >{sponsorContent.contactEmail}</a
+                                >
+                            </p>
+                        </section>
+                    </div>
+                    <SponsorAdCard
+                        sponsor={popupAdSlot?.enabled
+                            ? popupAdSponsor
+                                ? {
+                                      id: popupAdSponsor.id,
+                                      name: popupAdSponsor.name,
+                                      label: popupAdSponsor.label,
+                                      description: popupAdSponsor.description,
+                                      url: popupAdSponsor.url,
+                                      active: popupAdSponsor.active,
+                                  }
+                                : null
+                            : null}
+                    />
+                </div>
+                <div
+                    class="view-overlay-content"
+                    data-overlay-content="about"
+                    aria-hidden="true"
+                >
+                    <h2>{aboutContent.title}</h2>
+                    <p>{aboutContent.body}</p>
+                    <ul class="lang-list">
+                        {aboutContent.languages.map((lang) => <li>{lang}</li>)}
+                    </ul>
+                    <p>{aboutContent.closing}</p>
+                    <p class="micro note">
+                        Contact: <a href="mailto:hello@curvoteca.com"
+                            >{aboutContent.contact}</a
+                        >
+                    </p>
+                </div>
+                <div
+                    class="view-overlay-content"
+                    data-overlay-content="detail"
+                    aria-hidden="true"
+                >
+                    <div class="detail-dragbar" data-detail-drag-handle>
+                        <h2 id="detail-overlay-name"></h2>
+                    </div>
+                    <div class="detail-main">
+                        <div class="detail-viewport-wrap">
+                            <div
+                                class="detail-viewport-col"
+                                id="detail-overlay-viewport"
+                            >
+                            </div>
+                            <div class="detail-controls">
+                                <button
+                                    class="link-toggle detail-control"
+                                    type="button"
+                                    id="detail-wrap-toggle"
+                                    aria-pressed="false"
+                                    title="cycle wrap mode"
+                                >
+                                    wrap <span id="detail-wrap-toggle-state"
+                                        >clamp</span
+                                    >
+                                </button>
+                                <button
+                                    class="link-toggle detail-control"
+                                    type="button"
+                                    id="detail-view-toggle"
+                                    disabled
+                                    title="view modes coming soon"
+                                >
+                                    view <span>graph</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="detail-info-col">
+                            <p
+                                class="detail-overlay-summary"
+                                id="detail-overlay-summary"
+                            >
+                            </p>
+                        </div>
+                    </div>
+                    <div class="detail-tabs-row" id="detail-overlay-tabs"></div>
+                    <div class="detail-code-panel">
+                        <button
+                            class="icon copy-btn detail-code-copy"
+                            id="detail-overlay-copy"
+                            data-copy=""
+                            title="Copy"
+                            type="button"
+                        >
+                            <span class="copy-icon-wrap"
+                                ><CopyIcon size={14} /></span
+                            >
+                            <span class="copy-feedback">Copied!</span>
+                        </button>
+                        <pre
+                            class="detail-overlay-code"
+                            id="detail-overlay-code">
+                        </pre>
+                    </div>
+                    <SnippetOptionBar />
+                </div>
+            </div>
+        </div>
+
+        <div id="copy-popover" data-copy-popover></div>
+
+        <div class="pager" id="wall-pager" aria-label="Wall pagination">
+            <div class="pager-cluster">
+                <button
+                    class="icon pager-btn"
+                    type="button"
+                    id="pager-prev"
+                    title="previous page"
+                    aria-label="Previous page"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="16px"
+                        viewBox="0 -960 960 960"
+                        width="16px"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M560-208 288-480l272-272 88 88-184 184 184 184-88 88Z"
+                        ></path>
+                    </svg>
+                </button>
+                <span class="pager-state" aria-live="polite">
+                    <b id="pager-page">1</b><span class="pager-sep">/</span><b
+                        id="pager-total">1</b
+                    >
+                </span>
+                <button
+                    class="icon pager-btn"
+                    type="button"
+                    id="pager-next"
+                    title="next page"
+                    aria-label="Next page"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="16px"
+                        viewBox="0 -960 960 960"
+                        width="16px"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M472-480 288-664l88-88 272 272-272 272-88-88 184-184Z"
+                        ></path>
+                    </svg>
+                </button>
+                <button
+                    class="chip pager-size"
+                    type="button"
+                    id="pager-size"
+                    title="cycle cards per page"
+                    aria-label="Cycle cards per page"
+                >
+                    <span id="pager-size-val">32</span>
+                </button>
+                <button
+                    class="link-toggle pager-compare"
+                    type="button"
+                    id="rail-compare"
+                    title="show workbench"
+                    aria-label="Show workbench"
+                    aria-pressed="false"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="14px"
+                        viewBox="0 -960 960 960"
+                        width="14px"
+                        fill="currentColor"
+                        class="is-compare"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M480-144 144-408l58-46 278 218 278-218 58 46-336 264Zm0-192L144-600l336-264 336 264-336 264Zm0-258Zm0 166 219-172-219-172-219 172 219 172Z"
+                        ></path>
+                    </svg>
+                    <span class="link-toggle-state">workbench</span>
+                </button>
+                <button
+                    class="link-toggle pager-wrap"
+                    type="button"
+                    id="wrap-toggle"
+                    aria-pressed="false"
+                    title="cycle wrap mode: clamp / repeat / mirror / loop"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="14px"
+                        viewBox="0 -960 960 960"
+                        width="14px"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M220-237q-101 0-172-71t-172-172q0-101 71-172t172-71q41 0 79 14.5t68 41.5l55 48-94 85-45-39q-13-11-29.5-17.5T220-597q-49 0-83 34t-34 83q0 49 34 83t83 34q17 0 33.5-6.5T283-387l310-280q30-27 68-41.5t79-14.5q101 0,172,71t71,172q0,101-71,172t-172,71q-41 0-79-14.5T593-293l-55-48 94-85 45 39q13 11 29.5 17.5T740-363q49 0 83-34t34-83q0-49-34-83t-83-34q-17 0-33.5 6.5T677-573L367-293q-30 27-68 41.5T220-237Z"
+                        ></path>
+                    </svg>
+                    <span class="link-toggle-state" id="wrap-toggle-state"
+                        >clamp</span
+                    >
+                </button>
+                <button
+                    class="link-toggle pager-view"
+                    type="button"
+                    id="view-mode-toggle"
+                    aria-pressed="false"
+                    title="cycle view mode"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="14px"
+                        viewBox="0 -960 960 960"
+                        width="14px"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M192-240v-72h576v72H192Zm0-144v-72h576v72H192Zm0-144v-84l216-132 180 128 180-128v88L588-528 405-658 192-528Z"
+                        ></path>
+                    </svg>
+                    <span class="link-toggle-state" id="view-mode-toggle-state"
+                        >graph</span
+                    >
+                </button>
+                <button
+                    class="link-toggle pager-grid"
+                    type="button"
+                    id="view-grid-toggle"
+                    aria-pressed="true"
+                    title="cycle grid mode"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="14px"
+                        viewBox="0 -960 960 960"
+                        width="14px"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M138-138v-684h684v684H138Zm606-78v-225H519v225h225Zm0-528H519v225h225v-225Zm-528 0v225h225v-225H216Zm0 528h225v-225H216v225Z"
+                        ></path>
+                    </svg>
+                    <span class="link-toggle-state" id="view-grid-toggle-state"
+                        >grid</span
+                    >
+                </button>
+                <button
+                    class="link-toggle pager-cols"
+                    type="button"
+                    id="cols-toggle"
+                    aria-pressed="false"
+                    title="cycle gallery columns"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="14px"
+                        viewBox="0 -960 960 960"
+                        width="14px"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M440-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h240v720Zm-80-80v-560H200v560h160Zm160-320v-320h240q33 0 56.5 23.5T840-760v240H520Zm80-80h160v-160H600v160Zm-80 480v-320h320v240q0 33-23.5 56.5T760-120H520Zm80-80h160v-160H600v160ZM360-480Zm240-120Zm0 240Z"
+                        ></path>
+                    </svg>
+                    <span class="link-toggle-state" id="cols-toggle-state"
+                        >cols</span
+                    >
+                </button>
+            </div>
+        </div>
+
+        <script is:inline>
+            (function () {
+                const isTextSurface = function (el) {
+                    if (!el) return false;
+                    if (
+                        el.closest &&
+                        el.closest(
+                            'input, textarea, [contenteditable="true"], code, pre, kbd, samp, var, .detail-snippet-code, .detail-formula, .is-selectable, .allow-select',
+                        )
+                    ) {
+                        return true;
+                    }
+                    return false;
+                };
+                document.addEventListener("contextmenu", function (e) {
+                    if (isTextSurface(e.target)) return;
+                    e.preventDefault();
+                });
+            })();
+        </script>
+
+        <script is:inline>
+            // Single document-level click dispatcher. Per-feature inline
+            // scripts below register handlers via window.__appClickHandlers;
+            // we iterate them in registration order so behavior matches the
+            // previous (separate) listeners.
+            (function () {
+                window.__appClickHandlers = window.__appClickHandlers || [];
+                document.addEventListener("click", function (e) {
+                    const handlers = window.__appClickHandlers;
+                    for (let i = 0; i < handlers.length; i += 1) {
+                        try {
+                            handlers[i](e);
+                        } catch (err) {
+                            /* ignore */
+                        }
+                    }
+                });
+            })();
+        </script>
+
+        <script is:inline>
+            (function () {
+                const overlay = document.getElementById("view-overlay");
+                const railBtns = document.querySelectorAll("[data-rail-view]");
+                if (!overlay) return;
+
+                const openOverlay = function (view) {
+                    const contents = overlay.querySelectorAll(
+                        "[data-overlay-content]",
+                    );
+                    contents.forEach(function (c) {
+                        c.setAttribute(
+                            "aria-hidden",
+                            c.getAttribute("data-overlay-content") !== view
+                                ? "true"
+                                : "false",
+                        );
+                    });
+                    overlay.setAttribute("aria-hidden", "false");
+                    overlay.classList.toggle("is-detail", view === "detail");
+                    try {
+                        window.dispatchEvent(
+                            new CustomEvent("curvoteca:detail-overlay", {
+                                detail: { open: view === "detail" },
+                            }),
+                        );
+                    } catch (e) {}
+                    railBtns.forEach(function (b) {
+                        b.classList.toggle(
+                            "active",
+                            b.getAttribute("data-rail-view") === view,
+                        );
+                    });
+                };
+
+                const closeOverlay = function () {
+                    overlay.setAttribute("aria-hidden", "true");
+                    railBtns.forEach(function (b) {
+                        b.classList.remove("active");
+                    });
+                    try {
+                        window.dispatchEvent(
+                            new CustomEvent("curvoteca:detail-overlay", {
+                                detail: { open: false },
+                            }),
+                        );
+                    } catch (e) {}
+                };
+
+                const curvePathFor = function (id) {
+                    return "/curve/" + encodeURIComponent(id);
+                };
+
+                const syncCurveUrl = function (id, replace) {
+                    var nextPath = curvePathFor(id);
+                    if (window.location.pathname === nextPath) return;
+                    try {
+                        if (replace) {
+                            window.history.replaceState(
+                                { curveId: id },
+                                "",
+                                nextPath,
+                            );
+                        } else {
+                            window.history.pushState(
+                                { curveId: id },
+                                "",
+                                nextPath,
+                            );
+                        }
+                    } catch (err) {}
+                };
+
+                (function () {
+                    var box = overlay.querySelector(".view-overlay-box");
+                    var handle = overlay.querySelector(
+                        "[data-detail-drag-handle]",
+                    );
+                    if (!box || !handle) return;
+                    var drag = null;
+                    handle.addEventListener("pointerdown", function (e) {
+                        if (!overlay.classList.contains("is-detail")) return;
+                        if (e.target.closest("button, a")) return;
+                        drag = {
+                            x: e.clientX,
+                            y: e.clientY,
+                            left: box.offsetLeft,
+                            top: box.offsetTop,
+                        };
+                        box.classList.add("is-dragging");
+                        box.style.position = "fixed";
+                        box.style.left = drag.left + "px";
+                        box.style.top = drag.top + "px";
+                        box.style.margin = "0";
+                        try {
+                            handle.setPointerCapture(e.pointerId);
+                        } catch (err) {}
+                    });
+                    handle.addEventListener("pointermove", function (e) {
+                        if (!drag) return;
+                        var nextLeft = drag.left + e.clientX - drag.x;
+                        var nextTop = drag.top + e.clientY - drag.y;
+                        box.style.left =
+                            Math.max(
+                                4,
+                                Math.min(
+                                    window.innerWidth - box.offsetWidth - 4,
+                                    nextLeft,
+                                ),
+                            ) + "px";
+                        box.style.top =
+                            Math.max(
+                                4,
+                                Math.min(
+                                    window.innerHeight - box.offsetHeight - 4,
+                                    nextTop,
+                                ),
+                            ) + "px";
+                    });
+                    handle.addEventListener("pointerup", function (e) {
+                        drag = null;
+                        box.classList.remove("is-dragging");
+                        try {
+                            handle.releasePointerCapture(e.pointerId);
+                        } catch (err) {}
+                    });
+                })();
+
+                var hashMap = { support: "sponsor", about: "about" };
+                var hashView = hashMap[window.location.hash.replace("#", "")];
+                if (hashView) openOverlay(hashView);
+
+                window.__appClickHandlers.push(function (e) {
+                    const close = e.target.closest("[data-overlay-close]");
+                    if (close) {
+                        e.preventDefault();
+                        closeOverlay();
+                        if (window.location.pathname.indexOf("/curve/") === 0) {
+                            try {
+                                window.history.pushState(null, "", "/");
+                            } catch (err) {}
+                        }
+                        return;
+                    }
+                    const btn = e.target.closest("[data-rail-view]");
+                    if (btn) {
+                        e.preventDefault();
+                        const view = btn.getAttribute("data-rail-view");
+                        if (view === "gallery") {
+                            closeOverlay();
+                            return;
+                        }
+                        openOverlay(view);
+                        return;
+                    }
+                    const detail = e.target.closest("[data-open-detail]");
+                    if (detail) {
+                        if (e.target.closest("[data-tray-remove]")) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var id = detail.getAttribute("data-open-detail");
+                        if (!id) return;
+                        var wall = document.getElementById("curve-wall");
+                        if (!wall) return;
+                        try {
+                            var registry = JSON.parse(
+                                wall.getAttribute("data-curves") || "[]",
+                            );
+                            var entry = null;
+                            for (var i = 0; i < registry.length; i++) {
+                                if (registry[i].id === id) {
+                                    entry = registry[i];
+                                    break;
+                                }
+                            }
+                            if (!entry) return;
+                            var nameEl = document.getElementById(
+                                "detail-overlay-name",
+                            );
+                            var summaryEl = document.getElementById(
+                                "detail-overlay-summary",
+                            );
+                            if (nameEl) nameEl.textContent = entry.name;
+                            if (summaryEl)
+                                summaryEl.textContent = entry.summary || "";
+
+                            // --- detail right-column metadata sections ---
+                            // Re-uses the existing .detail-info-col container.
+                            // Each section is rendered only when its data is
+                            // present; empty headers are never emitted. Sections
+                            // are rebuilt on every open so switching curves
+                            // does not leak the previous curve's chips.
+                            var infoCol = summaryEl
+                                ? summaryEl.parentElement
+                                : null;
+                            var sectionsEl = infoCol
+                                ? infoCol.querySelector(
+                                      "[data-detail-sections]",
+                                  )
+                                : null;
+                            if (infoCol && !sectionsEl) {
+                                sectionsEl = document.createElement("div");
+                                sectionsEl.setAttribute(
+                                    "data-detail-sections",
+                                    "",
+                                );
+                                infoCol.appendChild(sectionsEl);
+                            }
+                            if (sectionsEl) {
+                                sectionsEl.innerHTML = "";
+                                var mkSection = function (label) {
+                                    var sec = document.createElement("div");
+                                    sec.className = "detail-section";
+                                    var head = document.createElement("div");
+                                    head.className = "detail-section-label";
+                                    head.textContent = label;
+                                    var body = document.createElement("div");
+                                    body.className = "detail-section-body";
+                                    sec.appendChild(head);
+                                    sec.appendChild(body);
+                                    sectionsEl.appendChild(sec);
+                                    return body;
+                                };
+                                var mkChip = function (text, cls, extraClass) {
+                                    var span = document.createElement("span");
+                                    span.className = cls;
+                                    if (extraClass)
+                                        span.classList.add(extraClass);
+                                    span.textContent = text;
+                                    return span;
+                                };
+                                // a. Shape — view-hint flags
+                                var hints = entry.viewHints || {};
+                                var hintKeys = [
+                                    "signed",
+                                    "bipolar",
+                                    "periodic",
+                                    "monotonic",
+                                    "bounded",
+                                ];
+                                var activeHints = hintKeys.filter(function (k) {
+                                    return hints[k] === true;
+                                });
+                                if (activeHints.length) {
+                                    var shapeBody = mkSection("shape");
+                                    activeHints.forEach(function (k) {
+                                        shapeBody.appendChild(
+                                            mkChip(k, "detail-shape-chip"),
+                                        );
+                                    });
+                                }
+                                // b. Continuity
+                                if (entry.continuity) {
+                                    var contBody = mkSection("continuity");
+                                    var contP = document.createElement("p");
+                                    contP.className = "detail-continuity";
+                                    contP.textContent = entry.continuity;
+                                    contBody.appendChild(contP);
+                                }
+                                // c. Tags — roleTags (uppercase) + tags (lowercase)
+                                var roleTags = entry.roleTags || [];
+                                var freeTags = entry.tags || [];
+                                if (roleTags.length || freeTags.length) {
+                                    var tagsBody = mkSection("tags");
+                                    roleTags.forEach(function (t) {
+                                        tagsBody.appendChild(
+                                            mkChip(t, "detail-role-tag-chip"),
+                                        );
+                                    });
+                                    freeTags.forEach(function (t) {
+                                        tagsBody.appendChild(
+                                            mkChip(t, "detail-free-tag-chip"),
+                                        );
+                                    });
+                                }
+                                // d. Use cases
+                                if (
+                                    Array.isArray(entry.useCases) &&
+                                    entry.useCases.length
+                                ) {
+                                    var ucBody = mkSection("use cases");
+                                    var ul = document.createElement("ul");
+                                    ul.className = "detail-use-cases";
+                                    entry.useCases.forEach(function (u) {
+                                        var li = document.createElement("li");
+                                        li.textContent = u;
+                                        ul.appendChild(li);
+                                    });
+                                    ucBody.appendChild(ul);
+                                }
+                                // e. Related
+                                if (
+                                    Array.isArray(entry.related) &&
+                                    entry.related.length
+                                ) {
+                                    var relBody = mkSection("related");
+                                    var relWrap = document.createElement("div");
+                                    relWrap.className = "detail-related";
+                                    entry.related.forEach(function (rid) {
+                                        var a = document.createElement("a");
+                                        a.className = "detail-related-link";
+                                        a.setAttribute("data-open-detail", rid);
+                                        a.href = "#" + rid;
+                                        a.textContent = rid;
+                                        relWrap.appendChild(a);
+                                    });
+                                    relBody.appendChild(relWrap);
+                                }
+                                // f. View modes (informational only)
+                                if (
+                                    Array.isArray(entry.views) &&
+                                    entry.views.length
+                                ) {
+                                    var vmBody = mkSection("views");
+                                    var vmWrap = document.createElement("div");
+                                    vmWrap.className = "detail-view-modes";
+                                    entry.views.forEach(function (m) {
+                                        var isDef = m === entry.defaultView;
+                                        vmWrap.appendChild(
+                                            mkChip(
+                                                m,
+                                                "detail-view-mode",
+                                                isDef ? "is-default" : null,
+                                            ),
+                                        );
+                                    });
+                                    vmBody.appendChild(vmWrap);
+                                }
+                            }
+
+                            var vpEl = document.getElementById(
+                                "detail-overlay-viewport",
+                            );
+                            if (vpEl) {
+                                vpEl.innerHTML = "";
+                                var wrap = document.createElement("div");
+                                wrap.className =
+                                    "graph curve-view detail-curve-view";
+                                wrap.setAttribute("data-curve-view", "");
+                                wrap.setAttribute("data-curve-id", entry.id);
+                                wrap.setAttribute(
+                                    "data-curve-view-default",
+                                    "0 0 252 128",
+                                );
+                                wrap.setAttribute(
+                                    "data-curve-domain",
+                                    JSON.stringify(entry.domain || [0, 1]),
+                                );
+                                wrap.setAttribute(
+                                    "data-curve-range",
+                                    JSON.stringify(entry.range || [0, 1]),
+                                );
+                                wrap.setAttribute(
+                                    "data-curve-view-hints",
+                                    JSON.stringify(entry.viewHints || {}),
+                                );
+                                // Honor the curve's defaultView so the
+                                // detail popup starts in the same view
+                                // the wall card uses. The view-toggle
+                                // button below cycles through entry.views.
+                                if (entry.defaultView) {
+                                    wrap.setAttribute(
+                                        "data-curve-view-mode",
+                                        entry.defaultView,
+                                    );
+                                }
+                                var pts = entry.previewPoints;
+                                if (pts && pts.length) {
+                                    wrap.setAttribute(
+                                        "data-curve-points",
+                                        JSON.stringify(pts),
+                                    );
+                                }
+                                // Canvas
+                                var canvas = document.createElement("canvas");
+                                canvas.className = "curve-view-canvas";
+                                canvas.setAttribute("data-curve-canvas", "");
+                                canvas.setAttribute("aria-hidden", "true");
+                                wrap.appendChild(canvas);
+                                // Zoom readout (bottom-right)
+                                var readout = document.createElement("div");
+                                readout.className = "curve-view-readout";
+                                readout.setAttribute("aria-hidden", "true");
+                                var rx = document.createElement("span");
+                                rx.setAttribute("data-curve-view-x", "");
+                                rx.textContent = "100%";
+                                var rsep = document.createElement("span");
+                                rsep.className = "curve-view-sep";
+                                rsep.textContent = "|";
+                                var ry = document.createElement("span");
+                                ry.setAttribute("data-curve-view-y", "");
+                                ry.textContent = "100%";
+                                var fitIcon = document.createElement("svg");
+                                fitIcon.className = "curve-view-fit-icon";
+                                fitIcon.setAttribute(
+                                    "viewBox",
+                                    "0 -960 960 960",
+                                );
+                                fitIcon.setAttribute("fill", "currentColor");
+                                fitIcon.innerHTML =
+                                    '<path d="M227-227v-266h98v168h168v98H227Zm408-240v-168H467v-98h266v266h-98Z"/>';
+                                readout.appendChild(rx);
+                                readout.appendChild(rsep);
+                                readout.appendChild(ry);
+                                readout.appendChild(fitIcon);
+                                wrap.appendChild(readout);
+                                // Probe readout (bottom-center)
+                                var pr = document.createElement("div");
+                                pr.className = "curve-view-probe-readout";
+                                pr.setAttribute("aria-hidden", "true");
+                                var px = document.createElement("span");
+                                px.className = "curve-view-probe-readout-x";
+                                px.setAttribute("data-curve-view-probe-x", "");
+                                px.textContent = "x 0.00";
+                                var psep = document.createElement("span");
+                                psep.className = "curve-view-probe-readout-sep";
+                                psep.textContent = "/";
+                                var py = document.createElement("span");
+                                py.className = "curve-view-probe-readout-y";
+                                py.setAttribute("data-curve-view-probe-y", "");
+                                py.textContent = "y 0.00";
+                                pr.appendChild(px);
+                                pr.appendChild(psep);
+                                pr.appendChild(py);
+                                wrap.appendChild(pr);
+                                // Screen probes (crosshairs)
+                                var spv = document.createElement("div");
+                                spv.className =
+                                    "curve-view-screen-probe curve-view-screen-probe--v";
+                                spv.setAttribute(
+                                    "data-curve-view-screen-probe-v",
+                                    "",
+                                );
+                                spv.setAttribute("aria-hidden", "true");
+                                wrap.appendChild(spv);
+                                var sph = document.createElement("div");
+                                sph.className =
+                                    "curve-view-screen-probe curve-view-screen-probe--h";
+                                sph.setAttribute(
+                                    "data-curve-view-screen-probe-h",
+                                    "",
+                                );
+                                sph.setAttribute("aria-hidden", "true");
+                                wrap.appendChild(sph);
+                                // Axis labels
+                                var lx = document.createElement("div");
+                                lx.className =
+                                    "curve-view-axis-label curve-view-axis-label--x";
+                                lx.setAttribute("data-curve-view-label-x", "");
+                                lx.setAttribute("aria-hidden", "true");
+                                lx.textContent = "x 0.00";
+                                wrap.appendChild(lx);
+                                var ly = document.createElement("div");
+                                ly.className =
+                                    "curve-view-axis-label curve-view-axis-label--y";
+                                ly.setAttribute("data-curve-view-label-y", "");
+                                ly.setAttribute("aria-hidden", "true");
+                                ly.textContent = "y 0.00";
+                                wrap.appendChild(ly);
+                                vpEl.appendChild(wrap);
+                            }
+
+                            // Use modules for tabs + code
+                            var codeEl = document.getElementById(
+                                "detail-overlay-code",
+                            );
+                            var copyEl = document.getElementById(
+                                "detail-overlay-copy",
+                            );
+                            var tabsEl = document.getElementById(
+                                "detail-overlay-tabs",
+                            );
+                            var ov = window.__detailOverlay;
+                            if (ov && tabsEl && codeEl && copyEl) {
+                                ov.buildSnippetTabs(
+                                    tabsEl,
+                                    entry,
+                                    function (_, code) {
+                                        ov.showCode(codeEl, copyEl, code);
+                                    },
+                                );
+                                ov.showCode(codeEl, copyEl, entry.equation);
+                            }
+
+                            var snippetBar =
+                                document.querySelector("[data-snippet-bar]");
+                            if (snippetBar) {
+                                var opts = entry.snippetOptions || {};
+                                snippetBar.setAttribute(
+                                    "data-snippet-options",
+                                    JSON.stringify(opts),
+                                );
+                            }
+
+                            openOverlay("detail");
+                            syncCurveUrl(
+                                entry.id,
+                                e.detail && e.detail.curvotecaInitialOpen,
+                            );
+                            // Wire the view-cycle button: enable it
+                            // when the curve has >1 view, set the
+                            // current label, and update the right-
+                            // column view-modes chip's is-default
+                            // highlight to match the active view.
+                            try {
+                                var viewBtn =
+                                    document.getElementById(
+                                        "detail-view-toggle",
+                                    );
+                                var viewLabel =
+                                    viewBtn && viewBtn.querySelector("span");
+                                var viewModesWrap = infoCol
+                                    ? infoCol.querySelector(
+                                          ".detail-view-modes",
+                                      )
+                                    : null;
+                                var viewsList = Array.isArray(entry.views)
+                                    ? entry.views
+                                    : [];
+                                var currentView = entry.defaultView || "graph";
+                                var applyViewUI = function (mode) {
+                                    if (viewLabel) viewLabel.textContent = mode;
+                                    if (viewModesWrap) {
+                                        var chips =
+                                            viewModesWrap.querySelectorAll(
+                                                ".detail-view-mode",
+                                            );
+                                        chips.forEach(function (c) {
+                                            c.classList.toggle(
+                                                "is-default",
+                                                c.textContent === mode,
+                                            );
+                                        });
+                                    }
+                                };
+                                if (viewBtn) {
+                                    if (viewsList.length > 1) {
+                                        viewBtn.removeAttribute("disabled");
+                                        viewBtn.setAttribute(
+                                            "title",
+                                            "cycle view mode",
+                                        );
+                                    } else {
+                                        viewBtn.setAttribute("disabled", "");
+                                        viewBtn.setAttribute(
+                                            "title",
+                                            "only one view available",
+                                        );
+                                    }
+                                    viewBtn.onclick = function (ev) {
+                                        ev.preventDefault();
+                                        if (viewsList.length < 2) return;
+                                        if (
+                                            typeof window.__cycleCurveView !==
+                                            "function"
+                                        )
+                                            return;
+                                        var nextView = window.__cycleCurveView(
+                                            viewsList,
+                                            currentView,
+                                        );
+                                        currentView = nextView;
+                                        var vp = document.getElementById(
+                                            "detail-overlay-viewport",
+                                        );
+                                        var inner = vp
+                                            ? vp.querySelector(
+                                                  "[data-curve-view]",
+                                              )
+                                            : null;
+                                        if (inner) {
+                                            inner.setAttribute(
+                                                "data-curve-view-mode",
+                                                nextView,
+                                            );
+                                            // Tell the renderer to
+                                            // re-read the mode attribute
+                                            // and redraw. Without this
+                                            // the detail popup keeps
+                                            // showing the previous view.
+                                            try {
+                                                if (window.__rendererFor) {
+                                                    window
+                                                        .__rendererFor(inner)
+                                                        .notifyViewModeChanged();
+                                                }
+                                            } catch (err) {}
+                                        }
+                                        applyViewUI(nextView);
+                                    };
+                                }
+                                applyViewUI(currentView);
+                            } catch (err) {}
+                            setTimeout(function () {
+                                try {
+                                    document.dispatchEvent(
+                                        new CustomEvent(
+                                            "curvoteca:views-changed",
+                                        ),
+                                    );
+                                } catch (err) {}
+                            }, 0);
+                        } catch (err) {}
+                        return;
+                    }
+                });
+
+                var initialCurveId =
+                    document.body.getAttribute("data-active-curve-id") || "";
+                if (initialCurveId) {
+                    setTimeout(function () {
+                        var detailLinks =
+                            document.querySelectorAll("[data-open-detail]");
+                        for (var i = 0; i < detailLinks.length; i += 1) {
+                            if (
+                                detailLinks[i].getAttribute(
+                                    "data-open-detail",
+                                ) === initialCurveId
+                            ) {
+                                detailLinks[i].dispatchEvent(
+                                    new CustomEvent("click", {
+                                        bubbles: true,
+                                        cancelable: true,
+                                        detail: {
+                                            curvotecaInitialOpen: true,
+                                        },
+                                    }),
+                                );
+                                break;
+                            }
+                        }
+                    }, 0);
+                }
+
+                window.addEventListener("popstate", function () {
+                    var match = window.location.pathname.match(
+                        /^\/curve\/([^/]+)\/?$/,
+                    );
+                    if (!match) {
+                        closeOverlay();
+                        return;
+                    }
+                    var id = decodeURIComponent(match[1]);
+                    var detailLinks =
+                        document.querySelectorAll("[data-open-detail]");
+                    for (var i = 0; i < detailLinks.length; i += 1) {
+                        if (
+                            detailLinks[i].getAttribute(
+                                "data-open-detail",
+                            ) === id
+                        ) {
+                            detailLinks[i].dispatchEvent(
+                                new CustomEvent("click", {
+                                    bubbles: true,
+                                    cancelable: true,
+                                    detail: {
+                                        curvotecaInitialOpen: true,
+                                    },
+                                }),
+                            );
+                            break;
+                        }
+                    }
+                });
+
+                window.__appClickHandlers.push(function (e) {
+                    const pixBtn = e.target.closest("[data-toggle-qr]");
+                    if (!pixBtn) return;
+                    e.preventDefault();
+                    const key = pixBtn.getAttribute("data-toggle-qr");
+                    const els = document.querySelectorAll(
+                        '[data-qr-for="' + key + '"]',
+                    );
+                    if (!els.length) return;
+                    const wasHidden = els[0].hasAttribute("hidden");
+                    els.forEach(function (el) {
+                        if (wasHidden) {
+                            el.removeAttribute("hidden");
+                        } else {
+                            el.setAttribute("hidden", "");
+                        }
+                    });
+                });
+
+                window.__appClickHandlers.push(function (e) {
+                    var copyBtn = e.target.closest("[data-copy]");
+                    if (!copyBtn) return;
+                    if (copyBtn.closest("[data-copy-toggle]")) return;
+                    if (copyBtn.closest("#copy-popover")) return;
+                    e.preventDefault();
+                    var code = copyBtn.getAttribute("data-copy");
+                    if (!code) return;
+                    var ov = window.__detailOverlay;
+                    if (ov) {
+                        ov.copyDetailCode(code)
+                            .then(function () {
+                                ov.flashCopied(copyBtn);
+                            })
+                            .catch(function () {});
+                    }
+                });
+            })();
+        </script>
+
+        <script
+            is:inline
+            define:vars={{
+                KEY_FAVORITES,
+                KEY_COMPARE,
+                KEY_TRAY_COLLAPSED,
+                KEY_GALLERY_MODE,
+                KEY_CURVE_VIEW,
+                KEY_VIEW_MODE,
+                KEY_WRAP_MODE,
+                KEY_GRID_SIZE,
+                KEY_GRID_COLS,
+                KEY_PAGER_SIZE,
+                KEY_VIEW_GRID,
+                PAGER_SIZES: PAGER.sizes,
+                PAGER_DEFAULT_SIZE: PAGER.defaultSize,
+            }}
+        >
+            window.KEY_FAVORITES = KEY_FAVORITES;
+            window.KEY_COMPARE = KEY_COMPARE;
+            window.KEY_TRAY_COLLAPSED = KEY_TRAY_COLLAPSED;
+            window.KEY_GALLERY_MODE = KEY_GALLERY_MODE;
+            window.KEY_CURVE_VIEW = KEY_CURVE_VIEW;
+            window.KEY_VIEW_MODE = KEY_VIEW_MODE;
+            window.KEY_WRAP_MODE = KEY_WRAP_MODE;
+            window.KEY_GRID_SIZE = KEY_GRID_SIZE;
+            window.KEY_GRID_COLS = KEY_GRID_COLS;
+            window.KEY_PAGER_SIZE = KEY_PAGER_SIZE;
+            window.KEY_VIEW_GRID = KEY_VIEW_GRID;
+            window.PAGER_SIZES = PAGER_SIZES;
+            window.PAGER_DEFAULT_SIZE = PAGER_DEFAULT_SIZE;
+        </script>
+
+        <script is:inline>
+            (function () {
+                const search = document.getElementById("curve-search");
+                const chips = document.querySelectorAll(".chips .chip");
+                const grid = document.getElementById("wall-grid");
+                const cards = document.querySelectorAll(".wall .grid .card");
+                const empty = document.getElementById("wall-empty");
+                const totalCountEl = document.getElementById("total-count");
+                const statusFavEl = document.getElementById("status-fav");
+                const statusCmpEl = document.getElementById("status-cmp");
+                const favCountEl = document.getElementById("fav-count");
+                const cmpCountEl = document.getElementById("cmp-count");
+                const filterStateEl = document.getElementById("filter-state");
+                const filterStateVal =
+                    document.getElementById("filter-state-val");
+                const filterStateClear =
+                    document.getElementById("filter-state-clear");
+                const railBtn = document.querySelector("[data-fav-filter]");
+
+                if (!search || !grid || !cards.length) {
+                    return;
+                }
+
+                if (totalCountEl) {
+                    totalCountEl.textContent = String(
+                        document.querySelectorAll(
+                            ".wall .grid .card[data-curve-id]",
+                        ).length,
+                    );
+                }
+
+                // Favorites state
+                const favState = { ids: [] };
+                try {
+                    const raw = localStorage.getItem(window.KEY_FAVORITES);
+                    if (raw) favState.ids = JSON.parse(raw) || [];
+                } catch (e) {}
+
+                const persistFavs = function () {
+                    try {
+                        localStorage.setItem(
+                            window.KEY_FAVORITES,
+                            JSON.stringify(favState.ids),
+                        );
+                    } catch (e) {}
+                };
+
+                const DEFAULT_FILTER = "random";
+                const sourceOrder = Array.prototype.slice.call(
+                    grid.querySelectorAll(".card[data-curve-id]"),
+                );
+                const state = { query: "", filter: DEFAULT_FILTER, value: "" };
+
+                const shuffleCards = function (items) {
+                    const out = items.slice();
+                    for (let i = out.length - 1; i > 0; i -= 1) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        const t = out[i];
+                        out[i] = out[j];
+                        out[j] = t;
+                    }
+                    return out;
+                };
+                let randomOrder = shuffleCards(sourceOrder);
+
+                const renderCurveOrder = function (orderedCards) {
+                    const slots = Array.prototype.slice.call(grid.children);
+                    const queue = orderedCards.slice();
+                    const frag = document.createDocumentFragment();
+                    slots.forEach(function (child) {
+                        if (
+                            child.matches &&
+                            child.matches(".card[data-curve-id]")
+                        ) {
+                            frag.appendChild(queue.shift());
+                        } else {
+                            frag.appendChild(child);
+                        }
+                    });
+                    grid.appendChild(frag);
+                };
+
+                const applyCardOrder = function () {
+                    renderCurveOrder(
+                        state.filter === DEFAULT_FILTER
+                            ? randomOrder
+                            : sourceOrder,
+                    );
+                };
+
+                const norm = function (s) {
+                    return (s || "").toString().toLowerCase().trim();
+                };
+
+                const matches = function (card) {
+                    const hay = norm(card.getAttribute("data-search"));
+                    if (state.query) {
+                        if (hay.indexOf(state.query) === -1) return false;
+                    }
+                    if (
+                        !state.filter ||
+                        state.filter === "all" ||
+                        state.filter === DEFAULT_FILTER
+                    )
+                        return true;
+                    if (state.filter === "fav") {
+                        const id = card.getAttribute("data-curve-id");
+                        return favState.ids.indexOf(id) !== -1;
+                    }
+                    const value = norm(state.value);
+                    if (!value) return true;
+                    const attr =
+                        state.filter === "family"
+                            ? card.getAttribute("data-family")
+                            : "";
+                    return norm(attr) === value;
+                };
+
+                const labelForFilter = function (filter, value) {
+                    if (!filter || filter === "all" || filter === DEFAULT_FILTER)
+                        return null;
+                    if (filter === "fav") return "favorites";
+                    if (filter === "family") return "family: " + value;
+                    return filter;
+                };
+
+                const renderFilterState = function () {
+                    const label = labelForFilter(state.filter, state.value);
+                    if (!label) {
+                        filterStateEl.classList.add("is-hidden");
+                        return;
+                    }
+                    filterStateEl.classList.remove("is-hidden");
+                    if (filterStateVal) filterStateVal.textContent = label;
+                };
+
+                const clearFilter = function () {
+                    state.filter = DEFAULT_FILTER;
+                    state.value = "";
+                    chips.forEach(function (c) {
+                        c.classList.remove("active");
+                    });
+                    const defaultChip = document.querySelector(
+                        '.chip[data-filter="' + DEFAULT_FILTER + '"]',
+                    );
+                    if (defaultChip) defaultChip.classList.add("active");
+                    renderFilterState();
+                    apply();
+                };
+
+                const apply = function () {
+                    applyCardOrder();
+                    let shown = 0;
+                    cards.forEach(function (card) {
+                        if (card.classList.contains("is-sponsor")) {
+                            shown += 1;
+                            return;
+                        }
+                        const ok = matches(card);
+                        card.classList.toggle("is-hidden", !ok);
+                        if (ok) shown += 1;
+                    });
+                    if (empty) empty.classList.toggle("is-hidden", shown !== 0);
+                    // Notify the pager so it can reset to page 1 and
+                    // recompute its window against the new filter-visible
+                    // set. The pager listens for this event; it does not
+                    // re-run the filter.
+                    try {
+                        window.dispatchEvent(
+                            new CustomEvent("curvoteca:filter-changed"),
+                        );
+                    } catch (e) {}
+                };
+
+                const renderFavs = function () {
+                    const railFav = document.querySelector("[data-rail-fav]");
+                    if (railFav) railFav.disabled = favState.ids.length === 0;
+                    cards.forEach(function (card) {
+                        const id = card.getAttribute("data-curve-id");
+                        const on = favState.ids.indexOf(id) !== -1;
+                        card.classList.toggle("is-fav", on);
+                        const btn = card.querySelector(".fav-btn");
+                        if (btn) {
+                            btn.classList.toggle("is-on", on);
+                            btn.setAttribute("data-label", on ? "on" : "off");
+                        }
+                    });
+                    if (railBtn)
+                        railBtn.classList.toggle(
+                            "active",
+                            state.filter === "fav",
+                        );
+                    if (favCountEl)
+                        favCountEl.textContent = String(favState.ids.length);
+                    if (statusFavEl)
+                        statusFavEl.classList.toggle(
+                            "is-on",
+                            favState.ids.length > 0,
+                        );
+                };
+
+                const toggleFav = function (id) {
+                    const i = favState.ids.indexOf(id);
+                    if (i === -1) favState.ids = favState.ids.concat([id]);
+                    else
+                        favState.ids = favState.ids
+                            .slice(0, i)
+                            .concat(favState.ids.slice(i + 1));
+                    persistFavs();
+                    renderFavs();
+                    apply();
+                };
+
+                search.addEventListener("input", function () {
+                    state.query = norm(search.value);
+                    apply();
+                });
+
+                chips.forEach(function (chip) {
+                    chip.addEventListener("click", function () {
+                        chips.forEach(function (c) {
+                            c.classList.remove("active");
+                        });
+                        chip.classList.add("active");
+                        state.filter =
+                            chip.getAttribute("data-filter") || "all";
+                        state.value =
+                            chip.getAttribute("data-filter-value") || "";
+                        if (state.filter === DEFAULT_FILTER) {
+                            randomOrder = shuffleCards(sourceOrder);
+                        }
+                        renderFilterState();
+                        apply();
+                    });
+                });
+
+                if (filterStateClear) {
+                    filterStateClear.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        clearFilter();
+                    });
+                }
+
+                window.__appClickHandlers.push(function (e) {
+                    const tog = e.target.closest("[data-fav-toggle]");
+                    if (tog) {
+                        e.preventDefault();
+                        toggleFav(tog.getAttribute("data-fav-toggle"));
+                        return;
+                    }
+                    if (e.target.closest("[data-fav-filter]")) {
+                        const isFav = state.filter === "fav";
+                        chips.forEach(function (c) {
+                            c.classList.remove("active");
+                        });
+                        if (isFav) {
+                            state.filter = DEFAULT_FILTER;
+                            document
+                                .querySelector(
+                                    '.chip[data-filter="' +
+                                        DEFAULT_FILTER +
+                                        '"]',
+                                )
+                                .classList.add("active");
+                        } else {
+                            state.filter = "fav";
+                            document
+                                .querySelector('.chip[data-filter="fav"]')
+                                .classList.add("active");
+                        }
+                        state.value = "";
+                        renderFilterState();
+                        apply();
+                        renderFavs();
+                    }
+                });
+
+                renderFavs();
+                renderFilterState();
+                apply();
+            })();
+        </script>
+
+        <script is:inline>
+            // --- wall pager (screen-glued) ---------------------------------
+            // Splits the wall's card list into fixed-size pages. Cards
+            // outside the current page get `.is-paged-out` (display:none)
+            // layered on top of the filter's `.is-hidden`. The pager does
+            // not know about the filter — it only operates on cards the
+            // filter has accepted. The filter's `curvoteca:filter-changed`
+            // event resets the page to 1 and re-applies the window.
+            (function () {
+                const PAGER_KEY = window.KEY_PAGER_SIZE;
+                const SIZES = window.PAGER_SIZES;
+                const DEFAULT_SIZE = window.PAGER_DEFAULT_SIZE;
+                const pagerEl = document.getElementById("wall-pager");
+                const prevBtn = document.getElementById("pager-prev");
+                const nextBtn = document.getElementById("pager-next");
+                const sizeBtn = document.getElementById("pager-size");
+                const sizeValEl = document.getElementById("pager-size-val");
+                const pageEl = document.getElementById("pager-page");
+                const totalEl = document.getElementById("pager-total");
+                const grid = document.getElementById("wall-grid");
+                const getCards = function () {
+                    return grid ? grid.querySelectorAll(".card") : [];
+                };
+                if (!pagerEl || !prevBtn || !nextBtn || !sizeBtn || !grid)
+                    return;
+                if (!getCards().length) {
+                    pagerEl.classList.add("is-hidden");
+                    return;
+                }
+
+                // Resolve persisted size (clamp to SIZES so a stale value
+                // from a future build never breaks the cycle).
+                const readSize = function () {
+                    try {
+                        const raw = localStorage.getItem(PAGER_KEY);
+                        if (!raw) return DEFAULT_SIZE;
+                        const n = parseInt(raw, 10);
+                        if (SIZES.indexOf(n) !== -1) return n;
+                    } catch (e) {}
+                    return DEFAULT_SIZE;
+                };
+                const writeSize = function (n) {
+                    try {
+                        localStorage.setItem(PAGER_KEY, String(n));
+                    } catch (e) {}
+                };
+
+                let pageSize = readSize();
+                let page = 1;
+                sizeValEl.textContent = String(pageSize);
+
+                // Visible-to-the-filter set. The pager re-reads this on
+                // every refresh so a search/filter change re-slices the
+                // page window against the new set without us owning the
+                // filter predicate.
+                const filterVisible = function () {
+                    const out = [];
+                    const cards = getCards();
+                    for (let i = 0; i < cards.length; i += 1) {
+                        const c = cards[i];
+                        if (c.classList.contains("is-hidden")) continue;
+                        out.push(c);
+                    }
+                    return out;
+                };
+
+                const applyPager = function () {
+                    const vis = filterVisible();
+                    const total = vis.length;
+                    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+                    if (page > totalPages) page = totalPages;
+                    if (page < 1) page = 1;
+                    const start = (page - 1) * pageSize;
+                    const end = start + pageSize;
+
+                    // Reset paged-out, then re-mark the slice that is not
+                    // in the current page window. Filter-hiding is layered
+                    // on top via .is-hidden (separate concern).
+                    const cards = getCards();
+                    for (let i = 0; i < cards.length; i += 1) {
+                        cards[i].classList.remove("is-paged-out");
+                    }
+                    for (let i = 0; i < vis.length; i += 1) {
+                        if (i < start || i >= end) {
+                            vis[i].classList.add("is-paged-out");
+                        }
+                    }
+
+                    if (pageEl) pageEl.textContent = String(page);
+                    if (totalEl) totalEl.textContent = String(totalPages);
+                    prevBtn.disabled = page <= 1;
+                    nextBtn.disabled = page >= totalPages;
+                    sizeValEl.textContent = String(pageSize);
+                };
+
+                prevBtn.addEventListener("click", function () {
+                    if (page > 1) {
+                        page -= 1;
+                        applyPager();
+                    }
+                });
+                nextBtn.addEventListener("click", function () {
+                    page += 1;
+                    applyPager();
+                });
+                sizeBtn.addEventListener("click", function () {
+                    const i = SIZES.indexOf(pageSize);
+                    const next = SIZES[(i + 1) % SIZES.length];
+                    pageSize = next;
+                    writeSize(pageSize);
+                    // Size change always returns to page 1: a smaller page
+                    // size can otherwise land the user on an empty page
+                    // when total is small, and a larger one feels more
+                    // natural from the top.
+                    page = 1;
+                    applyPager();
+                });
+
+                // Filter / search changed: drop to page 1 and re-slice.
+                // The filter's `apply()` runs *before* this event fires
+                // (it dispatches at the end of apply()), so the
+                // filterVisible() read here reflects the new filter set.
+                window.addEventListener(
+                    "curvoteca:filter-changed",
+                    function () {
+                        page = 1;
+                        applyPager();
+                    },
+                );
+
+                applyPager();
+            })();
+        </script>
+
+        <script is:inline>
+            (function () {
+                const wall = document.getElementById("curve-wall");
+                const strip = document.getElementById("tray-strip");
+                const empty = document.getElementById("tray-empty");
+                const countEl = document.getElementById("tray-count");
+                const cmpCountEl = document.getElementById("cmp-count");
+                const clearBtn = document.getElementById("tray-clear");
+                const railCompare = document.getElementById("rail-compare");
+                const app = document.getElementById("app");
+                if (!wall || !strip || !empty || !countEl) return;
+
+                let registry = [];
+                try {
+                    registry = JSON.parse(
+                        wall.getAttribute("data-curves") || "[]",
+                    );
+                } catch (e) {
+                    registry = [];
+                }
+                const byId = {};
+                registry.forEach(function (c) {
+                    byId[c.id] = c;
+                });
+
+                const STORAGE_KEY = window.KEY_COMPARE;
+                const PARAM = "c";
+                const MAX = 8;
+                const TRAY_KEY = window.KEY_TRAY_COLLAPSED;
+
+                const sanitize = function (raw) {
+                    if (!raw) return [];
+                    return raw
+                        .split(",")
+                        .map(function (s) {
+                            return s.trim();
+                        })
+                        .filter(function (s) {
+                            return /^[a-z0-9][a-z0-9-]*$/.test(s);
+                        })
+                        .slice(0, MAX);
+                };
+
+                const readStore = function () {
+                    try {
+                        const raw = localStorage.getItem(STORAGE_KEY);
+                        if (raw) {
+                            const parsed = JSON.parse(raw);
+                            if (Array.isArray(parsed))
+                                return sanitize(parsed.join(","));
+                        }
+                    } catch (e) {
+                        /* ignore */
+                    }
+                    return [];
+                };
+
+                const writeStore = function (ids) {
+                    try {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+                    } catch (e) {
+                        /* ignore */
+                    }
+                };
+
+                const readQuery = function () {
+                    try {
+                        const sp = new URLSearchParams(window.location.search);
+                        if (!sp.has(PARAM)) return null;
+                        return sanitize(sp.get(PARAM) || "");
+                    } catch (e) {
+                        return null;
+                    }
+                };
+
+                const writeQuery = function (ids) {
+                    try {
+                        const url = new URL(window.location.href);
+                        if (ids.length === 0) url.searchParams.delete(PARAM);
+                        else url.searchParams.set(PARAM, ids.join(","));
+                        window.history.replaceState(null, "", url.toString());
+                    } catch (e) {
+                        /* ignore */
+                    }
+                };
+
+                const fromQuery = readQuery();
+                const initial = fromQuery !== null ? fromQuery : readStore();
+                const state = { ids: initial };
+
+                const buildItem = function (id) {
+                    const reg = byId[id];
+                    if (!reg) return null;
+                    const a = document.createElement("button");
+                    a.className = "mini-card tray-item";
+                    a.type = "button";
+                    a.setAttribute("data-open-detail", id);
+                    a.setAttribute("data-tray-id", id);
+                    a.setAttribute("data-tray-name", reg.name);
+                    a.title = reg.name + (reg.family ? " / " + reg.family : "");
+                    const label = document.createElement("span");
+                    label.className = "tray-item-name";
+                    label.textContent = reg.name;
+                    const wrap = document.createElement("div");
+                    wrap.className = "mini-graph curve-view tray-item-graph";
+                    wrap.setAttribute("data-curve-view", "");
+                    wrap.setAttribute("data-curve-id", id);
+                    wrap.setAttribute("data-curve-view-default", "0 0 252 128");
+                    wrap.setAttribute(
+                        "data-curve-domain",
+                        JSON.stringify(reg.domain || [0, 1]),
+                    );
+                    wrap.setAttribute(
+                        "data-curve-range",
+                        JSON.stringify(reg.range || [0, 1]),
+                    );
+                    wrap.setAttribute(
+                        "data-curve-view-hints",
+                        JSON.stringify(reg.viewHints || {}),
+                    );
+                    wrap.setAttribute(
+                        "data-curve-points",
+                        JSON.stringify(reg.previewPoints || []),
+                    );
+                    const canvas = document.createElement("canvas");
+                    canvas.className = "curve-view-canvas";
+                    canvas.setAttribute("data-curve-canvas", "");
+                    canvas.setAttribute("aria-hidden", "true");
+                    wrap.appendChild(canvas);
+                    const x = document.createElement("button");
+                    x.className = "icon tray-item-x";
+                    x.type = "button";
+                    x.setAttribute("data-tray-remove", id);
+                    x.setAttribute("data-label", "x");
+                    x.title = "Remove from workbench";
+                    x.textContent = "x";
+                    a.appendChild(label);
+                    a.appendChild(wrap);
+                    a.appendChild(x);
+                    return a;
+                };
+
+                const render = function () {
+                    strip.innerHTML = "";
+                    const ids = state.ids;
+                    const tray = document.getElementById("compare-tray");
+                    if (ids.length === 0) {
+                        // Empty state: show a small "no curves" hint inside the strip
+                        // and let the tray-empty element explain the action.
+                        empty.classList.remove("is-hidden");
+                    } else {
+                        ids.forEach(function (id) {
+                            const item = buildItem(id);
+                            if (item) strip.appendChild(item);
+                        });
+                        empty.classList.add("is-hidden");
+                    }
+                    if (tray)
+                        tray.classList.toggle("is-empty", ids.length === 0);
+                    countEl.textContent = String(ids.length);
+                    if (cmpCountEl) {
+                        cmpCountEl.textContent = String(ids.length);
+                        const statusCmp = document.getElementById("status-cmp");
+                        if (statusCmp)
+                            statusCmp.classList.toggle("is-on", ids.length > 0);
+                    }
+                    document.dispatchEvent(
+                        new CustomEvent("curvoteca:views-changed"),
+                    );
+                    document
+                        .querySelectorAll("[data-compare-toggle]")
+                        .forEach(function (btn) {
+                            const id = btn.getAttribute("data-compare-toggle");
+                            const on = state.ids.indexOf(id) !== -1;
+                            btn.classList.toggle("is-on", on);
+                            btn.setAttribute("data-label", on ? "on" : "off");
+                            btn.setAttribute(
+                                "title",
+                                on
+                                    ? "Remove from workbench"
+                                    : "Add to workbench",
+                            );
+                        });
+                };
+
+                const persist = function () {
+                    writeStore(state.ids);
+                    writeQuery(state.ids);
+                };
+
+                const toggle = function (id) {
+                    const i = state.ids.indexOf(id);
+                    if (i === -1) {
+                        if (state.ids.length >= MAX) return;
+                        state.ids = state.ids.concat([id]);
+                    } else {
+                        state.ids = state.ids
+                            .slice(0, i)
+                            .concat(state.ids.slice(i + 1));
+                    }
+                    persist();
+                    render();
+                };
+
+                const readTrayCollapsed = function () {
+                    try {
+                        return localStorage.getItem(TRAY_KEY) === "1";
+                    } catch (e) {
+                        return false;
+                    }
+                };
+
+                const writeTrayCollapsed = function (collapsed) {
+                    try {
+                        localStorage.setItem(TRAY_KEY, collapsed ? "1" : "0");
+                    } catch (e) {
+                        /* ignore */
+                    }
+                };
+
+                const applyTrayCollapsed = function (collapsed) {
+                    if (app)
+                        app.classList.toggle("is-tray-collapsed", collapsed);
+                    if (railCompare) {
+                        railCompare.classList.toggle("active", !collapsed);
+                        railCompare.setAttribute(
+                            "aria-pressed",
+                            collapsed ? "false" : "true",
+                        );
+                        railCompare.title = collapsed
+                            ? "show workbench"
+                            : "hide workbench";
+                    }
+                };
+
+                const focusTray = function () {
+                    if (!app) return;
+                    app.classList.add("is-tray-focus");
+                    const trayEl = document.getElementById("compare-tray");
+                    if (trayEl && trayEl.scrollIntoView) {
+                        try {
+                            trayEl.scrollIntoView({
+                                behavior: "smooth",
+                                block: "nearest",
+                            });
+                        } catch (e) {
+                            /* ignore */
+                        }
+                    }
+                    const firstItem = strip.querySelector(
+                        ".tray-item, .mini-card",
+                    );
+                    if (firstItem && firstItem.focus) {
+                        try {
+                            firstItem.focus({ preventScroll: true });
+                        } catch (e) {
+                            /* ignore */
+                        }
+                    }
+                    setTimeout(function () {
+                        app.classList.remove("is-tray-focus");
+                    }, 700);
+                };
+
+                const toggleTray = function () {
+                    const wasCollapsed = !!(
+                        app && app.classList.contains("is-tray-collapsed")
+                    );
+                    const next = !wasCollapsed;
+                    applyTrayCollapsed(next);
+                    writeTrayCollapsed(next);
+                    if (!next) focusTray();
+                };
+
+                window.__appClickHandlers.push(function (e) {
+                    const tog = e.target.closest("[data-compare-toggle]");
+                    if (tog) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggle(tog.getAttribute("data-compare-toggle"));
+                        return;
+                    }
+                    const rem = e.target.closest("[data-tray-remove]");
+                    if (rem) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggle(rem.getAttribute("data-tray-remove"));
+                        return;
+                    }
+                    if (e.target.closest("#rail-compare")) {
+                        e.preventDefault();
+                        toggleTray();
+                        return;
+                    }
+                });
+
+                if (clearBtn) {
+                    clearBtn.addEventListener("click", function (e) {
+                        e.preventDefault();
+                        state.ids = [];
+                        persist();
+                        render();
+                    });
+                }
+
+                applyTrayCollapsed(readTrayCollapsed());
+                render();
+            })();
+        </script>
+
+        <script>
+            // @ts-nocheck — inline script; intentionally untyped. The renderer
+            // module is type-checked at its source.
+            import { createCurveCanvasRenderer } from "../lib/curveCanvasRenderer";
+
+            // Gallery + per-curve-view gestures.
+            //   - drag on empty wall: pan the gallery
+            //   - drag on [data-curve-view]: zoom X/Y (Houdini-style channel drag)
+            //   - Shift+drag on [data-curve-view]: pan the view window
+            //   - dblclick a card: focus; Esc: exit focus
+            //   - F: fit (reset active view and exit focus)
+            //
+            // Per-view state shape (persisted):
+            //   { zoomX, zoomY, centerX, centerY, wrapMode }
+            // - zoomX in [0.25..1]  — zoom OUT only (4x out, see more domain / repeats).
+            // - zoomY in [0.5..3]   — tight, normalized (around data range).
+            // - center is a fraction of the default viewBox (0..1).
+            // - wrapMode drives clamp/repeat/mirror/loop tiling.
+        </script>
+        <script>
+            import {
+                clamp,
+                parseViewBox,
+                fitZoomForPadding,
+                VIEWPORT_LIMITS,
+                type CurveViewportState,
+                type CurveWrapMode,
+            } from "../lib/curveViewportMath";
+            import { readTokens } from "../lib/renderer/tokens";
+            import { createCurveCanvasRenderer } from "../lib/curveCanvasRenderer";
+
+            // Local shapes used by the gallery IIFE. CurveViewportState
+            // covers the persisted view shape; the rest are IIFE-internal
+            // state that we type here rather than exporting.
+            interface ApplyOpts {
+                flash?: boolean;
+                persist?: boolean;
+            }
+            interface ModeOpts {
+                flash?: boolean;
+            }
+            interface GridSize {
+                minW: number;
+                rowH: number;
+            }
+            interface PanDrag {
+                kind: "pan";
+                x: number;
+                y: number;
+                sl: number;
+                st: number;
+                moved: boolean;
+            }
+            interface SizeDrag {
+                kind: "size";
+                x: number;
+                y: number;
+                minW0: number;
+                rowH0: number;
+                minWMin0: number;
+                minWMax0: number;
+                rowHMin0: number;
+                rowHMax0: number;
+                ratio0: number;
+                moved: boolean;
+            }
+            interface ZoomViewDrag {
+                kind: "zoom-view";
+                view: HTMLElement;
+                id: string;
+                x: number;
+                y: number;
+                zx0: number;
+                zy0: number;
+                cx0: number;
+                cy0: number;
+                moved: boolean;
+            }
+            interface PanViewDrag {
+                kind: "pan-view";
+                view: HTMLElement;
+                id: string;
+                x: number;
+                y: number;
+                zx0: number;
+                zy0: number;
+                cx0: number;
+                cy0: number;
+                moved: boolean;
+            }
+            type DragState = PanDrag | SizeDrag | ZoomViewDrag | PanViewDrag;
+            type GalleryMode = "atlas" | "browse" | "focus";
+            type Mode = GalleryMode;
+
+            (function () {
+                const wall = document.getElementById(
+                    "curve-wall",
+                ) as HTMLElement | null;
+                const grid = document.getElementById(
+                    "wall-grid",
+                ) as HTMLElement | null;
+                const modeEl = document.getElementById(
+                    "grid-mode",
+                ) as HTMLElement | null;
+                const modeLabel = document.getElementById(
+                    "grid-mode-label",
+                ) as HTMLElement | null;
+                if (!wall || !grid || !modeEl || !modeLabel) return;
+
+                const MODE_CLASS: Record<GalleryMode, string> = {
+                    atlas: "is-mode-atlas",
+                    browse: "is-mode-browse",
+                    focus: "is-mode-focus",
+                };
+                const STEP_MODES: GalleryMode[] = ["atlas", "browse"];
+                // Inline Astro scripts don't always pick up env.d.ts, so we
+                // coerce the window slot via a typed local to keep the
+                // call sites clean.
+                interface CurvotecaWindow {
+                    KEY_GALLERY_MODE: string;
+                    KEY_CURVE_VIEW: string;
+                    KEY_VIEW_MODE: string;
+                    KEY_WRAP_MODE: string;
+                    KEY_GRID_SIZE: string;
+                    KEY_GRID_COLS: string;
+                    KEY_VIEW_GRID: string;
+                    CurvotecaRenderCurveView: (view: HTMLElement) => void;
+                }
+                const wnd = window as unknown as CurvotecaWindow;
+                const MODE_KEY = wnd.KEY_GALLERY_MODE;
+                const VIEW_KEY = wnd.KEY_CURVE_VIEW;
+                const VIEW_SHARED_ID = "__all";
+                const VIEW_MODE_KEY = wnd.KEY_VIEW_MODE;
+                const WRAP_KEY = wnd.KEY_WRAP_MODE;
+                const VIEW_VERSION = 2;
+                // X / Y zoom limits and center clamp are sourced from
+                // VIEWPORT_LIMITS in src/lib/curveViewportMath.ts. Edit
+                // that file (the top-level VIEWPORT_LIMITS constant) to
+                // retune the per-axis ranges.
+
+                const GRID_SIZE_KEY = wnd.KEY_GRID_SIZE;
+                const GRID_COLS_KEY = wnd.KEY_GRID_COLS;
+                let currentCols = 8; // updated by applyCols; read by GRID_TOKENS
+                const GRID_TOKENS = function () {
+                    const s = getComputedStyle(grid);
+                    const lerp = function (
+                        tight: number,
+                        loose: number,
+                        cols: number,
+                    ) {
+                        // cols 1..8, 8 = tight, 1 = loose
+                        const t = (cols - 1) / 7;
+                        return tight + (loose - tight) * t;
+                    };
+                    const tight = {
+                        minWMin: parseFloat(
+                            s.getPropertyValue("--card-min-w-min"),
+                        ),
+                        minWMax: parseFloat(
+                            s.getPropertyValue("--card-min-w-max"),
+                        ),
+                        rowHMin: parseFloat(
+                            s.getPropertyValue("--card-row-h-min"),
+                        ),
+                        rowHMax: parseFloat(
+                            s.getPropertyValue("--card-row-h-max"),
+                        ),
+                    };
+                    const loose = {
+                        minWMin: parseFloat(
+                            s.getPropertyValue("--card-min-w-min-loose"),
+                        ),
+                        minWMax: parseFloat(
+                            s.getPropertyValue("--card-min-w-max-loose"),
+                        ),
+                        rowHMin: parseFloat(
+                            s.getPropertyValue("--card-row-h-min-loose"),
+                        ),
+                        rowHMax: parseFloat(
+                            s.getPropertyValue("--card-row-h-max-loose"),
+                        ),
+                    };
+                    const c = Math.max(1, Math.min(8, currentCols));
+                    return {
+                        minWMin: lerp(loose.minWMin, tight.minWMin, c),
+                        minWMax: lerp(loose.minWMax, tight.minWMax, c),
+                        rowHMin: lerp(loose.rowHMin, tight.rowHMin, c),
+                        rowHMax: lerp(loose.rowHMax, tight.rowHMax, c),
+                        ratio: parseFloat(s.getPropertyValue("--card-ratio")),
+                        wheelStep: parseFloat(
+                            s.getPropertyValue("--card-wheel-step"),
+                        ),
+                    };
+                };
+                const gridSizeFromMode = function (m: string): GridSize {
+                    const s = getComputedStyle(grid);
+                    return {
+                        minW: parseFloat(
+                            s.getPropertyValue("--card-" + m + "-w"),
+                        ),
+                        rowH: parseFloat(
+                            s.getPropertyValue("--card-" + m + "-h"),
+                        ),
+                    };
+                };
+                const COLS_MIN = 3;
+                const COLS_MAX = 9;
+
+                let mode: Mode = "browse";
+                let prevMode: Mode = "browse";
+                let activeView: HTMLElement | null = null; // most-recently-touched [data-curve-view]
+                // --- shared curve-view store --------------------------------
+                interface ViewRecord {
+                    v: number;
+                    zoomX: number;
+                    zoomY: number;
+                    centerX: number;
+                    centerY: number;
+                    wrapMode: string;
+                }
+                const readViewMap = function (): Record<string, ViewRecord> {
+                    try {
+                        const raw = localStorage.getItem(VIEW_KEY);
+                        if (raw) {
+                            const p = JSON.parse(raw);
+                            if (p && typeof p === "object") return p;
+                        }
+                    } catch (e) {}
+                    return {};
+                };
+                const writeViewMap = function (
+                    map: Record<string, ViewRecord>,
+                ) {
+                    try {
+                        localStorage.setItem(VIEW_KEY, JSON.stringify(map));
+                    } catch (e) {}
+                };
+                const viewMap = readViewMap();
+                const readView = function (): CurveViewportState {
+                    const v = viewMap[VIEW_SHARED_ID];
+                    if (
+                        v &&
+                        v.v === VIEW_VERSION &&
+                        typeof v.zoomX === "number" &&
+                        typeof v.zoomY === "number"
+                    ) {
+                        return {
+                            zoomX: clamp(
+                                v.zoomX,
+                                VIEWPORT_LIMITS.zoomX.min,
+                                VIEWPORT_LIMITS.zoomX.max,
+                            ),
+                            zoomY: clamp(
+                                v.zoomY,
+                                VIEWPORT_LIMITS.zoomY.min,
+                                VIEWPORT_LIMITS.zoomY.max,
+                            ),
+                            centerX:
+                                typeof v.centerX === "number"
+                                    ? clamp(
+                                          v.centerX,
+                                          VIEWPORT_LIMITS.center.min,
+                                          VIEWPORT_LIMITS.center.max,
+                                      )
+                                    : 0.5,
+                            centerY:
+                                typeof v.centerY === "number"
+                                    ? clamp(
+                                          v.centerY,
+                                          VIEWPORT_LIMITS.center.min,
+                                          VIEWPORT_LIMITS.center.max,
+                                      )
+                                    : 0.5,
+                            wrapMode: (v.wrapMode || "clamp") as CurveWrapMode,
+                        };
+                    }
+                    return {
+                        zoomX: 1,
+                        zoomY: 1,
+                        centerX: 0.5,
+                        centerY: 0.5,
+                        wrapMode: "clamp",
+                    };
+                };
+                const writeViewStore = function (st: CurveViewportState) {
+                    viewMap[VIEW_SHARED_ID] = {
+                        v: VIEW_VERSION,
+                        zoomX: st.zoomX,
+                        zoomY: st.zoomY,
+                        centerX: st.centerX,
+                        centerY: st.centerY,
+                        wrapMode: st.wrapMode,
+                    };
+                    writeViewMap(viewMap);
+                };
+                const canvasRenderers = new WeakMap();
+                const rendererFor = function (view: HTMLElement) {
+                    let renderer = canvasRenderers.get(view);
+                    if (!renderer) {
+                        renderer = createCurveCanvasRenderer(view);
+                        renderer.mount(view);
+                        canvasRenderers.set(view, renderer);
+                    }
+                    return renderer;
+                };
+                // Expose rendererFor to the page-level inline script
+                // (which runs before the module script that imports
+                // createCurveCanvasRenderer). The view-cycle button
+                // uses this to notify the renderer that the mode
+                // attribute changed, so it redraws the static layer.
+                window.__rendererFor = rendererFor;
+                // --- viewport visibility ---------------------------------------
+                // IntersectionObserver (relative to the wall's scroll container)
+                // tells each renderer whether its card is in view. Off-viewport
+                // cards skip the per-frame probe + cursor work and strip the
+                // probe DOM classes. Re-entry forces a static redraw so the
+                // card is correct when scrolled back.
+                if (typeof IntersectionObserver !== "undefined") {
+                    const viewportObserver = new IntersectionObserver(
+                        function (entries) {
+                            for (const entry of entries) {
+                                // @ts-expect-error - entry.target is EventTarget; we only observe HTMLElements.
+                                const view: HTMLElement = entry.target;
+                                const renderer = canvasRenderers.get(view);
+                                if (renderer) {
+                                    renderer.setViewportVisible(
+                                        entry.isIntersecting,
+                                    );
+                                }
+                                view.setAttribute(
+                                    "data-curve-view-in-viewport",
+                                    entry.isIntersecting ? "true" : "false",
+                                );
+                            }
+                        },
+                        {
+                            root: wall,
+                            // Match applyView's bounding-rect cull: any pixel
+                            // visible counts. Threshold 0 fires on every
+                            // entry/exit transition.
+                            rootMargin: "0px",
+                            threshold: 0,
+                        },
+                    );
+                    // Observe every view currently in the DOM. New views
+                    // (e.g. compare tray additions) are picked up by the
+                    // observer on the next mutation; for the static gallery
+                    // this covers all of them up front.
+                    document
+                        .querySelectorAll<HTMLElement>("[data-curve-view]")
+                        .forEach(function (view) {
+                            viewportObserver.observe(view);
+                        });
+                }
+                wnd.CurvotecaRenderCurveView = function (view: HTMLElement) {
+                    if (!view) return;
+                    const st = readView();
+                    st.wrapMode = wrapMode;
+                    applyView(view, st, { persist: false, flash: false });
+                };
+
+                // --- grid sizing store --------------------------------------
+                const readGridSize = function (): GridSize | null {
+                    try {
+                        const raw = localStorage.getItem(GRID_SIZE_KEY);
+                        if (raw) {
+                            const p = JSON.parse(raw);
+                            if (
+                                p &&
+                                typeof p.minW === "number" &&
+                                typeof p.rowH === "number"
+                            )
+                                return p;
+                        }
+                    } catch (e) {}
+                    return null;
+                };
+                const writeGridSize = function (size: GridSize) {
+                    try {
+                        localStorage.setItem(
+                            GRID_SIZE_KEY,
+                            JSON.stringify(size),
+                        );
+                    } catch (e) {}
+                };
+                const applyGridSize = function (minW: number, rowH: number) {
+                    // Skip if the values are already set on the grid's
+                    // inline style. Writing the same value still forces
+                    // a style recalc + layout in the browser, which the
+                    // pre-paint script + this function would otherwise
+                    // do twice on init.
+                    const wNext = minW + "px";
+                    const hNext = rowH + "px";
+                    if (
+                        grid.style.getPropertyValue("--card-min-w") === wNext &&
+                        grid.style.getPropertyValue("--card-row-h") === hNext
+                    )
+                        return;
+                    grid.style.setProperty("--card-min-w", wNext);
+                    grid.style.setProperty("--card-row-h", hNext);
+                };
+                // Read the active --card-min-w / --card-row-h, falling back
+                // to --card-browse-{w,h} if no inline value is set (e.g. before
+                // applyGridSize has run for the first time).
+                const readActiveSize = function () {
+                    const s = getComputedStyle(grid);
+                    return {
+                        minW:
+                            parseFloat(s.getPropertyValue("--card-min-w")) ||
+                            parseFloat(s.getPropertyValue("--card-browse-w")),
+                        rowH:
+                            parseFloat(s.getPropertyValue("--card-row-h")) ||
+                            parseFloat(s.getPropertyValue("--card-browse-h")),
+                    };
+                };
+                const setWallHeadGridSize = function (
+                    _minW: number,
+                    _rowH: number,
+                ) {
+                    // no-op: the scale readout was removed.
+                };
+
+                // --- column count (1..8) ------------------------------------
+
+                // --- column count (1..8) ------------------------------------
+                const readCols = function (): number {
+                    try {
+                        const v = parseInt(
+                            localStorage.getItem(GRID_COLS_KEY) || "",
+                            10,
+                        );
+                        if (v >= COLS_MIN && v <= COLS_MAX) return v;
+                    } catch (e) {}
+                    return 0; // 0 = auto
+                };
+                const writeCols = function (c: number) {
+                    try {
+                        if (c <= 0) localStorage.removeItem(GRID_COLS_KEY);
+                        else localStorage.setItem(GRID_COLS_KEY, String(c));
+                    } catch (e) {}
+                };
+                const applyCols = function (c: number) {
+                    currentCols = c > 0 ? c : 8;
+                    // Same value-guard as applyGridSize: skip the inline
+                    // style write if the grid already has the same value.
+                    // The pre-paint script in <head> sets --grid-cols on
+                    // <html> when a value is persisted, and the grid
+                    // inherits it; this function would otherwise re-write
+                    // the same value and trigger a redundant style+layout.
+                    const next =
+                        c > 0 ? "repeat(" + c + ", minmax(0, 1fr))" : "";
+                    if (grid.style.getPropertyValue("--grid-cols") !== next) {
+                        if (c > 0) {
+                            grid.style.setProperty("--grid-cols", next);
+                        } else {
+                            grid.style.removeProperty("--grid-cols");
+                        }
+                    }
+                    // Mirror the column count as a data attribute so CSS can
+                    // hook into density, and push the count into each renderer
+                    // so it can skip canvas axis labels (and disable probing)
+                    // when the card is small.
+                    grid.setAttribute("data-cols", String(currentCols));
+                    // Position the sponsor card at top-right based on column count.
+                    var sponsorCard = grid.querySelector(
+                        ".is-sponsor",
+                    ) as HTMLElement | null;
+                    if (sponsorCard) {
+                        if (currentCols >= 6) {
+                            sponsorCard.style.gridColumn =
+                                currentCols - 1 + " / " + (currentCols + 1);
+                            sponsorCard.style.gridRow = "1 / 3";
+                        } else {
+                            sponsorCard.style.gridColumn = String(currentCols);
+                            sponsorCard.style.gridRow = "1";
+                        }
+                    }
+                    grid.querySelectorAll<HTMLElement>(
+                        "[data-curve-view]",
+                    ).forEach(function (view) {
+                        const renderer = canvasRenderers.get(view);
+                        if (renderer) renderer.setColumnCount(currentCols);
+                    });
+                };
+                const setWallHeadCols = function (_c: number) {
+                    // no-op: the scale readout was removed.
+                };
+
+                const visibleBoxFor = function (
+                    def: { x: number; y: number; w: number; h: number },
+                    st: CurveViewportState,
+                ) {
+                    const w = def.w / st.zoomX;
+                    const h = def.h / st.zoomY;
+                    const x = def.x + (def.w - w) * st.centerX;
+                    const y = def.y + (def.h - h) * st.centerY;
+                    return { x: x, y: y, w: w, h: h };
+                };
+                const fmtZoom = function (z: number) {
+                    return Math.round(z * 100) + "%";
+                };
+                // Per-view cached readout nodes, populated lazily and
+                // invalidated when the view element is replaced.
+                // Avoids per-frame querySelector during drag broadcasts.
+                const readoutCache = new WeakMap<
+                    HTMLElement,
+                    { x: HTMLElement | null; y: HTMLElement | null }
+                >();
+                const setReadout = function (
+                    view: HTMLElement,
+                    st: CurveViewportState,
+                ) {
+                    let cached = readoutCache.get(view);
+                    if (!cached) {
+                        cached = {
+                            x: view.querySelector("[data-curve-view-x]"),
+                            y: view.querySelector("[data-curve-view-y]"),
+                        };
+                        readoutCache.set(view, cached);
+                    }
+                    const zoomXStr = fmtZoom(st.zoomX);
+                    const zoomYStr = fmtZoom(st.zoomY);
+                    if (cached.x && cached.x.textContent !== zoomXStr) {
+                        cached.x.textContent = zoomXStr;
+                    }
+                    if (cached.y && cached.y.textContent !== zoomYStr) {
+                        cached.y.textContent = zoomYStr;
+                    }
+                    const attrX = st.zoomX.toFixed(2);
+                    const attrY = st.zoomY.toFixed(2);
+                    if (view.getAttribute("data-zoom-x") !== attrX) {
+                        view.setAttribute("data-zoom-x", attrX);
+                        view.setAttribute("data-zoom-y", attrY);
+                    }
+                };
+
+                // --- shared viewport scaling ------------------------------
+                let wrapMode: CurveWrapMode = "clamp";
+                const wrapBtn = document.getElementById(
+                    "wrap-toggle",
+                ) as HTMLElement | null;
+                const wrapState = document.getElementById(
+                    "wrap-toggle-state",
+                ) as HTMLElement | null;
+                const detailWrapBtn = document.getElementById(
+                    "detail-wrap-toggle",
+                ) as HTMLElement | null;
+                const detailWrapState = document.getElementById(
+                    "detail-wrap-toggle-state",
+                ) as HTMLElement | null;
+                try {
+                    const w = localStorage.getItem(WRAP_KEY);
+                    if (
+                        w === "repeat" ||
+                        w === "mirror" ||
+                        w === "loop" ||
+                        w === "clamp"
+                    ) {
+                        wrapMode = w;
+                    }
+                } catch (e) {}
+                const wrapLabel = function (m: CurveWrapMode) {
+                    return m === "repeat"
+                        ? "repeat"
+                        : m === "mirror"
+                          ? "mirror"
+                          : m === "loop"
+                            ? "loop"
+                            : "clamp";
+                };
+                const applyWrapUI = function () {
+                    if (wrapBtn) {
+                        wrapBtn.setAttribute(
+                            "aria-pressed",
+                            wrapMode === "clamp" ? "false" : "true",
+                        );
+                    }
+                    if (wrapState) {
+                        wrapState.textContent = wrapLabel(wrapMode);
+                    }
+                    if (detailWrapBtn) {
+                        detailWrapBtn.setAttribute(
+                            "aria-pressed",
+                            wrapMode === "clamp" ? "false" : "true",
+                        );
+                    }
+                    if (detailWrapState) {
+                        detailWrapState.textContent = wrapLabel(wrapMode);
+                    }
+                };
+                const cycleWrap = function () {
+                    wrapMode =
+                        wrapMode === "clamp"
+                            ? "repeat"
+                            : wrapMode === "repeat"
+                              ? "mirror"
+                              : wrapMode === "mirror"
+                                ? "loop"
+                                : "clamp";
+                    try {
+                        localStorage.setItem(WRAP_KEY, wrapMode);
+                    } catch (e) {}
+                    applyWrapUI();
+                    // Re-render wrap on all visible views.
+                    visibleViews().forEach(function (v) {
+                        const st = readView();
+                        st.wrapMode = wrapMode;
+                        applyView(v, st, { persist: false, flash: false });
+                    });
+                };
+                applyWrapUI();
+                if (wrapBtn) wrapBtn.addEventListener("click", cycleWrap);
+                if (detailWrapBtn)
+                    detailWrapBtn.addEventListener("click", cycleWrap);
+                const visibleViews = function (): NodeListOf<HTMLElement> {
+                    return document.querySelectorAll(
+                        "#wall-grid .card:not(.is-hidden) [data-curve-view], #compare-tray [data-curve-view], #detail-overlay-viewport [data-curve-view]",
+                    );
+                };
+                const VIEW_MODE_ORDER = [
+                    "graph",
+                    "motion",
+                    "field",
+                    "heightStrip",
+                    "ramp",
+                ];
+                let globalViewMode = "graph";
+                const viewModeBtn = document.getElementById(
+                    "view-mode-toggle",
+                ) as HTMLElement | null;
+                const viewModeState = document.getElementById(
+                    "view-mode-toggle-state",
+                ) as HTMLElement | null;
+                const readCurveRegistry = function () {
+                    const wall = document.getElementById("curve-wall");
+                    if (!wall) return [];
+                    try {
+                        const parsed = JSON.parse(
+                            wall.getAttribute("data-curves") || "[]",
+                        );
+                        return Array.isArray(parsed) ? parsed : [];
+                    } catch (err) {
+                        return [];
+                    }
+                };
+                const registryViewsFor = function (
+                    id: string | null,
+                ): string[] {
+                    if (!id) return ["graph"];
+                    const registry = readCurveRegistry();
+                    for (let i = 0; i < registry.length; i += 1) {
+                        if (registry[i].id === id) {
+                            return Array.isArray(registry[i].views)
+                                ? registry[i].views
+                                : ["graph"];
+                        }
+                    }
+                    return ["graph"];
+                };
+                const supportsViewMode = function (
+                    view: HTMLElement,
+                    mode: string,
+                ) {
+                    const views = registryViewsFor(
+                        view.getAttribute("data-curve-id"),
+                    );
+                    return views.indexOf(mode) >= 0;
+                };
+                const applyViewModeUI = function () {
+                    if (viewModeState)
+                        viewModeState.textContent = globalViewMode;
+                    if (viewModeBtn) {
+                        viewModeBtn.setAttribute("aria-pressed", "false");
+                        viewModeBtn.setAttribute(
+                            "title",
+                            "view mode: " + globalViewMode,
+                        );
+                    }
+                };
+                const applyGlobalViewMode = function () {
+                    applyViewModeUI();
+                    let unsupported = 0;
+                    visibleViews().forEach(function (view) {
+                        const supported = supportsViewMode(
+                            view,
+                            globalViewMode,
+                        );
+                        const target = supported ? globalViewMode : "graph";
+                        const card = view.closest(".card");
+                        view.toggleAttribute(
+                            "data-view-mode-unsupported",
+                            !supported,
+                        );
+                        if (card) {
+                            card.classList.toggle(
+                                "is-view-mode-unsupported",
+                                !supported,
+                            );
+                            if (!supported) {
+                                unsupported += 1;
+                                card.setAttribute(
+                                    "title",
+                                    globalViewMode +
+                                        " is not registered for this curve; showing graph",
+                                );
+                            } else {
+                                card.removeAttribute("title");
+                            }
+                        }
+                        if (
+                            view.getAttribute("data-curve-view-mode") !== target
+                        ) {
+                            view.setAttribute("data-curve-view-mode", target);
+                        }
+                        try {
+                            rendererFor(view).notifyViewModeChanged();
+                        } catch (err) {}
+                    });
+                    if (viewModeBtn && unsupported > 0) {
+                        viewModeBtn.setAttribute(
+                            "title",
+                            "view mode: " +
+                                globalViewMode +
+                                " (" +
+                                unsupported +
+                                " showing graph fallback)",
+                        );
+                    }
+                };
+                try {
+                    const stored = localStorage.getItem(VIEW_MODE_KEY);
+                    if (stored && VIEW_MODE_ORDER.indexOf(stored) >= 0) {
+                        globalViewMode = stored;
+                    }
+                } catch (err) {}
+                const cycleGlobalViewMode = function () {
+                    const idx = VIEW_MODE_ORDER.indexOf(globalViewMode);
+                    globalViewMode =
+                        VIEW_MODE_ORDER[
+                            (idx < 0 ? 0 : idx + 1) % VIEW_MODE_ORDER.length
+                        ];
+                    try {
+                        localStorage.setItem(VIEW_MODE_KEY, globalViewMode);
+                    } catch (err) {}
+                    applyGlobalViewMode();
+                };
+                if (viewModeBtn) {
+                    viewModeBtn.addEventListener("click", cycleGlobalViewMode);
+                }
+                document.addEventListener(
+                    "curvoteca:views-changed",
+                    applyGlobalViewMode,
+                );
+                applyGlobalViewMode();
+
+                // --- canvas viewport grid cycle ------------------------------
+                // 3-state cycle for the canvas2d grid:
+                //   full  : grid + subgrid + axis labels + 0..1 frame + endlines
+                //   lines : major grid + axis labels only
+                //   axis  : zero/axis lines only (no labels, no grid, no frame)
+                // Persisted like the other bottom-bar controls and applied
+                // to every visible renderer on cycle.
+                const VIEW_GRID_KEY = wnd.KEY_VIEW_GRID;
+                const VIEW_GRID_LABELS: Record<string, string> = {
+                    full: "grid",
+                    lines: "lines",
+                    axis: "axis",
+                };
+                const gridBtn = document.getElementById(
+                    "view-grid-toggle",
+                ) as HTMLElement | null;
+                const gridState = document.getElementById(
+                    "view-grid-toggle-state",
+                ) as HTMLElement | null;
+                const VIEW_GRID_MODES = ["full", "lines", "axis"] as const;
+                type ViewGridMode = (typeof VIEW_GRID_MODES)[number];
+                let viewGridMode: ViewGridMode = "full";
+                const applyViewGridUI = function () {
+                    if (gridState)
+                        gridState.textContent =
+                            VIEW_GRID_LABELS[viewGridMode] || viewGridMode;
+                    if (gridBtn) {
+                        gridBtn.setAttribute("aria-pressed", "true");
+                        gridBtn.setAttribute(
+                            "title",
+                            "grid mode: " + viewGridMode,
+                        );
+                    }
+                };
+                const applyGlobalViewGrid = function () {
+                    applyViewGridUI();
+                    document
+                        .querySelectorAll("[data-curve-view]")
+                        .forEach(function (el) {
+                            try {
+                                rendererFor(el as HTMLElement).setViewGridMode(
+                                    viewGridMode,
+                                );
+                            } catch (err) {}
+                        });
+                };
+                try {
+                    const stored = localStorage.getItem(VIEW_GRID_KEY);
+                    if (
+                        stored &&
+                        (VIEW_GRID_MODES as readonly string[]).indexOf(
+                            stored,
+                        ) >= 0
+                    ) {
+                        viewGridMode = stored as ViewGridMode;
+                    }
+                } catch (err) {}
+                const cycleGlobalViewGrid = function () {
+                    const idx = VIEW_GRID_MODES.indexOf(viewGridMode);
+                    viewGridMode =
+                        VIEW_GRID_MODES[
+                            (idx < 0 ? 0 : idx + 1) % VIEW_GRID_MODES.length
+                        ];
+                    try {
+                        localStorage.setItem(VIEW_GRID_KEY, viewGridMode);
+                    } catch (err) {}
+                    applyGlobalViewGrid();
+                };
+                if (gridBtn) {
+                    gridBtn.addEventListener("click", cycleGlobalViewGrid);
+                }
+                applyGlobalViewGrid();
+
+                // --- gallery columns cycle ---------------------------------
+                const colsBtn = document.getElementById(
+                    "cols-toggle",
+                ) as HTMLElement | null;
+                const colsState = document.getElementById(
+                    "cols-toggle-state",
+                ) as HTMLElement | null;
+                const applyColsUI = function () {
+                    const c = readCols();
+                    const label = c > 0 ? String(c) : "auto";
+                    if (colsState) colsState.textContent = label;
+                    if (colsBtn) {
+                        colsBtn.setAttribute(
+                            "title",
+                            "gallery columns: " + label,
+                        );
+                    }
+                };
+                const cycleCols = function () {
+                    const current = readCols();
+                    const c =
+                        current > 0
+                            ? current
+                            : Math.round(
+                                  grid.offsetWidth /
+                                      parseFloat(
+                                          getComputedStyle(
+                                              grid,
+                                          ).getPropertyValue("--card-browse-w"),
+                                      ),
+                              ) || 4;
+                    const next = c >= COLS_MAX ? COLS_MIN : c + 1;
+                    writeCols(next);
+                    applyCols(next);
+                    setWallHeadCols(next);
+                    refreshVisibleViews();
+                    applyColsUI();
+                };
+                if (colsBtn) colsBtn.addEventListener("click", cycleCols);
+                applyColsUI();
+
+                const broadcastView = function (
+                    sourceView: HTMLElement,
+                    st: CurveViewportState,
+                    opts: ApplyOpts,
+                ) {
+                    const views = visibleViews();
+                    views.forEach(function (v) {
+                        applyView(v, st, opts);
+                    });
+                };
+                const setWallHeadScale = function (_st: CurveViewportState) {
+                    // no-op: the scale readout was removed.
+                };
+                const applyView = function (
+                    view: HTMLElement,
+                    st: CurveViewportState,
+                    opts?: ApplyOpts,
+                ) {
+                    // Cull removed: every call now creates the renderer
+                    // (if missing) and forwards the state. The renderer
+                    // gates its own per-frame work on `inViewport` (set
+                    // by the page-level IntersectionObserver), so the
+                    // cost of mounting off-viewport cards is the one-time
+                    // setup, not the per-frame hot path. Without this,
+                    // off-viewport cards never get a renderer created,
+                    // so the IO's setViewportVisible() call is a no-op
+                    // and the card stays blank until hover triggers
+                    // `rendererFor(view)` lazily.
+                    st.zoomX = clamp(
+                        st.zoomX,
+                        VIEWPORT_LIMITS.zoomX.min,
+                        VIEWPORT_LIMITS.zoomX.max,
+                    );
+                    st.zoomY = clamp(
+                        st.zoomY,
+                        VIEWPORT_LIMITS.zoomY.min,
+                        VIEWPORT_LIMITS.zoomY.max,
+                    );
+                    st.wrapMode = wrapMode;
+                    rendererFor(view).update({
+                        zoomX: st.zoomX,
+                        zoomY: st.zoomY,
+                        centerX: st.centerX,
+                        centerY: st.centerY,
+                        wrapMode: st.wrapMode,
+                    });
+                    // Only the active view's per-card readout needs to
+                    // update during a drag; broadcasting to all N cards
+                    // caused ~4N redundant DOM writes per frame.
+                    if (view === activeView) setReadout(view, st);
+                    const hasZoom =
+                        Math.abs(st.zoomX - 1) > 0.02 ||
+                        Math.abs(st.zoomY - 1) > 0.02;
+                    view.classList.toggle("has-zoom", hasZoom);
+                    view.setAttribute("data-wrap-mode", wrapMode);
+                    if (!opts || opts.persist !== false) writeViewStore(st);
+                    if (view === activeView) setWallHeadScale(st);
+                };
+                const setBackgroundViewsFrozen = function (frozen: boolean) {
+                    document
+                        .querySelectorAll<HTMLElement>(
+                            "#wall-grid [data-curve-view], #compare-tray [data-curve-view]",
+                        )
+                        .forEach(function (view) {
+                            const renderer = canvasRenderers.get(view);
+                            if (!renderer) return;
+                            if (frozen) {
+                                renderer.setViewportVisible(false);
+                                return;
+                            }
+                            const inWall = !!view.closest("#wall-grid");
+                            const visible = inWall
+                                ? view.getAttribute(
+                                      "data-curve-view-in-viewport",
+                                  ) === "true"
+                                : true;
+                            renderer.setViewportVisible(visible);
+                        });
+                };
+                window.addEventListener(
+                    "curvoteca:detail-overlay",
+                    function (e) {
+                        const detail = (e as CustomEvent).detail;
+                        setBackgroundViewsFrozen(!!(detail && detail.open));
+                    },
+                );
+                const fitStateFor = function (
+                    view: HTMLElement,
+                ): CurveViewportState {
+                    // F-key: reset to the canonical view with breathing room.
+                    // Reads `fitPadding` from the renderer tokens (single
+                    // source of truth in src/lib/renderer/tokens.ts) and
+                    // shrinks zoom so the curve doesn't hug the canvas edges.
+                    // Padding is in screen pixels (not viewBox units), so the
+                    // visible margin is symmetric on both axes regardless of
+                    // the viewBox aspect ratio.
+                    const tokens = readTokens(view);
+                    const canvas = view.querySelector(
+                        "canvas[data-curve-canvas]",
+                    ) as HTMLElement | null;
+                    const cw = canvas ? canvas.clientWidth : 0;
+                    const ch = canvas ? canvas.clientHeight : 0;
+                    const z = fitZoomForPadding(tokens.fitPadding, cw, ch);
+                    return {
+                        zoomX: z.zoomX,
+                        zoomY: z.zoomY,
+                        centerX: 0.5,
+                        centerY: 0.5,
+                        wrapMode: wrapMode,
+                    };
+                };
+                const resetAllViews = function (opts?: ApplyOpts) {
+                    visibleViews().forEach(function (v) {
+                        applyView(v, fitStateFor(v), opts || { flash: false });
+                    });
+                };
+
+                // Initialize every view with its persisted state.
+                const initViews = function () {
+                    const views =
+                        document.querySelectorAll<HTMLElement>(
+                            "[data-curve-view]",
+                        );
+                    views.forEach(function (v) {
+                        const st = readView();
+                        applyView(v, st, { flash: false });
+                    });
+                };
+                let refreshViewsFrame = 0;
+                const refreshVisibleViews = function () {
+                    if (refreshViewsFrame) {
+                        cancelAnimationFrame(refreshViewsFrame);
+                    }
+                    refreshViewsFrame = requestAnimationFrame(function () {
+                        refreshViewsFrame = 0;
+                        visibleViews().forEach(function (v) {
+                            const st = readView();
+                            st.wrapMode = wrapMode;
+                            applyView(v, st, {
+                                persist: false,
+                                flash: false,
+                            });
+                        });
+                    });
+                };
+
+                // Keep edge indicators aligned after resize / mode switches.
+                if (typeof ResizeObserver !== "undefined") {
+                    const ro = new ResizeObserver(function (entries) {
+                        entries.forEach(function (entry) {
+                            // @ts-expect-error - entry.target is Element; we only observe HTMLElements.
+                            const view: HTMLElement = entry.target;
+                            const st = readView();
+                            applyView(view, st, {
+                                persist: false,
+                                flash: false,
+                            });
+                        });
+                    });
+                    document
+                        .querySelectorAll<HTMLElement>("[data-curve-view]")
+                        .forEach(function (v) {
+                            ro.observe(v);
+                        });
+                }
+                document.addEventListener(
+                    "curvoteca:views-changed",
+                    function () {
+                        document
+                            .querySelectorAll<HTMLElement>("[data-curve-view]")
+                            .forEach(function (v) {
+                                wnd.CurvotecaRenderCurveView(v);
+                            });
+                    },
+                );
+
+                // --- mode store + apply -------------------------------------
+                const readMode = function (): Mode {
+                    try {
+                        const v = localStorage.getItem(MODE_KEY);
+                        if (
+                            v &&
+                            STEP_MODES.concat([
+                                "focus",
+                            ] as GalleryMode[]).indexOf(v as GalleryMode) !== -1
+                        )
+                            return v as Mode;
+                    } catch (e) {}
+                    return "browse";
+                };
+                const writeMode = function (m: Mode) {
+                    try {
+                        localStorage.setItem(MODE_KEY, m);
+                    } catch (e) {}
+                };
+                const flashPill = function (el: HTMLElement | null) {
+                    if (!el) return;
+                    el.classList.add("is-flash");
+                    // @ts-expect-error - flashPill._t is an untyped setTimeout handle assigned to the function itself.
+                    clearTimeout(flashPill._t);
+                    // @ts-expect-error - flashPill._t is an untyped setTimeout handle assigned to the function itself.
+                    flashPill._t = setTimeout(function () {
+                        el.classList.remove("is-flash");
+                    }, 240);
+                };
+                const applyMode = function (m: Mode, opts?: ModeOpts) {
+                    grid.classList.remove(
+                        "is-mode-atlas",
+                        "is-mode-browse",
+                        "is-mode-focus",
+                    );
+                    grid.classList.add(MODE_CLASS[m]);
+                    wall.classList.remove(
+                        "is-mode-atlas",
+                        "is-mode-browse",
+                        "is-mode-focus",
+                    );
+                    wall.classList.add(MODE_CLASS[m]);
+                    mode = m;
+                    modeLabel.textContent = m;
+                    if (!opts || opts.flash !== false) flashPill(modeEl);
+                };
+                const stepMode = function (dir: number) {
+                    if (mode === "focus") {
+                        applyMode(prevMode, { flash: false });
+                    }
+                    const i = STEP_MODES.indexOf(mode);
+                    const j =
+                        i < 0
+                            ? 1
+                            : (i + dir + STEP_MODES.length) % STEP_MODES.length;
+                    const next = STEP_MODES[j];
+                    applyMode(next, { flash: true });
+                    writeMode(next);
+                    prevMode = next;
+                    const defs = gridSizeFromMode(next);
+                    applyGridSize(defs.minW, defs.rowH);
+                    setWallHeadGridSize(defs.minW, defs.rowH);
+                    refreshVisibleViews();
+                    writeGridSize(defs);
+                };
+                const stepCols = function (dir: number) {
+                    const current = readCols();
+                    const c =
+                        current > 0
+                            ? current
+                            : Math.round(
+                                  grid.offsetWidth /
+                                      parseFloat(
+                                          getComputedStyle(
+                                              grid,
+                                          ).getPropertyValue("--card-browse-w"),
+                                      ),
+                              ) || 4;
+                    const next = clamp(c + dir, COLS_MIN, COLS_MAX);
+                    writeCols(next);
+                    applyCols(next);
+                    setWallHeadCols(next);
+                    refreshVisibleViews();
+                    applyColsUI();
+                };
+                let fitT: ReturnType<typeof setTimeout> | undefined = undefined;
+
+                // --- focus --------------------------------------------------
+                const findCard = function (
+                    target: EventTarget | null,
+                ): HTMLElement | null {
+                    if (!(target instanceof Element)) return null;
+                    return target.closest(".card");
+                };
+                const findView = function (
+                    target: EventTarget | null,
+                ): HTMLElement | null {
+                    if (!(target instanceof Element)) return null;
+                    return target.closest("[data-curve-view]");
+                };
+                const enterFocus = function (card: HTMLElement | null) {
+                    if (mode === "focus") return;
+                    prevMode = mode;
+                    applyMode("focus", { flash: true });
+                    cards.forEach(function (c) {
+                        c.classList.remove("is-focus");
+                    });
+                    if (card) card.classList.add("is-focus");
+                };
+                const exitFocus = function () {
+                    if (mode !== "focus") return;
+                    applyMode(prevMode || "browse", { flash: true });
+                    writeMode(mode);
+                    cards.forEach(function (c) {
+                        c.classList.remove("is-focus");
+                    });
+                    const saved = readGridSize();
+                    if (saved) {
+                        applyGridSize(saved.minW, saved.rowH);
+                        setWallHeadGridSize(saved.minW, saved.rowH);
+                    } else {
+                        const defs = gridSizeFromMode(prevMode || "browse");
+                        applyGridSize(defs.minW, defs.rowH);
+                        setWallHeadGridSize(defs.minW, defs.rowH);
+                    }
+                    refreshVisibleViews();
+                };
+
+                // --- restore persisted state --------------------------------
+                const m0 = readMode();
+                mode = m0;
+                prevMode = m0 === "focus" ? "browse" : m0;
+                applyMode(mode, { flash: false });
+                const savedSize = readGridSize();
+                if (savedSize) {
+                    applyGridSize(savedSize.minW, savedSize.rowH);
+                } else {
+                    const defs = gridSizeFromMode(mode);
+                    applyGridSize(defs.minW, defs.rowH);
+                }
+                const savedCols = readCols();
+                applyCols(savedCols);
+                setWallHeadCols(savedCols);
+                // Defer initViews to idle so persisted zoom/pan state is
+                // applied after first paint, reducing CLS. The renderer
+                // already has a sensible default view from the renderer
+                // mount, so the brief delay is invisible to users.
+                if (typeof (window as any).requestIdleCallback === "function") {
+                    (window as any).requestIdleCallback(initViews);
+                } else {
+                    setTimeout(initViews, 0);
+                }
+
+                const cards = grid.querySelectorAll<HTMLElement>(".card");
+
+                // --- hotkeys -----------------------------------------------
+                document.addEventListener(
+                    "keydown",
+                    function (e: KeyboardEvent) {
+                        // @ts-expect-error - e.target is EventTarget | null; closest is on Element.
+                        if (e.target.closest("input, textarea")) return;
+                        if (e.metaKey || e.ctrlKey || e.altKey) return;
+                        if (e.key === "f" || e.key === "F") {
+                            e.preventDefault();
+                            resetAllViews({ flash: true });
+                            if (mode === "focus") exitFocus();
+                            modeLabel.textContent = "fit";
+                            clearTimeout(fitT);
+                            fitT = setTimeout(function () {
+                                modeLabel.textContent = mode;
+                            }, 380);
+                        } else if (e.key === "Escape") {
+                            if (mode === "focus") {
+                                e.preventDefault();
+                                exitFocus();
+                            }
+                        } else if (e.key === "=" || e.key === "+") {
+                            e.preventDefault();
+                            stepCols(1);
+                        } else if (e.key === "-" || e.key === "_") {
+                            e.preventDefault();
+                            stepCols(-1);
+                        }
+                    },
+                );
+
+                // --- drag ---------------------------------------------------
+                //   - started on [data-curve-view] + no modifier => zoom
+                //   - started on [data-curve-view] + Shift/Alt     => pan
+                //   - started on empty wall                        => pan gallery
+                let drag: DragState | null = null;
+                wall.addEventListener("mousedown", function (e: MouseEvent) {
+                    if (e.button !== 0) return;
+                    const view = findView(e.target);
+                    if (view) {
+                        const card = findCard(e.target);
+                        if (
+                            grid.classList.contains("is-mode-focus") &&
+                            (!card || !card.classList.contains("is-focus"))
+                        ) {
+                            return;
+                        }
+                        const id = view.getAttribute("data-curve-id") || "";
+                        const st = readView();
+                        activeView = view;
+                        setWallHeadScale(st);
+                        const isPan = e.shiftKey || e.altKey;
+                        drag = {
+                            kind: isPan ? "pan-view" : "zoom-view",
+                            view: view,
+                            id: id,
+                            x: e.clientX,
+                            y: e.clientY,
+                            zx0: st.zoomX,
+                            zy0: st.zoomY,
+                            cx0: st.centerX,
+                            cy0: st.centerY,
+                            moved: false,
+                        };
+                    } else {
+                        const isPan = e.shiftKey || e.altKey;
+                        if (isPan) {
+                            drag = {
+                                kind: "pan",
+                                x: e.clientX,
+                                y: e.clientY,
+                                sl: wall.scrollLeft,
+                                st: wall.scrollTop,
+                                moved: false,
+                            };
+                        } else {
+                            const t = GRID_TOKENS();
+                            const { minW, rowH } = readActiveSize();
+                            drag = {
+                                kind: "size",
+                                x: e.clientX,
+                                y: e.clientY,
+                                minW0: minW,
+                                rowH0: rowH,
+                                minWMin0: t.minWMin,
+                                minWMax0: t.minWMax,
+                                rowHMin0: t.rowHMin,
+                                rowHMax0: t.rowHMax,
+                                ratio0: t.ratio,
+                                moved: false,
+                            };
+                        }
+                    }
+                });
+                // Overlay viewport drag (zoom/pan)
+                const overlayVpEl = document.getElementById(
+                    "detail-overlay-viewport",
+                );
+                if (overlayVpEl) {
+                    overlayVpEl.addEventListener(
+                        "mousedown",
+                        function (e: MouseEvent) {
+                            if (e.button !== 0) return;
+                            const v = findView(e.target);
+                            if (!v) return;
+                            const id = v.getAttribute("data-curve-id") || "";
+                            const st = readView();
+                            activeView = v;
+                            const isPan = e.shiftKey || e.altKey;
+                            drag = {
+                                kind: isPan ? "pan-view" : "zoom-view",
+                                view: v,
+                                id: id,
+                                x: e.clientX,
+                                y: e.clientY,
+                                zx0: st.zoomX,
+                                zy0: st.zoomY,
+                                cx0: st.centerX,
+                                cy0: st.centerY,
+                                moved: false,
+                            };
+                        },
+                    );
+                }
+                window.addEventListener("mousemove", function (e: MouseEvent) {
+                    if (!drag) return;
+                    const dx = e.clientX - drag.x;
+                    const dy = e.clientY - drag.y;
+                    if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 3) {
+                        return;
+                    }
+                    drag.moved = true;
+                    if (drag.kind === "pan") {
+                        wall.classList.add("is-dragging");
+                        wall.scrollLeft = drag.sl - dx;
+                        wall.scrollTop = drag.st - dy;
+                    } else if (drag.kind === "size") {
+                        wall.classList.add("is-dragging");
+                        const nextRowH = clamp(
+                            drag.rowH0 - dy,
+                            drag.rowHMin0,
+                            drag.rowHMax0,
+                        );
+                        const nextMinW = clamp(
+                            Math.round(nextRowH * drag.ratio0),
+                            drag.minWMin0,
+                            drag.minWMax0,
+                        );
+                        applyGridSize(nextMinW, nextRowH);
+                        setWallHeadGridSize(nextMinW, nextRowH);
+                        refreshVisibleViews();
+                    } else if (drag.kind === "pan-view") {
+                        // Shift/Alt drag pans the view window.
+                        wall.classList.add("is-curve-drag");
+                        drag.view.classList.add("is-curve-drag");
+                        const canvas = drag.view.querySelector(
+                            "[data-curve-canvas]",
+                        );
+                        if (!canvas) return;
+                        const cw = canvas.clientWidth || 1;
+                        const ch = canvas.clientHeight || 1;
+                        const def = parseViewBox(
+                            drag.view.getAttribute("data-curve-view-default"),
+                        );
+                        const vbW = def.w / drag.zx0;
+                        const vbH = def.h / drag.zy0;
+                        const availW = def.w - vbW;
+                        const availH = def.h - vbH;
+                        const dMinX = -(dx / cw) * vbW;
+                        const dMinY = -(dy / ch) * vbH;
+                        const next = {
+                            zoomX: drag.zx0,
+                            zoomY: drag.zy0,
+                            centerX:
+                                availW > 0.01
+                                    ? clamp(drag.cx0 + dMinX / availW, 0, 1)
+                                    : 0.5,
+                            centerY:
+                                availH > 0.01
+                                    ? clamp(drag.cy0 + dMinY / availH, 0, 1)
+                                    : 0.5,
+                            wrapMode: wrapMode,
+                        };
+                        broadcastView(drag.view, next, { flash: false });
+                    } else {
+                        // Regular drag zooms X/Y.
+                        wall.classList.add("is-curve-drag");
+                        drag.view.classList.add("is-curve-drag");
+                        if (Math.abs(dx) > Math.abs(dy)) {
+                            wall.classList.remove("is-curve-drag-y");
+                            drag.view.classList.remove("is-curve-drag-y");
+                        } else {
+                            wall.classList.add("is-curve-drag-y");
+                            drag.view.classList.add("is-curve-drag-y");
+                        }
+                        // Drag delta capped at 500px so a single full-width
+                        // drag can sweep the full zoom range. 1 -> 0.25 is
+                        // ~280px at the X factor below.
+                        const ndx = Math.max(-500, Math.min(500, dx));
+                        const ndy = Math.max(-500, Math.min(500, dy));
+                        // Houdini-style channel drag: drag in the direction of
+                        // the axis to zoom in. ndy comes from clientY which
+                        // grows downward, so drag-up is negative ndy.
+                        // X zoom is OUT-only (0.25..1): drag X LEFT to grow
+                        // the visible domain (zoom out, see repeats); drag X
+                        // RIGHT to return to the default (zoomX=1).
+                        // Y zoom is normalized (0.5..3): drag up zooms in,
+                        // drag down zooms out, around the data range. Y is
+                        // intentionally less sensitive than X (1.002 vs 1.005)
+                        // so vertical zoom feels like a fine adjustment.
+                        //
+                        // Set the value directly each mousemove — no per-frame
+                        // easing. The user expects the curve to follow the
+                        // cursor 1:1. (A previous version lerped toward a
+                        // target, which produced a visible lag during fast
+                        // drags because the target kept moving ahead of the
+                        // lerp.)
+                        const nextZoomX = drag.zx0 * Math.pow(1.005, ndx);
+                        const nextZoomY = drag.zy0 * Math.pow(1.002, -ndy);
+                        broadcastView(
+                            drag.view,
+                            {
+                                zoomX: nextZoomX,
+                                zoomY: nextZoomY,
+                                centerX: drag.cx0,
+                                centerY: drag.cy0,
+                                wrapMode: wrapMode,
+                            },
+                            { flash: false },
+                        );
+                    }
+                });
+                window.addEventListener("mouseup", function () {
+                    if (!drag) return;
+                    if (drag.moved) {
+                        if (drag.kind === "size") {
+                            const { minW: curMinW, rowH: curRowH } =
+                                readActiveSize();
+                            writeGridSize({
+                                minW: isFinite(curMinW) ? curMinW : drag.minW0,
+                                rowH: isFinite(curRowH) ? curRowH : drag.rowH0,
+                            });
+                        }
+                        const swallow = function (ev: MouseEvent) {
+                            ev.stopPropagation();
+                            ev.preventDefault();
+                            document.removeEventListener(
+                                "click",
+                                swallow,
+                                true,
+                            );
+                        };
+                        document.addEventListener("click", swallow, true);
+                    }
+                    // The zoom-view easing loop self-terminates when the
+                    // current value reaches the target (within epsilon).
+                    // We do not cancel the rAF here — the user expects the
+                    // drag to settle smoothly after release.
+                    wall.classList.remove(
+                        "is-dragging",
+                        "is-curve-drag",
+                        "is-curve-drag-y",
+                    );
+                    if (drag.kind === "zoom-view" || drag.kind === "pan-view") {
+                        drag.view.classList.remove(
+                            "is-curve-drag",
+                            "is-curve-drag-y",
+                        );
+                    }
+                    drag = null;
+                });
+
+                // --- hover probe ------------------------------------------
+                // The canvas renderer owns probe hit-testing, crosshairs,
+                // and labels. We just forward the cursor position. The
+                // renderer decides internally whether to show the probe
+                // (based on column count) — setProbe() always tracks the
+                // mouse so the custom cursor stays active even in dense
+                // mode where the probe itself is suppressed.
+                const updateProbe = function (
+                    view: HTMLElement,
+                    clientX: number,
+                    clientY: number,
+                ) {
+                    rendererFor(view).setProbe(clientX, clientY);
+                };
+                const clearProbeState = function () {
+                    if (hoveredView) {
+                        const renderer = canvasRenderers.get(hoveredView);
+                        if (renderer) renderer.clearProbe();
+                        hoveredView.classList.remove(
+                            "has-probe",
+                            "is-probe-near",
+                        );
+                    }
+                    hoveredView = null;
+                };
+                // Track the currently hovered card so that moving from one
+                // card to another clears the previous card's probe (which
+                // would otherwise stay at full alpha with its cursor pinned
+                // to the last-known position).
+                let hoveredView: HTMLElement | null = null;
+                wall.addEventListener("mousemove", function (e: MouseEvent) {
+                    const view = findView(e.target);
+                    if (!view) {
+                        clearProbeState();
+                        return;
+                    }
+                    if (view !== hoveredView) {
+                        // Cursor crossed into a new card. Clear the probe on
+                        // the previous one so its cursor + probe start their
+                        // disappear ramp instead of getting stuck.
+                        if (hoveredView) {
+                            const prev = canvasRenderers.get(hoveredView);
+                            if (prev) prev.clearProbe();
+                            hoveredView.classList.remove(
+                                "has-probe",
+                                "is-probe-near",
+                            );
+                        }
+                        hoveredView = view;
+                    }
+                    updateProbe(view, e.clientX, e.clientY);
+                });
+                wall.addEventListener("mouseleave", clearProbeState);
+
+                // Overlay viewport probe
+                const detailCol = document.getElementById(
+                    "detail-overlay-viewport",
+                );
+                if (detailCol) {
+                    detailCol.addEventListener(
+                        "mousemove",
+                        function (e: MouseEvent) {
+                            const v = findView(e.target);
+                            if (!v) return;
+                            if (v !== hoveredView) {
+                                if (hoveredView) {
+                                    const prev =
+                                        canvasRenderers.get(hoveredView);
+                                    if (prev) prev.clearProbe();
+                                    hoveredView.classList.remove(
+                                        "has-probe",
+                                        "is-probe-near",
+                                    );
+                                }
+                                hoveredView = v;
+                            }
+                            updateProbe(v, e.clientX, e.clientY);
+                        },
+                    );
+                    detailCol.addEventListener("mouseleave", function () {
+                        if (hoveredView && detailCol.contains(hoveredView)) {
+                            const r = canvasRenderers.get(hoveredView);
+                            if (r) r.clearProbe();
+                            hoveredView.classList.remove(
+                                "has-probe",
+                                "is-probe-near",
+                            );
+                            hoveredView = null;
+                        }
+                    });
+                }
+
+                // --- click to select --------------------------------------
+                grid.addEventListener("click", function (e: MouseEvent) {
+                    const card = findCard(e.target);
+                    if (!card) return;
+                    // @ts-expect-error - e.target is EventTarget | null; closest is on Element.
+                    if (e.target.closest("button, a, input")) return;
+                    cards.forEach(function (c) {
+                        c.classList.remove("is-selected");
+                    });
+                    card.classList.add("is-selected");
+                });
+            })();
+        </script>
+
+        <script>
+            import { initSnippetPopover } from "../lib/snippetPopover";
+            initSnippetPopover();
+        </script>
+
+        <script>
+            import { buildSnippetTabs } from "../lib/detailSnippetTabs";
+            import {
+                showCode,
+                copyDetailCode,
+                flashCopied,
+            } from "../lib/detailCodeField";
+            import { cycleViewMode } from "../lib/curveViewMode";
+            window.__detailOverlay = {
+                buildSnippetTabs,
+                showCode,
+                copyDetailCode,
+                flashCopied,
+            };
+            // Expose the pure view-cycle helper to the page-level
+            // inline script (which runs before this module script).
+            // The detail popup's view-cycle button calls this on click
+            // to advance the viewport's data-curve-view-mode.
+            window.__cycleCurveView = cycleViewMode;
+        </script>
+    </body>
+</html>
