@@ -8,10 +8,12 @@ dist/
 # caches & tooling
 .codex/
 .agents/
+.hermes/
 
-# logs
+# logs / dumps
 *.log
 build.log
+request_dump_*.json
 
 # env
 .env
@@ -21,11 +23,20 @@ build.log
 # external reference snippets
 ref/
 
-# docs
+# private docs
 docs/
+
+# lighthouse / local reports
 lh.json
 lh.report.json
-scripts/read-lh.mjs
+
+# temp / OS junk
 nul
 scratch/
-scripts/generate-metadata.mjs
+scripts/read-lh.mjs
+scripts/build.bat
+scripts/preview-open.bat
+scripts/print-lan-ip.bat
+scripts/preview-open-lan.bat
+scripts/dev-open-lan.bat
+scripts/dev-open.bat
