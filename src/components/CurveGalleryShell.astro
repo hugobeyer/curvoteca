@@ -32,12 +32,28 @@ import {
 } from "../lib/curveSeo";
 
 const { about: aboutContent, sponsor: sponsorContent } = popupContent;
+type Sponsor = {
+  id: string;
+  name: string;
+  label: string;
+  description: string;
+  url: string;
+  active: boolean;
+};
 const popupAdSlot = sponsorsData.slots?.popup;
 const popupAdSponsor = popupAdSlot?.sponsorId
-    ? (sponsorsData.sponsors.find(
+    ? (sponsorsData.sponsors as Sponsor[]).find(
           (s) => s.id === popupAdSlot.sponsorId && s.active,
-      ) ?? null)
+      ) ?? null
     : null;
+
+declare global {
+  interface Window {
+    __curvotecaViewportReady?: boolean;
+    __curvotecaDetailCodeReady?: boolean;
+  }
+}
+
 import { PAGER } from "../lib/curveViewportMath";
 import {
     KEY_FAVORITES,
@@ -3821,13 +3837,20 @@ const ogTitle = curveForSeo
             } from "../lib/detailCodeField";
             import { cycleViewMode } from "../lib/curveViewMode";
             import { transformSnippet } from "../lib/snippetTransforms";
-            window.__detailOverlay = {
+            const detailOverlay: {
+                buildSnippetTabs: typeof buildSnippetTabs;
+                showCode: typeof showCode;
+                copyDetailCode: typeof copyDetailCode;
+                flashCopied: typeof flashCopied;
+                transformSnippet: typeof transformSnippet;
+            } = {
                 buildSnippetTabs,
                 showCode,
                 copyDetailCode,
                 flashCopied,
                 transformSnippet,
             };
+            window.__detailOverlay = detailOverlay;
             // Expose the pure view-cycle helper to the page-level
             // inline script (which runs before this module script).
             // The detail popup's view-cycle button calls this on click
