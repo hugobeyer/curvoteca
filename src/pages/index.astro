@@ -1293,6 +1293,10 @@ import "../styles/gallery.css";
                 const apply = function () {
                     let shown = 0;
                     cards.forEach(function (card) {
+                        if (card.classList.contains("is-sponsor")) {
+                            shown += 1;
+                            return;
+                        }
                         const ok = matches(card);
                         card.classList.toggle("is-hidden", !ok);
                         if (ok) shown += 1;

@@ -63,10 +63,15 @@ export const VIEWPORT_LIMITS = {
  * that is >= `maxPerPage` doubles as the default; below it, the user can
  * step down for denser previews.
  */
+const PAGER_SIZE_24 = 24;
+const PAGER_SIZE_48 = 48;
+const PAGER_SIZE_64 = 64;
+const PAGER_SIZE_96 = 96;
+
 export const PAGER = {
-  maxPerPage: 64,
-  sizes: [8, 16, 32, 48, 64] as const,
-  defaultSize: 32,
+  maxPerPage: PAGER_SIZE_96,
+  sizes: [PAGER_SIZE_24, PAGER_SIZE_48, PAGER_SIZE_64, PAGER_SIZE_96] as const,
+  defaultSize: PAGER_SIZE_48,
 } as const;
 
 /**

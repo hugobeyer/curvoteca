@@ -197,6 +197,11 @@ const sponsorCardProps = {
                     </Fragment>
                 ))
             }
+            {
+                showSponsorCard && curves.length < sponsorInsertIndex && (
+                    <SponsorCard {...sponsorCardProps} />
+                )
+            }
         </div>
         <p class="micro wall-empty is-hidden" id="wall-empty">
             no curve matches the current filter
