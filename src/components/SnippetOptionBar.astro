@@ -88,7 +88,11 @@ const options = [
         });
 
         apply(true);
-        new MutationObserver(apply).observe(host, {
+
+        const observer = new MutationObserver(function () {
+            apply(false);
+        });
+        observer.observe(host, {
             attributes: true,
             attributeFilter: ["data-snippet-options", "data-snippet-curve-id"],
         });

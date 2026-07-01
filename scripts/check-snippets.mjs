@@ -1,7 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const curvesDir = join(root, "src", "lib", "curves");
@@ -20,15 +19,6 @@ function warn(message) {
 
 function readText(path) {
   return readFileSync(path, "utf8");
-}
-
-function commandExists(command) {
-  const result = spawnSync(command, ["--version"], {
-    encoding: "utf8",
-    stdio: "pipe",
-    shell: process.platform === "win32",
-  });
-  return result.status === 0;
 }
 
 function collectSnippetTargets() {
@@ -229,20 +219,12 @@ function validateByTarget(file, curveId, target, code, knownTargets) {
   }
 }
 
-function validateOptionalJsSyntax(snippets) {
-  if (!commandExists("node")) return;
-
-  for (const item of snippets) {
-    if (item.target !== "js") continue;
-
-    const result = spawnSync(process.execPath, ["--input-type=module", "-e", item.code], {
-    encoding: "utf8",
-    stdio: "pipe",
-  });
-
-    if (result.status !== 0) {
-      fail(`${item.where}: node --check failed:\n${result.stderr.trim()}`);
-    }
+function validateJsSnippets(snippets) {
+  const jsCount = snippets.filter((s) => s.target === "js").length;
+  if (jsCount > 0) {
+    warn(
+      `${jsCount} JS snippets found but syntax validation skipped (executing snippets is unsafe).`,
+    );
   }
 }
 
@@ -290,7 +272,7 @@ function main() {
     }
   }
 
-  validateOptionalJsSyntax(allSnippets);
+  validateJsSnippets(allSnippets);
 
   for (const warning of warnings) {
     console.warn(`Warning: ${warning}`);
