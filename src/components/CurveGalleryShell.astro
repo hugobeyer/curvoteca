@@ -421,11 +421,6 @@ const ogTitle = curveForSeo
                             </div>
                         </div>
                         <div class="detail-info-col">
-                            <p
-                                class="detail-overlay-summary"
-                                id="detail-overlay-summary"
-                            >
-                            </p>
                         </div>
                     </div>
                     <div class="detail-tabs-row" id="detail-overlay-tabs"></div>
@@ -871,12 +866,13 @@ const ogTitle = curveForSeo
                             var nameEl = document.getElementById(
                                 "detail-overlay-name",
                             );
-                            var summaryEl = document.getElementById(
-                                "detail-overlay-summary",
-                            );
-                            if (nameEl) nameEl.textContent = entry.name;
-                            if (summaryEl)
-                                summaryEl.textContent = entry.summary || "";
+                            if (nameEl)
+                                nameEl.innerHTML =
+                                    entry.name +
+                                    (entry.summary
+                                        ? ' <span class="detail-title-sub">'
+                                              .concat(entry.summary, "</span>")
+                                        : "");
 
                             // --- detail right-column metadata sections ---
                             // Re-uses the existing .detail-info-col container.
@@ -884,9 +880,9 @@ const ogTitle = curveForSeo
                             // present; empty headers are never emitted. Sections
                             // are rebuilt on every open so switching curves
                             // does not leak the previous curve's chips.
-                            var infoCol = summaryEl
-                                ? summaryEl.parentElement
-                                : null;
+                            var infoCol = document.querySelector(
+                                ".detail-info-col",
+                            );
                             var sectionsEl = infoCol
                                 ? infoCol.querySelector(
                                       "[data-detail-sections]",

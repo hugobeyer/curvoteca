@@ -1291,11 +1291,14 @@
     padding: 6px;
     background: transparent;
 }
-.detail-overlay-summary {
-    margin: 0;
-    color: var(--text-soft);
-    font-size: var(--font-size-sm);
-    line-height: 1.35;
+.detail-title-sub {
+    color: var(--muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-normal);
+    text-transform: none;
+    white-space: nowrap;
+    padding: 0 12px;
 }
 
 /* --- detail right-column metadata sections ----------------------------
