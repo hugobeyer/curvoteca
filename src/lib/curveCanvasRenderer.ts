@@ -566,8 +566,8 @@ export const createCurveCanvasRenderer = (
     // the masked content on top. The per-frame render() will blit this
     // single canvas instead of re-blitting bg+static on every frame.
     compositeCtx!.clearRect(0, 0, screen.width, screen.height);
-    compositeCtx!.drawImage(bgCanvas!, 0, 0);
-    compositeCtx!.drawImage(staticCanvas!, 0, 0);
+    compositeCtx!.drawImage(bgCanvas!, 0, 0, screen.width, screen.height);
+    compositeCtx!.drawImage(staticCanvas!, 0, 0, screen.width, screen.height);
     needsStaticRedraw = false;
   };
 
@@ -678,7 +678,7 @@ export const createCurveCanvasRenderer = (
       // way, one drawImage replaces the previous two-step blit and avoids
       // re-touching bg+static on probe-fade frames where they haven't
       // changed.
-      ctx!.drawImage(compositeCanvas!, 0, 0);
+      ctx!.drawImage(compositeCanvas!, 0, 0, screen.width, screen.height);
       // From here on, any probe/cursor/motion draw invalidates the composite
       // (different pixels next frame). The composite is only reusable
       // after a clean blit with no probe and no mouse — which we just did.
