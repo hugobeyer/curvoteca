@@ -571,28 +571,41 @@
 
 .wall-head {
     display: grid;
-    grid-template-columns: minmax(220px, 1fr) auto;
+    grid-template-columns: 1fr 1fr 1fr;
     align-items: center;
     gap: 8px;
-    padding: 6px var(--gallery-edge-padding) 4px var(--gallery-edge-padding);
+    padding: var(--wall-head-padding-top) var(--gallery-edge-padding) 4px
+        var(--gallery-edge-padding);
     flex: 0 0 auto;
 }
 
-.wall-head > :first-child {
+.wall-head .helper-tips {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    color: var(--soft);
+    opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.wall-head .chips-wrap {
     grid-column: 1 / -1;
     grid-row: 2;
     min-width: 0;
 }
 
 .wall-head .layout-note {
-    grid-column: 2;
+    grid-column: 3;
     grid-row: 1;
     justify-self: end;
 }
 
-/* Search and info share the row above the filter chips. */
+/* Helper tips, search, and info share the row above the filter chips. */
 .wall-head .search {
-    grid-column: 1;
+    grid-column: 2;
     grid-row: 1;
     min-width: 0;
     margin: 0;

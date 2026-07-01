@@ -22,7 +22,8 @@ const ads = adsData as unknown as AdsData;
 const galleryInlineSlot = ads.slots?.["gallery-inline"];
 const showInlineAd = galleryInlineSlot?.enabled;
 const inlineAd = galleryInlineSlot?.adId
-    ? (ads.ads?.find((a) => a.id === galleryInlineSlot.adId && a.active) ?? null)
+    ? (ads.ads?.find((a) => a.id === galleryInlineSlot.adId && a.active) ??
+      null)
     : null;
 
 interface Props {
@@ -103,7 +104,11 @@ const sponsorCardProps = {
 
 <section class="wall-area" id="wall-area">
     <div class="wall-head">
-        <div>
+        <div class="helper-tips" aria-label="Tips">
+            USER TIPS > GALLERY: - / + keys || ZOOM CANVAS: X or Y clickdrag ||
+            FOCUS - F key
+        </div>
+        <div class="chips-wrap">
             <div class="chips" role="toolbar" aria-label="Curve filters">
                 <button
                     class="chip"

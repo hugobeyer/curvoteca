@@ -95,6 +95,7 @@
     --chip-gap: 2px;
     /* Shared gallery edge inset: chips, search/info row, curve wall, and rail. */
     --gallery-edge-padding: 0px;
+    --wall-head-padding-top: 3px;
     --rail-top-padding: 6px;
     --rail-button-offset-x: -8px;
     --rail-button-content-inset: 16px;
