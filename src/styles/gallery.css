@@ -13,13 +13,6 @@
        on the curve viewport and card meta). */
     --text-label-inset-x: 12px;
     --text-label-inset-y: 8px;
-    /* Pager shadow tokens: close (tight drop) + wide (broad ambient).
-       High alpha so the floating bar separates clearly from the wall. */
-    --pager-shadow-close: 0 4px 18px
-        color-mix(in srgb, var(--black) 60%, transparent);
-    --pager-shadow-wide: 0 36px 96px
-        color-mix(in srgb, var(--black) 50%, transparent);
-    --pager-shadow: var(--pager-shadow-close), var(--pager-shadow-wide);
     /* Card body gradient stack. Two static radial highlights (curve2
        top-left + accent bottom-right) that give cards their depth.
        Reused by the pager so the bottom bar picks up the same
@@ -867,19 +860,21 @@
     /* Wall spans grid columns 2/4 (rail 1 + wall 2..3). Offset matches
        the app's left rail + the wall's outer padding. */
     left: 50%;
-    bottom: 20px;
+    bottom: -2px;
     transform: translateX(-50%);
     z-index: 30;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 8px;
-    border-radius: 5px;
+    padding: 8px 10px 16px 10px;
+    border-radius: 5px 5px 0 0;
     background:
         var(--card-bg-gradient),
-        color-mix(in srgb, var(--panel2) 94%, transparent);
-    box-shadow: var(--pager-shadow);
-    backdrop-filter: blur(6px);
+        color-mix(in srgb, var(--panel2) 100%, transparent);
+    box-shadow:
+        0 4px 4px color-mix(in srgb, var(--black) var(--fx-sml), transparent),
+        0 4px 4px color-mix(in srgb, var(--black) var(--fx-sml), transparent);
+    backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(6px);
     user-select: none;
 }
