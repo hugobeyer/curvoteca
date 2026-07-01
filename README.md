@@ -15,7 +15,7 @@ No accounts necessary. Just a lightweight visual reference made by someone who n
 
 ## Support
 
-Curvoteca is a free, static reference — no accounts, no backends, no tracking. If the curves save you time or spark an idea, a small donation helps keep the project growing.
+Curvoteca is a free, static reference — no accounts. If the curves save you time or spark an idea, a small donation helps keep the project growing.
 
 If you desire to support Curvoteca more directly, sponsor inquiries are welcome — especially from tools, courses, creators, and projects useful to technical artists, shader developers, procedural artists, and creative coders.
 
