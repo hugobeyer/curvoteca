@@ -81,4 +81,14 @@
     /* Text label alpha — shared by gallery readouts (meta-summary,
        curve-view-probe, curve-view-snap). */
     --text-label-alpha: 78%;
+
+    /* Selection highlight */
+    --selection-bg: color-mix(in srgb, var(--accent) 40%, transparent);
+
+    /* Snippet highlight (syntax / selection in code panel) */
+    --font-snippet-highlight: color-mix(
+        in srgb,
+        var(--accent) 30%,
+        transparent
+    );
 }

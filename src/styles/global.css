@@ -172,6 +172,10 @@ p {
     margin: 0;
 }
 
+::selection {
+    background: var(--selection-bg);
+}
+
 .app {
     height: 100vh;
     display: grid;

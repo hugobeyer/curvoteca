@@ -70,6 +70,11 @@
     /* --- default body chrome ---------------------------------------- */
     --font-weight-default: var(--font-weight-regular);
     --letter-spacing-default: var(--letter-spacing-normal);
+
+    /* --- snippet / mono chrome --------------------------------------- */
+    --font-snippet-weight: var(--font-weight-thin);
+    --font-snippet-size: var(--font-size-sm);
+    --font-snippet-opacity: 0.8;
 }
 
 body {

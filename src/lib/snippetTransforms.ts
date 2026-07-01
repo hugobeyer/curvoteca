@@ -127,7 +127,7 @@ const hasFunctionShape = (lang: string, code: string): boolean => {
 
 const commentBlock = (entry: SnippetCurveEntry, lang: string): string => {
   const p = commentPrefix(lang);
-  const lines = [`${p} Curvoteca: ${entry.name}`];
+  const lines = [`${p} ${entry.name}`];
   if (entry.summary) lines.push(`${p} ${entry.summary}`);
   return lines.join("\n");
 };
