@@ -1242,49 +1242,13 @@ const ogTitle = curveForSeo
                     }
                 });
 
-                var initialCurveId =
-                    document.body.getAttribute("data-active-curve-id") || "";
-                if (initialCurveId) {
-                    setTimeout(function () {
-                        var detailLinks =
-                            document.querySelectorAll("[data-open-detail]");
-                        for (var i = 0; i < detailLinks.length; i += 1) {
-                            if (
-                                detailLinks[i].getAttribute(
-                                    "data-open-detail",
-                                ) === initialCurveId
-                            ) {
-                                detailLinks[i].dispatchEvent(
-                                    new CustomEvent("click", {
-                                        bubbles: true,
-                                        cancelable: true,
-                                        detail: {
-                                            curvotecaInitialOpen: true,
-                                        },
-                                    }),
-                                );
-                                break;
-                            }
-                        }
-                    }, 0);
-                }
-
-                window.addEventListener("popstate", function () {
-                    var match = window.location.pathname.match(
-                        /^\/curve\/([^/]+)\/?$/,
-                    );
-                    if (!match) {
-                        closeOverlay();
-                        return;
-                    }
-                    var id = decodeURIComponent(match[1]);
+                var openRouteCurve = function (id) {
                     var detailLinks =
                         document.querySelectorAll("[data-open-detail]");
                     for (var i = 0; i < detailLinks.length; i += 1) {
                         if (
-                            detailLinks[i].getAttribute(
-                                "data-open-detail",
-                            ) === id
+                            detailLinks[i].getAttribute("data-open-detail") ===
+                            id
                         ) {
                             detailLinks[i].dispatchEvent(
                                 new CustomEvent("click", {
@@ -1298,6 +1262,36 @@ const ogTitle = curveForSeo
                             break;
                         }
                     }
+                };
+                window.__curvotecaOpenRouteCurve = openRouteCurve;
+
+                var initialCurveId =
+                    document.body.getAttribute("data-active-curve-id") || "";
+                if (initialCurveId) {
+                    var openInitialCurve = function () {
+                        openRouteCurve(initialCurveId);
+                    };
+                    if (window.__curvotecaViewportReady) {
+                        setTimeout(openInitialCurve, 0);
+                    } else {
+                        window.addEventListener(
+                            "curvoteca:viewport-ready",
+                            openInitialCurve,
+                            { once: true },
+                        );
+                    }
+                }
+
+                window.addEventListener("popstate", function () {
+                    var match = window.location.pathname.match(
+                        /^\/curve\/([^/]+)\/?$/,
+                    );
+                    if (!match) {
+                        closeOverlay();
+                        return;
+                    }
+                    var id = decodeURIComponent(match[1]);
+                    openRouteCurve(id);
                 });
 
                 window.__appClickHandlers.push(function (e) {
@@ -3674,6 +3668,9 @@ const ogTitle = curveForSeo
                     });
                     card.classList.add("is-selected");
                 });
+
+                window.__curvotecaViewportReady = true;
+                window.dispatchEvent(new Event("curvoteca:viewport-ready"));
             })();
         </script>
 
