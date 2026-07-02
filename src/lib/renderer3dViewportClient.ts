@@ -183,7 +183,16 @@ const readUseCase = (
 const readRenderMode = (
   value: string | undefined,
 ): Renderer3DRenderMode | undefined => {
-  if (value === "shaded" || value === "wireframe" || value === "points") {
+  if (
+    value === "shaded" ||
+    value === "wireframe" ||
+    value === "points" ||
+    value === "graph" ||
+    value === "ramp" ||
+    value === "field" ||
+    value === "heightstrip" ||
+    value === "motion"
+  ) {
     return value;
   }
   return undefined;

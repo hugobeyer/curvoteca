@@ -198,10 +198,10 @@ export const mountRenderer3D = (
       new Float32Array(cameraMvp(canvas, controls)),
     );
     gl.uniform1f(program.uPointSize, 4.2 * currentDpr(tokens));
-
-    drawBufferInfo(gl, geometryBuffers.wire, gl.LINES);
+    gl.uniform1f(program.uTime, time);
 
     const renderMode = data.renderMode ?? view.defaultRenderMode;
+    gl.uniform1f(program.uShowScanline, renderMode === "motion" ? 1 : 0);
     if (renderMode === "wireframe") {
       drawBufferInfo(gl, geometryBuffers.ghost, gl.TRIANGLES);
       gl.disable(gl.DEPTH_TEST);
@@ -209,7 +209,20 @@ export const mountRenderer3D = (
       gl.enable(gl.DEPTH_TEST);
     } else if (renderMode === "points") {
       drawBufferInfo(gl, geometryBuffers.points, gl.POINTS);
+    } else if (renderMode === "graph") {
+      drawBufferInfo(gl, geometryBuffers.wire, gl.LINES);
+    } else if (renderMode === "field") {
+      drawBufferInfo(gl, geometryBuffers.wire, gl.LINES);
+    } else if (renderMode === "ramp") {
+      drawBufferInfo(gl, geometryBuffers.mesh, gl.TRIANGLES);
+    } else if (renderMode === "heightstrip") {
+      drawBufferInfo(gl, geometryBuffers.mesh, gl.TRIANGLES);
+      drawBufferInfo(gl, geometryBuffers.wire, gl.LINES);
+    } else if (renderMode === "motion") {
+      drawBufferInfo(gl, geometryBuffers.mesh, gl.TRIANGLES);
+      drawBufferInfo(gl, geometryBuffers.wire, gl.LINES);
     } else {
+      // shaded (legacy)
       drawBufferInfo(gl, geometryBuffers.mesh, gl.TRIANGLES);
       drawBufferInfo(gl, geometryBuffers.points, gl.POINTS);
       drawBufferInfo(gl, geometryBuffers.wire, gl.LINES);

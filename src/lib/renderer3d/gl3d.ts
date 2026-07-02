@@ -12,12 +12,14 @@ uniform float uPointSize;
 
 out vec3 vColor;
 out float vAlpha;
+out float vWorldY;
 
 void main() {
   gl_Position = uMvp * vec4(aPos, 1.0);
   gl_PointSize = uPointSize;
   vColor = aColor;
   vAlpha = aAlpha;
+  vWorldY = aPos.y;
 }
 `;
 
@@ -26,11 +28,21 @@ precision highp float;
 
 in vec3 vColor;
 in float vAlpha;
+in float vWorldY;
+
+uniform float uTime;
+uniform float uShowScanline;
 
 out vec4 outColor;
 
 void main() {
-  outColor = vec4(vColor, vAlpha);
+  vec4 base = vec4(vColor, vAlpha);
+  // Scanline glow — moving up Y with alpha, orange-curve colored
+  float scanY = (fract(uTime * 0.0004) * 2.0) - 1.0;
+  float dist = abs(vWorldY - scanY);
+  float glow = exp(-dist * 35.0);
+  base.a += glow * 0.55 * uShowScanline;
+  outColor = base;
 }
 `;
 
@@ -38,6 +50,8 @@ export type Renderer3DProgram = {
   program: WebGLProgram;
   uMvp: WebGLUniformLocation | null;
   uPointSize: WebGLUniformLocation | null;
+  uTime: WebGLUniformLocation | null;
+  uShowScanline: WebGLUniformLocation | null;
 };
 
 export const createRenderer3DProgram = (
@@ -68,6 +82,8 @@ export const createRenderer3DProgram = (
     program,
     uMvp: gl.getUniformLocation(program, "uMvp"),
     uPointSize: gl.getUniformLocation(program, "uPointSize"),
+    uTime: gl.getUniformLocation(program, "uTime"),
+    uShowScanline: gl.getUniformLocation(program, "uShowScanline"),
   };
 };
 

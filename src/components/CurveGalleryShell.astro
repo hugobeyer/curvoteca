@@ -3124,14 +3124,14 @@ const ogTitle = curveForSeo
                     detailWrapBtn.addEventListener("click", cycleWrap);
                 const visibleViews = function (): NodeListOf<HTMLElement> {
                     return document.querySelectorAll(
-                        "#wall-grid .card:not(.is-hidden) [data-curve-view], #compare-tray [data-curve-view], #detail-overlay-viewport [data-curve-view]",
+                        "#wall-grid .card:not(.is-hidden) [data-curve-view], #compare-tray [data-curve-view], #detail-overlay-viewport [data-curve-view], #wall-grid .card:not(.is-hidden) [data-renderer3d-root], #compare-tray [data-renderer3d-root], #detail-overlay-viewport [data-renderer3d-root]",
                     );
                 };
                 const VIEW_MODE_ORDER = [
                     "graph",
                     "motion",
                     "field",
-                    "heightStrip",
+                    "height",
                     "ramp",
                 ];
                 let globalViewMode = "graph";
@@ -3187,10 +3187,38 @@ const ogTitle = curveForSeo
                         );
                     }
                 };
+                const viewModeTo3DRenderMode = function (mode: string): string {
+                    if (mode === "graph") return "graph";
+                    if (mode === "motion") return "motion";
+                    if (mode === "height") return "heightstrip";
+                    if (mode === "ramp") return "ramp";
+                    if (mode === "field") return "field";
+                    return "shaded"; // fallback
+                };
                 const applyGlobalViewMode = function () {
                     applyViewModeUI();
                     let unsupported = 0;
                     visibleViews().forEach(function (view) {
+                        const is3d = view.hasAttribute("data-renderer3d-root");
+                        if (is3d) {
+                            var renderMode = viewModeTo3DRenderMode(globalViewMode);
+                            if (
+                                view.getAttribute("data-renderer3d-render-mode") !==
+                                renderMode
+                            ) {
+                                view.setAttribute(
+                                    "data-renderer3d-render-mode",
+                                    renderMode,
+                                );
+                            }
+                            try {
+                                var h = (view as unknown as Record<string, unknown>).__r3dh;
+                                if (h && typeof (h as any).setRenderMode === "function") {
+                                    (h as any).setRenderMode(renderMode);
+                                }
+                            } catch (err) {}
+                            return;
+                        }
                         const supported = supportsViewMode(
                             view,
                             globalViewMode,

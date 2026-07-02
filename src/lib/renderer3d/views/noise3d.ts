@@ -1,4 +1,4 @@
-import { addRenderer3DGrid, pushLine, pushVertex } from "../geometry3d";
+import { addRenderer3DGrid, pushLine, pushTri, pushVertex } from "../geometry3d";
 import {
   clamp01,
   cross3,
@@ -20,9 +20,18 @@ export const createNoise3DView = (): Renderer3DView => ({
   id: "noise3d",
   defaultUseCase: "fbm-terrain",
   defaultRenderMode: "shaded",
-  supportedRenderModes: ["shaded", "wireframe"],
+  supportedRenderModes: [
+    "shaded",
+    "wireframe",
+    "graph",
+    "ramp",
+    "field",
+    "heightstrip",
+    "motion",
+  ],
   build({ data, time, colors, tokens }) {
     const useCase = resolveNoiseUseCase(data.useCase);
+    const renderMode = data.renderMode ?? "shaded";
     // Read current pager size for LOD scaling (live, so column/pager cycling takes effect)
     let lod = data.params?.lod;
     if (typeof localStorage !== "undefined") {
@@ -39,6 +48,7 @@ export const createNoise3DView = (): Renderer3DView => ({
     );
     const size = tokens.surfaceExtent;
     const wire: number[] = [];
+    const mesh: number[] = [];
 
     // Grid (respect grid mode: full / lines / axis)
     addRenderer3DGrid(wire, colors, tokens.gridExtent, data.gridMode ?? "full");
@@ -73,40 +83,121 @@ export const createNoise3DView = (): Renderer3DView => ({
       }
     }
 
-    // Wireframe — unlit curve color, alpha fades by height (low Y = faint)
     const wf = colors.curve;
+    const c2 = colors.curve2;
     const lift = 0.012;
     const heightAlpha = (y: number) => clamp01((y - 0.04) / 1.0) * 0.7 + 0.15;
-    for (let z = 0; z < gridSize; z += 1) {
-      for (let x = 0; x < gridSize - 1; x += 1) {
-        const a = verts[z * gridSize + x].p;
-        const b = verts[z * gridSize + x + 1].p;
-        const alpha = heightAlpha((a[1] + b[1]) / 2);
-        pushLine(
-          wire,
-          [a[0], a[1] + lift, a[2]],
-          [b[0], b[1] + lift, b[2]],
-          wf,
-          alpha,
-        );
+
+    // --- build geometry based on render mode ---
+
+    if (renderMode === "graph") {
+      // Sparse wireframe: only every 4th quad boundary
+      const step = 4;
+      for (let z = 0; z < gridSize; z += step) {
+        for (let x = 0; x < gridSize - 1; x += 1) {
+          const a = verts[z * gridSize + x].p;
+          const b = verts[z * gridSize + x + 1].p;
+          const alpha = heightAlpha((a[1] + b[1]) / 2);
+          pushLine(wire, [a[0], a[1] + lift, a[2]], [b[0], b[1] + lift, b[2]], wf, alpha);
+        }
       }
-    }
-    for (let x = 0; x < gridSize; x += 1) {
+      for (let x = 0; x < gridSize; x += step) {
+        for (let z = 0; z < gridSize - 1; z += 1) {
+          const a = verts[z * gridSize + x].p;
+          const b = verts[(z + 1) * gridSize + x].p;
+          const alpha = heightAlpha((a[1] + b[1]) / 2);
+          pushLine(wire, [a[0], a[1] + lift, a[2]], [b[0], b[1] + lift, b[2]], wf, alpha);
+        }
+      }
+    } else if (renderMode === "ramp") {
+      // Per-vertex Y ramp: each vertex colored by its world Y, GPU interpolates across faces
+      const colorFor = (v: typeof verts[number]) => {
+        const t = clamp01((v.p[1] + 1) / 2);
+        return [
+          c2[0] * (1 - t) + wf[0] * t,
+          c2[1] * (1 - t) + wf[1] * t,
+          c2[2] * (1 - t) + wf[2] * t,
+        ] as Vec3;
+      };
       for (let z = 0; z < gridSize - 1; z += 1) {
-        const a = verts[z * gridSize + x].p;
-        const b = verts[(z + 1) * gridSize + x].p;
-        const alpha = heightAlpha((a[1] + b[1]) / 2);
-        pushLine(
-          wire,
-          [a[0], a[1] + lift, a[2]],
-          [b[0], b[1] + lift, b[2]],
-          wf,
-          alpha,
-        );
+        for (let x = 0; x < gridSize - 1; x += 1) {
+          const a = verts[z * gridSize + x];
+          const b = verts[z * gridSize + x + 1];
+          const c = verts[(z + 1) * gridSize + x];
+          const d = verts[(z + 1) * gridSize + x + 1];
+          pushVertex(mesh, a.p, colorFor(a), 1);
+          pushVertex(mesh, b.p, colorFor(b), 1);
+          pushVertex(mesh, c.p, colorFor(c), 1);
+          pushVertex(mesh, b.p, colorFor(b), 1);
+          pushVertex(mesh, d.p, colorFor(d), 1);
+          pushVertex(mesh, c.p, colorFor(c), 1);
+        }
+      }
+    } else if (renderMode === "heightstrip") {
+      // Per-vertex: bg at Y=0 → curve color at high Y, opaque
+      const bg = colors.bg;
+      for (let z = 0; z < gridSize - 1; z += 1) {
+        for (let x = 0; x < gridSize - 1; x += 1) {
+          const a = verts[z * gridSize + x];
+          const b = verts[z * gridSize + x + 1];
+          const c = verts[(z + 1) * gridSize + x];
+          const d = verts[(z + 1) * gridSize + x + 1];
+          const colorFor = (v: typeof a) => {
+            const t = clamp01(v.p[1] / 1.2);
+            return [
+              bg[0] * (1 - t) + wf[0] * t,
+              bg[1] * (1 - t) + wf[1] * t,
+              bg[2] * (1 - t) + wf[2] * t,
+            ] as Vec3;
+          };
+          pushVertex(mesh, a.p, colorFor(a), 1);
+          pushVertex(mesh, b.p, colorFor(b), 1);
+          pushVertex(mesh, c.p, colorFor(c), 1);
+          pushVertex(mesh, b.p, colorFor(b), 1);
+          pushVertex(mesh, d.p, colorFor(d), 1);
+          pushVertex(mesh, c.p, colorFor(c), 1);
+        }
+      }
+    } else if (renderMode === "motion") {
+      // 4x4 sparse wires + shader scanline
+      const step = 4;
+      for (let z = 0; z < gridSize; z += step) {
+        for (let x = 0; x < gridSize - 1; x += 1) {
+          const a = verts[z * gridSize + x].p;
+          const b = verts[z * gridSize + x + 1].p;
+          const alpha = heightAlpha((a[1] + b[1]) / 2);
+          pushLine(wire, [a[0], a[1] + lift, a[2]], [b[0], b[1] + lift, b[2]], wf, alpha);
+        }
+      }
+      for (let x = 0; x < gridSize; x += step) {
+        for (let z = 0; z < gridSize - 1; z += 1) {
+          const a = verts[z * gridSize + x].p;
+          const b = verts[(z + 1) * gridSize + x].p;
+          const alpha = heightAlpha((a[1] + b[1]) / 2);
+          pushLine(wire, [a[0], a[1] + lift, a[2]], [b[0], b[1] + lift, b[2]], wf, alpha);
+        }
+      }
+    } else {
+      // shaded / wireframe / points — keep full wireframe lines (existing behavior)
+      for (let z = 0; z < gridSize; z += 1) {
+        for (let x = 0; x < gridSize - 1; x += 1) {
+          const a = verts[z * gridSize + x].p;
+          const b = verts[z * gridSize + x + 1].p;
+          const alpha = heightAlpha((a[1] + b[1]) / 2);
+          pushLine(wire, [a[0], a[1] + lift, a[2]], [b[0], b[1] + lift, b[2]], wf, alpha);
+        }
+      }
+      for (let x = 0; x < gridSize; x += 1) {
+        for (let z = 0; z < gridSize - 1; z += 1) {
+          const a = verts[z * gridSize + x].p;
+          const b = verts[(z + 1) * gridSize + x].p;
+          const alpha = heightAlpha((a[1] + b[1]) / 2);
+          pushLine(wire, [a[0], a[1] + lift, a[2]], [b[0], b[1] + lift, b[2]], wf, alpha);
+        }
       }
     }
 
-    return { mesh: [], ghost: [], wire, points: [] };
+    return { mesh, ghost: [], wire, points: [] };
   },
 });
 

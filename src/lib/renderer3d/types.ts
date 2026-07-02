@@ -3,7 +3,15 @@ import type { Renderer3DTokens } from "./tokens3d";
 
 export type Renderer3DViewId = "noise3d" | "pointcloud";
 
-export type Renderer3DRenderMode = "shaded" | "wireframe" | "points";
+export type Renderer3DRenderMode =
+  | "shaded"
+  | "wireframe"
+  | "points"
+  | "graph"
+  | "ramp"
+  | "field"
+  | "heightstrip"
+  | "motion";
 
 export type Renderer3DUseCase =
   | "fbm-terrain"
