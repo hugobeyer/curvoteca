@@ -20,6 +20,7 @@ export type Renderer3DUseCase =
   | "ridged-multi"
   | "voronoi-terrain"
   | "hybrid-blend"
+  | "gerstner-waves"
   | "scatter-volume"
   | "density-shell";
 

@@ -58,6 +58,7 @@ export const createNoise3DView = (): Renderer3DView => ({
       for (let x = 0; x < gridSize; x += 1) {
         const u = ((x / (gridSize - 1)) * 2 - 1) * uvRange * globalFreq;
         const v = ((z / (gridSize - 1)) * 2 - 1) * uvRange * globalFreq;
+        let dispX = 0, dispZ = 0;
         const value = sampleNoiseUseCase(
           useCase,
           u,
@@ -66,6 +67,7 @@ export const createNoise3DView = (): Renderer3DView => ({
           data.params?.seed ?? 0,
           tokens.noiseSpeed || 0.00013,
           tokens.globalOctaves || 5,
+          disp => { dispX = disp[0]; dispZ = disp[1]; },
         );
         const falloff = smoothstep01(1.25 - Math.hypot(u, v) * 0.76);
         const amp =
@@ -75,7 +77,7 @@ export const createNoise3DView = (): Renderer3DView => ({
               ? 1.05
               : 1.14;
         verts.push({
-          p: [u * size, 0.04 + value * amp * falloff, v * size],
+          p: [u * size + dispX * 0.5, 0.04 + value * amp * falloff, v * size + dispZ * 0.5],
           value,
         });
       }
@@ -255,18 +257,19 @@ const addStructuralWires = (
 
 const resolveNoiseUseCase = (value: Renderer3DUseCase | undefined) => {
   const noise = value as string;
-  if (noise === "domain-warp" || noise === "ridged-rock" || noise === "fbm-terrain" || noise === "ridged-multi" || noise === "voronoi-terrain" || noise === "hybrid-blend") return value as "fbm-terrain" | "domain-warp" | "ridged-rock" | "ridged-multi" | "voronoi-terrain" | "hybrid-blend";
+  if (noise === "domain-warp" || noise === "ridged-rock" || noise === "fbm-terrain" || noise === "ridged-multi" || noise === "voronoi-terrain" || noise === "hybrid-blend" || noise === "gerstner-waves") return value as "fbm-terrain" | "domain-warp" | "ridged-rock" | "ridged-multi" | "voronoi-terrain" | "hybrid-blend" | "gerstner-waves";
   return "fbm-terrain" as const;
 };
 
 const sampleNoiseUseCase = (
-  useCase: "fbm-terrain" | "domain-warp" | "ridged-rock" | "ridged-multi" | "voronoi-terrain" | "hybrid-blend",
+  useCase: "fbm-terrain" | "domain-warp" | "ridged-rock" | "ridged-multi" | "voronoi-terrain" | "hybrid-blend" | "gerstner-waves",
   u: number,
   v: number,
   time: number,
   seed: number,
   noiseSpeed: number,
   octaves: number,
+  onDisp?: (d: [number, number]) => void,
 ) => {
   const z = time * noiseSpeed + seed * 0.013;
   if (useCase === "domain-warp") {
@@ -283,6 +286,11 @@ const sampleNoiseUseCase = (
   }
   if (useCase === "hybrid-blend") {
     return hybridBlend3(u * 2.6 + 5, v * 2.6 + 8, z, seed, octaves);
+  }
+  if (useCase === "gerstner-waves") {
+    const r = gerstner3(u * 3.0, v * 3.0, time, seed);
+    if (onDisp) onDisp([r.dx, r.dz]);
+    return r.h;
   }
   return fbm3(u * 2.3 + 8, v * 2.3 + 3, z, octaves);
 };
@@ -381,8 +389,44 @@ const voronoi3d = (x: number, y: number, z: number, seed: number) => {
 };
 
 const hybridBlend3 = (x: number, y: number, z: number, seed: number, octaves: number) => {
-  const f = fbm3(x, y, z, octaves/2) * .5;
+  const f = fbm3(x, y, z, octaves);
   const r = 1 - Math.abs(fbm3(x * 1.7 + seed * 0.1, y * 1.7, z * 1.7, octaves) * 2 - 1);
   const t = smoothstep01((y + 1.2) / 2.4);
   return f * (1 - t) + r * r * t * 1.3;
+};
+
+const gerstner3 = (x: number, z: number, t: number, seed: number): { h: number; dx: number; dz: number } => {
+  const steepness = 0.35;
+  const primary = [
+    { f: 0.85,  d: 0.35, p: 0.0 },
+    { f: 1.17,  d: 0.78, p: 0.8 },
+    { f: 1.60,  d: 1.35, p: 1.9 },
+    { f: 2.19,  d: 2.02, p: 3.1 },
+    { f: 3.00,  d: 2.83, p: 4.5 },
+  ];
+  const detail = [
+    { f: 4.13,  d: 0.92, p: 2.3 },
+    { f: 5.89,  d: 1.73, p: 4.1 },
+    { f: 7.96,  d: 2.48, p: 5.8 },
+    { f: 11.27, d: 3.31, p: 7.4 },
+    { f: 15.03, d: 4.19, p: 9.1 },
+  ];
+  let h = 0, dx = 0, dz = 0;
+  const accumulate = (waves: typeof primary, ampMul: number) => {
+    for (const w of waves) {
+      const dirX = Math.cos(w.d + seed * 0.07);
+      const dirZ = Math.sin(w.d + seed * 0.07);
+      const amp = steepness / w.f * ampMul;
+      const speed = Math.sqrt(9.8 * w.f) * 0.0006;
+      const phase = (dirX * x + dirZ * z) * w.f + t * speed + w.p;
+      const c = Math.cos(phase);
+      const s = Math.sin(phase);
+      h += amp * c;
+      dx -= dirX * amp * s * 1.3;
+      dz -= dirZ * amp * s * 1.3;
+    }
+  };
+  accumulate(primary, 0.55);
+  accumulate(detail, 0.25);
+  return { h, dx, dz };
 };

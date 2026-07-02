@@ -254,6 +254,8 @@ import { ridgedMulti3dCurve } from "../lib/curves/ridged-multi-3d";
 import { ridgedMulti3dMeta } from "../lib/curves/ridged-multi-3d.meta";
 import { voronoiTerrain3dCurve } from "../lib/curves/voronoi-terrain-3d";
 import { voronoiTerrain3dMeta } from "../lib/curves/voronoi-terrain-3d.meta";
+import { gerstnerWaves3dCurve } from "../lib/curves/gerstner-waves-3d";
+import { gerstnerWaves3dMeta } from "../lib/curves/gerstner-waves-3d.meta";
 import type { CurveKernel, SamplingHint } from "../lib/curveMath";
 import type {
   Renderer3DParams,
@@ -577,4 +579,5 @@ export const curves: CurveDefinition[] = [
   { ...hybridBlend3dCurve(), ...hybridBlend3dMeta },
   { ...ridgedMulti3dCurve(), ...ridgedMulti3dMeta },
   { ...voronoiTerrain3dCurve(), ...voronoiTerrain3dMeta },
+  { ...gerstnerWaves3dCurve(), ...gerstnerWaves3dMeta },
 ];

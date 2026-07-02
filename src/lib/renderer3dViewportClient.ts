@@ -175,6 +175,7 @@ const readUseCase = (
     value === "ridged-multi" ||
     value === "voronoi-terrain" ||
     value === "hybrid-blend" ||
+    value === "gerstner-waves" ||
     value === "scatter-volume" ||
     value === "density-shell"
   ) {
