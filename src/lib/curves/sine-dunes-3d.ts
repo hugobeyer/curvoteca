@@ -33,7 +33,7 @@ export function sineDunes3dCurve(
     snippets: {
       equation: "d(x,z) = sin(x · f + noise(x, z) · w) · 0.5 + 0.5",
       glsl: "float sineDunes3d(vec2 p, float seed) { float perturb = fbm(vec3(p * 0.3 + seed, 0.0)); return (sin(p.x * 2.5 + perturb * 3.0 + seed * 0.1) * 0.5 + 0.5) * 0.8; }\n\nfloat fbm(vec3 p) { float v = 0.0, a = 0.5, f = 1.0; for (int i = 0; i < 3; i++) { v += a * noise(p * f); a *= 0.5; f *= 2.0; } return v; }",
-      vex: "float sineDunes3d(vector2 p; float seed) { float perturb = fbm(p * 0.3 + seed); return (sin(p.x * 2.5 + perturb * 3.0 + seed * 0.1) * 0.5 + 0.5) * 0.8; }\n\nfloat fbm(vector p) { float v = 0, a = 0.5, f = 1; for (int i = 0; i < 3; i++) { v += a * noise(p * f); a *= 0.5; f *= 2; } return v; }",
+      vex: "float sineDunes3d(vector p; float seed) {\n  float perturb = fbm(p * 0.3 + seed, 3);\n  return (sin(p.x * 2.5 + perturb * 3.0 + seed * 0.1) * 0.5 + 0.5) * 0.8;\n}",
       hlsl: "float sineDunes3d(float2 p, float seed) { float perturb = fbm(float3(p * 0.3 + seed, 0)); return (sin(p.x * 2.5 + perturb * 3.0 + seed * 0.1) * 0.5 + 0.5) * 0.8; }",
       wgsl: "fn sine_dunes_3d(p: vec2f, seed: f32) -> f32 { let perturb = fbm(vec3f(p * 0.3 + seed, 0.0)); return (sin(p.x * 2.5 + perturb * 3.0 + seed * 0.1) * 0.5 + 0.5) * 0.8; }\n\nfn fbm(p: vec3f) -> f32 { var v = 0.0; var a = 0.5; var f = 1.0; for (var i = 0u; i < 3u; i++) { v += a * noise(p * f); a *= 0.5; f *= 2.0; } return v; }",
       ts: "function sineDunes3d(x: number, z: number, seed: number): number { const perturb = fbm3(x * 0.3 + 5, z * 0.3 + 3, seed * 0.01, 3) * 0.4; return (Math.sin(x * 2.5 + perturb * 3.0 + seed * 0.1) * 0.5 + 0.5) * 0.8; }",
