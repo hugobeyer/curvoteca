@@ -786,6 +786,7 @@
 }
 .renderer3d-view {
     cursor: grab;
+    touch-action: none;
 }
 .renderer3d-view:active {
     cursor: grabbing;

@@ -3720,6 +3720,13 @@ const ogTitle = curveForSeo
                 let drag: DragState | null = null;
                 wall.addEventListener("mousedown", function (e: MouseEvent) {
                     if (e.button !== 0) return;
+                    // Skip if the event originated inside a 3D renderer
+                    // viewport — 3D has its own pointer/wheel handlers.
+                    if (
+                        e.target instanceof Element &&
+                        e.target.closest("[data-renderer3d-root]")
+                    )
+                        return;
                     const view = findView(e.target);
                     if (view) {
                         const card = findCard(e.target);

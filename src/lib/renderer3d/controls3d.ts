@@ -28,6 +28,8 @@ export const createRenderer3DControls = (
   let lastY = 0;
 
   const onPointerDown = (event: PointerEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     dragging = true;
     lastX = event.clientX;
     lastY = event.clientY;
@@ -35,6 +37,8 @@ export const createRenderer3DControls = (
   };
 
   const onPointerMove = (event: PointerEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     if (!dragging) return;
     const dx = event.clientX - lastX;
     const dy = event.clientY - lastY;
@@ -45,20 +49,26 @@ export const createRenderer3DControls = (
     requestRender();
   };
 
-  const onPointerEnd = () => {
+  const onPointerEnd = (event: PointerEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
     dragging = false;
   };
 
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();
-    camera.distance = Math.max(2.4, Math.min(8.5, camera.distance + event.deltaY * 0.004));
+    event.stopPropagation();
+    camera.distance = Math.max(
+      2.4,
+      Math.min(8.5, camera.distance + event.deltaY * 0.004),
+    );
     requestRender();
   };
 
-  canvas.addEventListener("pointerdown", onPointerDown);
-  canvas.addEventListener("pointermove", onPointerMove);
-  canvas.addEventListener("pointerup", onPointerEnd);
-  canvas.addEventListener("pointercancel", onPointerEnd);
+  canvas.addEventListener("pointerdown", onPointerDown, { passive: false });
+  canvas.addEventListener("pointermove", onPointerMove, { passive: false });
+  canvas.addEventListener("pointerup", onPointerEnd, { passive: false });
+  canvas.addEventListener("pointercancel", onPointerEnd, { passive: false });
   canvas.addEventListener("wheel", onWheel, { passive: false });
 
   return {

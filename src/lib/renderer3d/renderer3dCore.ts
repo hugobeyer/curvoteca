@@ -1,6 +1,13 @@
 import { readRenderer3DColors, type Renderer3DColors } from "./colors3d";
-import { createRenderer3DControls, type Renderer3DControls } from "./controls3d";
-import { createRenderer3DProgram, drawBufferInfo, type Renderer3DProgram } from "./gl3d";
+import {
+  createRenderer3DControls,
+  type Renderer3DControls,
+} from "./controls3d";
+import {
+  createRenderer3DProgram,
+  drawBufferInfo,
+  type Renderer3DProgram,
+} from "./gl3d";
 import { createBufferInfo, type Renderer3DBufferInfo } from "./geometry3d";
 import { lookAt, multiplyMat4, perspective } from "./math3d";
 import { readRenderer3DTokens, type Renderer3DTokens } from "./tokens3d";
@@ -20,6 +27,11 @@ import { createPointCloudView } from "./views/pointCloud";
 
 const THEME_EVENT = "curvoteca:theme-changed";
 
+const DEBUG_RENDERER3D = false;
+const debugLog = (...args: unknown[]) => {
+  if (DEBUG_RENDERER3D) console.log("[renderer3dCore]", ...args);
+};
+
 export const createDefaultRenderer3DViews = (): Renderer3DView[] => [
   createNoise3DView(),
   createPointCloudView(),
@@ -30,14 +42,25 @@ export const mountRenderer3D = (
   options: Renderer3DMountOptions,
 ): Renderer3DHandle => {
   const canvas = options.canvas ?? ensureCanvas(container);
-  const glContext = canvas.getContext("webgl2", { antialias: true, alpha: false });
+  debugLog("mount: canvas ready");
+  const glContext = canvas.getContext("webgl2", {
+    antialias: true,
+    alpha: false,
+  });
+  debugLog("mount: WebGL2 context?", !!glContext);
   const programInfo = glContext ? createRenderer3DProgram(glContext) : null;
-  const viewList = options.views?.length ? [...options.views] : createDefaultRenderer3DViews();
+  debugLog("mount: program?", !!programInfo);
+  const viewList = options.views?.length
+    ? [...options.views]
+    : createDefaultRenderer3DViews();
   const views = new Map<Renderer3DViewId, Renderer3DView>(
     viewList.map((view) => [view.id, view]),
   );
 
-  if (!glContext || !programInfo) return createNoopRenderer3DHandle();
+  if (!glContext || !programInfo) {
+    debugLog("mount: no GL/program — returning noop handle");
+    return createNoopRenderer3DHandle();
+  }
   const gl = glContext;
   const program = programInfo;
 
@@ -71,12 +94,18 @@ export const mountRenderer3D = (
   };
 
   const setData = (next: Partial<Renderer3DData>) => {
-    data = normalizeData({ ...data, ...next, params: { ...data.params, ...next.params } }, views);
+    data = normalizeData(
+      { ...data, ...next, params: { ...data.params, ...next.params } },
+      views,
+    );
     geometryKey = "";
     requestRender();
   };
 
-  const setView = (viewId: Renderer3DViewId, next?: Partial<Renderer3DData>) => {
+  const setView = (
+    viewId: Renderer3DViewId,
+    next?: Partial<Renderer3DData>,
+  ) => {
     const view = views.get(viewId);
     if (!view) return;
     setData({
@@ -125,11 +154,28 @@ export const mountRenderer3D = (
 
     resizeCanvas(canvas, gl, tokens);
     const view = views.get(data.viewId);
-    if (!view) return;
+    if (!view) {
+      debugLog("render: no view for", data.viewId);
+      return;
+    }
 
-    const nextGeometryKey = buildGeometryKey(data, time, tokens.animationStepMs);
+    const nextGeometryKey = buildGeometryKey(
+      data,
+      time,
+      tokens.animationStepMs,
+    );
     if (nextGeometryKey !== geometryKey) {
       const geometry = view.build({ data, time, colors, tokens });
+      debugLog(
+        "render: geometry built — mesh",
+        geometry.mesh.length,
+        "ghost",
+        geometry.ghost.length,
+        "wire",
+        geometry.wire.length,
+        "points",
+        geometry.points.length,
+      );
       disposeUploadedGeometry(gl, geometryBuffers);
       geometryBuffers = uploadGeometry(gl, geometry);
       geometryKey = nextGeometryKey;
@@ -142,7 +188,11 @@ export const mountRenderer3D = (
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.useProgram(program.program);
-    gl.uniformMatrix4fv(program.uMvp, false, new Float32Array(cameraMvp(canvas, controls)));
+    gl.uniformMatrix4fv(
+      program.uMvp,
+      false,
+      new Float32Array(cameraMvp(canvas, controls)),
+    );
     gl.uniform1f(program.uPointSize, 4.2 * currentDpr(tokens));
 
     drawBufferInfo(gl, geometryBuffers.wire, gl.LINES);
@@ -164,7 +214,15 @@ export const mountRenderer3D = (
     if (data.params?.animate !== false) requestRender();
   }
 
-  return { destroy, resize, setData, setView, setUseCase, setRenderMode, setQuality };
+  return {
+    destroy,
+    resize,
+    setData,
+    setView,
+    setUseCase,
+    setRenderMode,
+    setQuality,
+  };
 };
 
 type UploadedGeometry = {
@@ -175,7 +233,9 @@ type UploadedGeometry = {
 };
 
 const ensureCanvas = (container: HTMLElement) => {
-  const existing = container.querySelector<HTMLCanvasElement>("[data-renderer3d-canvas]");
+  const existing = container.querySelector<HTMLCanvasElement>(
+    "[data-renderer3d-canvas]",
+  );
   if (existing) return existing;
   const canvas = document.createElement("canvas");
   canvas.setAttribute("data-renderer3d-canvas", "");
@@ -225,7 +285,10 @@ const resizeCanvas = (
 };
 
 const currentDpr = (tokens: Renderer3DTokens) =>
-  Math.max(tokens.dprMin, Math.min(tokens.dprMax, window.devicePixelRatio || tokens.dprMin));
+  Math.max(
+    tokens.dprMin,
+    Math.min(tokens.dprMax, window.devicePixelRatio || tokens.dprMin),
+  );
 
 const cameraMvp = (canvas: HTMLCanvasElement, controls: Renderer3DControls) => {
   const { yaw, pitch, distance, target } = controls.camera;
@@ -246,7 +309,8 @@ const buildGeometryKey = (
   time: number,
   animationStepMs: number,
 ) => {
-  const step = data.params?.animate === false ? 0 : Math.floor(time / animationStepMs);
+  const step =
+    data.params?.animate === false ? 0 : Math.floor(time / animationStepMs);
   return JSON.stringify({
     viewId: data.viewId,
     useCase: data.useCase,

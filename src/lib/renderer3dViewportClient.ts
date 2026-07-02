@@ -10,6 +10,11 @@ import type {
 
 const ROOT_SELECTOR = "[data-renderer3d-root]";
 
+const DEBUG_RENDERER3D = false;
+const debugLog = (...args: unknown[]) => {
+  if (DEBUG_RENDERER3D) console.log("[renderer3d]", ...args);
+};
+
 type Renderer3DWindow = Window & {
   __curvotecaInitRenderer3DViewports?: (scope?: ParentNode) => void;
   __curvotecaDestroyRenderer3DViewports?: (scope?: ParentNode) => void;
@@ -22,7 +27,9 @@ let listenersReady = false;
 
 export const initRenderer3DViewports = (scope: ParentNode = document) => {
   bindGlobalListeners();
-  scope.querySelectorAll<HTMLElement>(ROOT_SELECTOR).forEach(observeRoot);
+  const roots = scope.querySelectorAll<HTMLElement>(ROOT_SELECTOR);
+  debugLog("init: found", roots.length, "root(s) in scope");
+  roots.forEach(observeRoot);
 };
 
 export const destroyRenderer3DViewports = (scope: ParentNode = document) => {
@@ -32,18 +39,28 @@ export const destroyRenderer3DViewports = (scope: ParentNode = document) => {
 const observeRoot = (root: HTMLElement) => {
   if (observed.has(root)) return;
   observed.add(root);
-  if (typeof IntersectionObserver === "undefined") {
+  debugLog("observeRoot:", root.dataset.renderer3dId);
+
+  // Direct mount if the element is already visible with size.
+  // This handles cards on the current page; the IntersectionObserver
+  // catches cards that become visible later (pager navigation, filter).
+  const rect = root.getBoundingClientRect();
+  if (rect.width > 0 && rect.height > 0) {
+    debugLog("observeRoot: direct mount (visible)");
     void mountRoot(root);
-    return;
   }
+
+  if (typeof IntersectionObserver === "undefined") return;
   if (!observer) {
     observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           const root = entry.target as HTMLElement;
           if (entry.isIntersecting) {
+            debugLog("IntersectionObserver: visible -> mount");
             void mountRoot(root);
           } else {
+            debugLog("IntersectionObserver: hidden -> destroy");
             destroyRoot(root);
           }
         });
@@ -55,14 +72,38 @@ const observeRoot = (root: HTMLElement) => {
 };
 
 const mountRoot = async (root: HTMLElement) => {
-  if (mounted.has(root) || !root.isConnected) return;
+  if (mounted.has(root) || !root.isConnected) {
+    debugLog("mountRoot: skip (already mounted or disconnected)");
+    return;
+  }
+  const id = root.dataset.renderer3dId || "?";
+  debugLog("mountRoot: mounting", id);
   const { mountRenderer3D } = await import("./renderer3d");
-  if (mounted.has(root) || !root.isConnected) return;
+  if (mounted.has(root) || !root.isConnected) {
+    debugLog("mountRoot: skip (mounted during async import)");
+    return;
+  }
   const canvas = root.querySelector<HTMLCanvasElement>(
     "[data-renderer3d-canvas]",
   );
+  debugLog("mountRoot: canvas found?", !!canvas);
+  if (canvas) {
+    const rect = canvas.getBoundingClientRect();
+    debugLog("mountRoot: canvas rect", rect.width, "x", rect.height);
+  }
+  const data = readRenderer3DData(root);
+  debugLog(
+    "mountRoot: viewId=",
+    data.viewId,
+    "useCase=",
+    data.useCase,
+    "mode=",
+    data.renderMode,
+    "quality=",
+    data.quality,
+  );
   const handle = mountRenderer3D(root, {
-    data: readRenderer3DData(root),
+    data,
     canvas: canvas ?? undefined,
   });
   mounted.set(root, handle);
@@ -130,6 +171,17 @@ const readParams = (value: string | undefined): Renderer3DParams => {
   }
 };
 
+const toParentNode = (scope?: ParentNode | Node | null): ParentNode => {
+  if (
+    scope instanceof Element ||
+    scope instanceof Document ||
+    scope instanceof DocumentFragment
+  ) {
+    return scope;
+  }
+  return document;
+};
+
 const bindGlobalListeners = () => {
   if (listenersReady || typeof window === "undefined") return;
   listenersReady = true;
@@ -137,8 +189,8 @@ const bindGlobalListeners = () => {
   wnd.__curvotecaInitRenderer3DViewports = initRenderer3DViewports;
   wnd.__curvotecaDestroyRenderer3DViewports = destroyRenderer3DViewports;
   document.addEventListener("curvoteca:renderer3d-views-changed", (event) => {
-    const scope = (event as CustomEvent).detail?.scope;
-    initRenderer3DViewports(scope instanceof Node ? scope : document);
+    const scope = event instanceof CustomEvent ? event.detail?.scope : null;
+    initRenderer3DViewports(toParentNode(scope));
   });
   window.addEventListener("pagehide", () => {
     destroyRenderer3DViewports(document);

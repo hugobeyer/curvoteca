@@ -2,28 +2,37 @@ import { bindBufferInfo, type Renderer3DBufferInfo } from "./geometry3d";
 
 const VERTEX_SHADER = `#version 300 es
 precision highp float;
+
 layout(location=0) in vec3 aPos;
 layout(location=1) in vec3 aColor;
 layout(location=2) in float aAlpha;
+
 uniform mat4 uMvp;
 uniform float uPointSize;
+
 out vec3 vColor;
 out float vAlpha;
+
 void main() {
   gl_Position = uMvp * vec4(aPos, 1.0);
   gl_PointSize = uPointSize;
   vColor = aColor;
   vAlpha = aAlpha;
-}`;
+}
+`;
 
 const FRAGMENT_SHADER = `#version 300 es
 precision highp float;
+
 in vec3 vColor;
 in float vAlpha;
+
 out vec4 outColor;
+
 void main() {
   outColor = vec4(vColor, vAlpha);
-}`;
+}
+`;
 
 export type Renderer3DProgram = {
   program: WebGLProgram;
@@ -47,7 +56,10 @@ export const createRenderer3DProgram = (
   gl.deleteShader(fragment);
 
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.warn("[renderer3d] program link failed", gl.getProgramInfoLog(program));
+    console.warn(
+      "[renderer3d] program link failed",
+      gl.getProgramInfoLog(program),
+    );
     gl.deleteProgram(program);
     return null;
   }
@@ -79,7 +91,10 @@ const compileShader = (
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.warn("[renderer3d] shader compile failed", gl.getShaderInfoLog(shader));
+    console.warn(
+      "[renderer3d] shader compile failed",
+      gl.getShaderInfoLog(shader),
+    );
     gl.deleteShader(shader);
     return null;
   }
