@@ -3131,7 +3131,7 @@ const ogTitle = curveForSeo
                     "graph",
                     "motion",
                     "field",
-                    "height",
+                    "heightStrip",
                     "ramp",
                 ];
                 let globalViewMode = "graph";
@@ -3190,7 +3190,7 @@ const ogTitle = curveForSeo
                 const viewModeTo3DRenderMode = function (mode: string): string {
                     if (mode === "graph") return "graph";
                     if (mode === "motion") return "motion";
-                    if (mode === "height") return "heightstrip";
+                    if (mode === "heightStrip") return "heightstrip";
                     if (mode === "ramp") return "ramp";
                     if (mode === "field") return "field";
                     return "shaded"; // fallback
@@ -3267,8 +3267,9 @@ const ogTitle = curveForSeo
                 };
                 try {
                     const stored = localStorage.getItem(VIEW_MODE_KEY);
-                    if (stored && VIEW_MODE_ORDER.indexOf(stored) >= 0) {
-                        globalViewMode = stored;
+                    if (stored === "height") localStorage.setItem(VIEW_MODE_KEY, "heightStrip");
+                    if (stored && VIEW_MODE_ORDER.indexOf(stored === "height" ? "heightStrip" : stored) >= 0) {
+                        globalViewMode = stored === "height" ? "heightStrip" : stored;
                     }
                 } catch (err) {}
                 const cycleGlobalViewMode = function () {

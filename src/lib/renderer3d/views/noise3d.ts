@@ -120,27 +120,23 @@ export const createNoise3DView = (): Renderer3DView => ({
       }
       addStructuralWires(wire, verts, gridSize, 6, wf, lift, heightAlpha);
     } else if (renderMode === "heightstrip") {
-      const bg = colors.bg;
+      const dim: Vec3 = [
+        colors.bg[0] * 0.7 + wf[0] * 0.3,
+        colors.bg[1] * 0.7 + wf[1] * 0.3,
+        colors.bg[2] * 0.7 + wf[2] * 0.3,
+      ];
       for (let z = 0; z < gridSize - 1; z += 1) {
         for (let x = 0; x < gridSize - 1; x += 1) {
           const a = verts[z * gridSize + x];
           const b = verts[z * gridSize + x + 1];
           const c = verts[(z + 1) * gridSize + x];
           const d = verts[(z + 1) * gridSize + x + 1];
-          const colorFor = (v: typeof a) => {
-            const t = clamp01(v.p[1] / 1.2);
-            return [
-              bg[0] * (1 - t) + wf[0] * t,
-              bg[1] * (1 - t) + wf[1] * t,
-              bg[2] * (1 - t) + wf[2] * t,
-            ] as Vec3;
-          };
-          pushVertex(mesh, a.p, colorFor(a), 1);
-          pushVertex(mesh, b.p, colorFor(b), 1);
-          pushVertex(mesh, c.p, colorFor(c), 1);
-          pushVertex(mesh, b.p, colorFor(b), 1);
-          pushVertex(mesh, d.p, colorFor(d), 1);
-          pushVertex(mesh, c.p, colorFor(c), 1);
+          pushVertex(mesh, a.p, dim, 1);
+          pushVertex(mesh, b.p, dim, 1);
+          pushVertex(mesh, c.p, dim, 1);
+          pushVertex(mesh, b.p, dim, 1);
+          pushVertex(mesh, d.p, dim, 1);
+          pushVertex(mesh, c.p, dim, 1);
         }
       }
       addStructuralWires(wire, verts, gridSize, 6, wf, lift, heightAlpha);
