@@ -180,7 +180,8 @@ const readUseCase = (
     value === "density-shell" ||
     value === "billow" ||
     value === "curl-noise" ||
-    value === "sine-dunes"
+    value === "sine-dunes" ||
+    value === "ripple"
   ) {
     return value;
   }

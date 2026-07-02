@@ -61,6 +61,8 @@ export const createNoise3DView = (): Renderer3DView => ({
         let dispX = 0, dispZ = 0;
         const freqMul =
           useCase === "curl-noise" ? 0.235 : 1;
+        const speedMul =
+          useCase === "ripple" ? 4 : 1;
         const fu = u * freqMul;
         const fv = v * freqMul;
         const value = sampleNoiseUseCase(
@@ -69,7 +71,7 @@ export const createNoise3DView = (): Renderer3DView => ({
           fv,
           time,
           data.params?.seed ?? 0,
-          tokens.noiseSpeed || 0.00013,
+          (tokens.noiseSpeed || 0.00013) * speedMul,
           tokens.globalOctaves || 5,
           disp => { dispX = disp[0]; dispZ = disp[1]; },
         );
@@ -263,12 +265,12 @@ const addStructuralWires = (
 
 const resolveNoiseUseCase = (value: Renderer3DUseCase | undefined) => {
   const noise = value as string;
-  if (noise === "domain-warp" || noise === "ridged-rock" || noise === "fbm-terrain" || noise === "ridged-multi" || noise === "voronoi-terrain" || noise === "hybrid-blend" || noise === "gerstner-waves" || noise === "billow" || noise === "curl-noise" || noise === "sine-dunes") return value as "fbm-terrain" | "domain-warp" | "ridged-rock" | "ridged-multi" | "voronoi-terrain" | "hybrid-blend" | "gerstner-waves" | "billow" | "curl-noise" | "sine-dunes";
+  if (noise === "domain-warp" || noise === "ridged-rock" || noise === "fbm-terrain" || noise === "ridged-multi" || noise === "voronoi-terrain" || noise === "hybrid-blend" || noise === "gerstner-waves" || noise === "billow" || noise === "curl-noise" || noise === "sine-dunes" || noise === "ripple") return value as "fbm-terrain" | "domain-warp" | "ridged-rock" | "ridged-multi" | "voronoi-terrain" | "hybrid-blend" | "gerstner-waves" | "billow" | "curl-noise" | "sine-dunes" | "ripple";
   return "fbm-terrain" as const;
 };
 
 const sampleNoiseUseCase = (
-  useCase: "fbm-terrain" | "domain-warp" | "ridged-rock" | "ridged-multi" | "voronoi-terrain" | "hybrid-blend" | "gerstner-waves" | "billow" | "curl-noise" | "sine-dunes",
+  useCase: "fbm-terrain" | "domain-warp" | "ridged-rock" | "ridged-multi" | "voronoi-terrain" | "hybrid-blend" | "gerstner-waves" | "billow" | "curl-noise" | "sine-dunes" | "ripple",
   u: number,
   v: number,
   time: number,
@@ -306,6 +308,9 @@ const sampleNoiseUseCase = (
   }
   if (useCase === "sine-dunes") {
     return sineDunes3(u * 4.0 + 12, z, seed);
+  }
+  if (useCase === "ripple") {
+    return ripple3(u * 2.5, v * 2.5, z, seed, octaves);
   }
   return fbm3(u * 2.3 + 8, v * 2.3 + 3, z, octaves);
 };
@@ -428,10 +433,18 @@ const curl3 = (x: number, y: number, z: number, seed: number, octaves: number) =
 const sineDunes3 = (x: number, z: number, seed: number) => {
   const duneFreq = x * 2.5 + seed * 0.1;
   const perturb = fbm3(x * 0.3 + 5, z * 0.3 + 3, seed * 0.01, 3) * 0.4;
-  return (Math.sin(duneFreq + perturb * 3.0) * 0.5 + 0.5) * 0.8;
-};
+  	return (Math.sin(duneFreq + perturb * 3.0) * 0.5 + 0.5) * 0.8;
+  };
 
-const gerstner3 = (x: number, z: number, t: number, seed: number): { h: number; dx: number; dz: number } => {
+  const ripple3 = (x: number, y: number, z: number, seed: number, _octaves: number) => {
+    const cx = fbm3(seed * 0.17, y + seed * 0.13, z * 0.15, 1) * 0.25;
+    const cy = fbm3(x + seed * 0.23, seed * 0.11, z * 0.15, 1) * 0.25;
+    const dist = Math.hypot(x - cx, y - cy);
+    const density = Math.sin(dist * 6.5 - z * 3.0) * Math.exp(-dist * 1.8) + 0.5;
+    return density * 0.7;
+  };
+
+  const gerstner3 = (x: number, z: number, t: number, seed: number): { h: number; dx: number; dz: number } => {
   const steepness = 0.35;
   const primary = [
     { f: 0.85,  d: 0.35, p: 0.0 },

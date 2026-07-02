@@ -262,6 +262,8 @@ import { curl3dCurve } from "../lib/curves/curl-3d";
 import { curl3dMeta } from "../lib/curves/curl-3d.meta";
 import { sineDunes3dCurve } from "../lib/curves/sine-dunes-3d";
 import { sineDunes3dMeta } from "../lib/curves/sine-dunes-3d.meta";
+import { ripple3dCurve } from "../lib/curves/ripple-3d";
+import { ripple3dMeta } from "../lib/curves/ripple-3d.meta";
 import type { CurveKernel, SamplingHint } from "../lib/curveMath";
 import type {
   Renderer3DParams,
@@ -589,4 +591,5 @@ export const curves: CurveDefinition[] = [
   { ...billow3dCurve(), ...billow3dMeta },
   { ...curl3dCurve(), ...curl3dMeta },
   { ...sineDunes3dCurve(), ...sineDunes3dMeta },
+  { ...ripple3dCurve(), ...ripple3dMeta },
 ];

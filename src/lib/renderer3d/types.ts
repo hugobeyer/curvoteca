@@ -25,7 +25,8 @@ export type Renderer3DUseCase =
   | "density-shell"
   | "billow"
   | "curl-noise"
-  | "sine-dunes";
+  | "sine-dunes"
+  | "ripple";
 
 export type Renderer3DQuality = "card" | "detail" | "high";
 
