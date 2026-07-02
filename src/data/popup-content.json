@@ -3,7 +3,7 @@
         "title": "About",
         "body": "A visual reference for the curve-curious. Tuning animation timing? Crafting shader falloff? Building UI transitions? Curvoteca lets you browse, compare, and copy equations side by side.",
         "languages": ["JS", "GLSL", "VEX", "Python", "C#", "Rust", "C", "C++", "HLSL", "OpenCL", "Lua", "Metal", "WGSL", "CUDA", "Swift", "Kotlin", "TypeScript", "TouchDesigner", "Java", "MATLAB", "Dart", "Julia", "MEL", "GDScript", "Blueprint", "After Effects", "DCTL", "CSS", "Framer Motion", "GSAP", "Arduino", "OSL", "Max/MSP gen~", "REAPER JSFX", "Nuke", "Csound", "ChucK", "JSON", "SVG", "Haskell", "Fortran", "R", "Wolfram Language", "and more"],
-        "closing": "No accounts, no paywalls, no tracking. Just a tool made by someone who needed it, shared with anyone who does too. If it saves you time, donations are deeply appreciated. The intention is to keep scaling it — more curves, more formats, and always free.",
+        "closing": "No accounts, no paywalls. Just a tool made by someone who needed it, shared with anyone who does too. If it saves you time, donations are deeply appreciated. The intention is to keep scaling it — more curves, more formats, and always free.",
         "contact": "hello@curvoteca.com"
     },
     "sponsor": {

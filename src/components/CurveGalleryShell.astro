@@ -681,6 +681,17 @@ const ogTitle = curveForSeo
                 if (!overlay) return;
 
                 const openOverlay = function (view) {
+                    // Clear any stale inline display override so CSS
+                    // [aria-hidden] attribute selector controls visibility.
+                    overlay.style.display = "";
+                    // Reset box position (clear persisted drag position)
+                    var box = overlay.querySelector(".view-overlay-box");
+                    if (box) {
+                        box.style.position = "";
+                        box.style.left = "";
+                        box.style.top = "";
+                        box.style.margin = "";
+                    }
                     const contents = overlay.querySelectorAll(
                         "[data-overlay-content]",
                     );
