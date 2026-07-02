@@ -25,6 +25,21 @@ const observed = new WeakSet<HTMLElement>();
 let observer: IntersectionObserver | null = null;
 let listenersReady = false;
 
+export const bindGlobalListeners = () => {
+  if (listenersReady || typeof window === "undefined") return;
+  listenersReady = true;
+  const wnd = window as Renderer3DWindow;
+  wnd.__curvotecaInitRenderer3DViewports = initRenderer3DViewports;
+  wnd.__curvotecaDestroyRenderer3DViewports = destroyRenderer3DViewports;
+  document.addEventListener("curvoteca:renderer3d-views-changed", (event) => {
+    const scope = event instanceof CustomEvent ? event.detail?.scope : null;
+    initRenderer3DViewports(toParentNode(scope));
+  });
+  window.addEventListener("pagehide", () => {
+    destroyRenderer3DViewports(document);
+  });
+};
+
 export const initRenderer3DViewports = (scope: ParentNode = document) => {
   bindGlobalListeners();
   const roots = scope.querySelectorAll<HTMLElement>(ROOT_SELECTOR);
@@ -41,12 +56,18 @@ const observeRoot = (root: HTMLElement) => {
   observed.add(root);
   debugLog("observeRoot:", root.dataset.renderer3dId);
 
-  // Direct mount if the element is already visible with size.
-  // This handles cards on the current page; the IntersectionObserver
-  // catches cards that become visible later (pager navigation, filter).
+  // Direct mount if the element is already inside the viewport.
+  // Off-screen cards (e.g. scrolled above y:0) still have non-zero
+  // dimensions, so we check viewport overlap to avoid exhausting
+  // WebGL contexts by mounting too many at once.
   const rect = root.getBoundingClientRect();
-  if (rect.width > 0 && rect.height > 0) {
-    debugLog("observeRoot: direct mount (visible)");
+  if (
+    rect.width > 0 &&
+    rect.height > 0 &&
+    rect.bottom >= 0 &&
+    rect.top <= (typeof window !== "undefined" ? window.innerHeight : 0)
+  ) {
+    debugLog("observeRoot: direct mount (in viewport)");
     void mountRoot(root);
   }
 
@@ -92,6 +113,19 @@ const mountRoot = async (root: HTMLElement) => {
     debugLog("mountRoot: canvas rect", rect.width, "x", rect.height);
   }
   const data = readRenderer3DData(root);
+  // Column-based grid size override (set by gallery grid cycle)
+  const colGrid = root.getAttribute("data-renderer3d-gridsize");
+  if (colGrid) {
+    const n = Number(colGrid);
+    if (n > 0) data.params = { ...data.params, gridSize: n };
+  }
+  // Scale LOD by pager size (smaller cards = less geo)
+  if (!data.params?.lod) {
+    try {
+      const pager = Number(localStorage.getItem("curvoteca:pager-size")) || 48;
+      data.params = { ...data.params, lod: pager };
+    } catch {}
+  }
   debugLog(
     "mountRoot: viewId=",
     data.viewId,
@@ -107,6 +141,8 @@ const mountRoot = async (root: HTMLElement) => {
     canvas: canvas ?? undefined,
   });
   mounted.set(root, handle);
+  // Expose for grid cycle wiring in CurveGalleryShell
+  (root as unknown as Record<string, unknown>).__r3dh = handle;
 };
 
 const destroyRoot = (root: HTMLElement) => {
@@ -122,6 +158,7 @@ const readRenderer3DData = (root: HTMLElement): Renderer3DData => ({
   useCase: readUseCase(root.dataset.renderer3dUseCase),
   renderMode: readRenderMode(root.dataset.renderer3dRenderMode),
   quality: readQuality(root.dataset.renderer3dQuality),
+  gridMode: readGridMode(root.dataset.renderer3dGridMode),
   params: readParams(root.dataset.renderer3dParams),
 });
 
@@ -161,6 +198,13 @@ const readQuality = (
   return undefined;
 };
 
+const readGridMode = (
+  value: string | undefined,
+): "full" | "lines" | "axis" | undefined => {
+  if (value === "lines" || value === "axis") return value;
+  return "full";
+};
+
 const readParams = (value: string | undefined): Renderer3DParams => {
   if (!value) return {};
   try {
@@ -180,19 +224,4 @@ const toParentNode = (scope?: ParentNode | Node | null): ParentNode => {
     return scope;
   }
   return document;
-};
-
-const bindGlobalListeners = () => {
-  if (listenersReady || typeof window === "undefined") return;
-  listenersReady = true;
-  const wnd = window as Renderer3DWindow;
-  wnd.__curvotecaInitRenderer3DViewports = initRenderer3DViewports;
-  wnd.__curvotecaDestroyRenderer3DViewports = destroyRenderer3DViewports;
-  document.addEventListener("curvoteca:renderer3d-views-changed", (event) => {
-    const scope = event instanceof CustomEvent ? event.detail?.scope : null;
-    initRenderer3DViewports(toParentNode(scope));
-  });
-  window.addEventListener("pagehide", () => {
-    destroyRenderer3DViewports(document);
-  });
 };

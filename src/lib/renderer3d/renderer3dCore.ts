@@ -128,6 +128,10 @@ export const mountRenderer3D = (
     setData({ quality });
   };
 
+  const setGridMode = (gridMode: "full" | "lines" | "axis") => {
+    setData({ gridMode });
+  };
+
   const destroy = () => {
     destroyed = true;
     if (frame) cancelAnimationFrame(frame);
@@ -222,6 +226,8 @@ export const mountRenderer3D = (
     setUseCase,
     setRenderMode,
     setQuality,
+    setGridMode,
+    resetView: () => controls?.reset(),
   };
 };
 
@@ -264,6 +270,7 @@ const normalizeData = (
     useCase: data.useCase ?? view.defaultUseCase,
     renderMode,
     quality: data.quality ?? "detail",
+    gridMode: data.gridMode ?? "full",
     params: data.params ?? {},
   };
 };
@@ -293,13 +300,13 @@ const currentDpr = (tokens: Renderer3DTokens) =>
 const cameraMvp = (canvas: HTMLCanvasElement, controls: Renderer3DControls) => {
   const { yaw, pitch, distance, target } = controls.camera;
   const eye = [
-    Math.sin(yaw) * Math.cos(pitch) * distance,
-    Math.sin(pitch) * distance,
-    Math.cos(yaw) * Math.cos(pitch) * distance,
+    Math.sin(yaw) * Math.cos(pitch) * distance + target[0],
+    Math.sin(pitch) * distance + target[1],
+    Math.cos(yaw) * Math.cos(pitch) * distance + target[2],
   ] as const;
   const aspect = canvas.width / Math.max(1, canvas.height);
   return multiplyMat4(
-    perspective(Math.PI / 4.15, aspect, 0.05, 80),
+    perspective(Math.PI / 8, aspect, 0.05, 80),
     lookAt(eye, target, [0, 1, 0]),
   );
 };
@@ -355,4 +362,6 @@ const createNoopRenderer3DHandle = (): Renderer3DHandle => ({
   setUseCase() {},
   setRenderMode() {},
   setQuality() {},
+  setGridMode() {},
+  resetView() {},
 });

@@ -15,3 +15,4 @@ export const KEY_GRID_SIZE = "curvoteca:grid-size";
 export const KEY_GRID_COLS = "curvoteca:grid-cols";
 export const KEY_PAGER_SIZE = "curvoteca:pager-size";
 export const KEY_VIEW_GRID = "curvoteca:view-grid";
+export const KEY_FILTER = "curvoteca:filter";

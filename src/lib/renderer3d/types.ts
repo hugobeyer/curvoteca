@@ -22,6 +22,7 @@ export type Renderer3DParams = {
   gain?: number;
   pointCount?: number;
   gridSize?: number;
+  lod?: number;
   animate?: boolean;
 };
 
@@ -31,6 +32,7 @@ export type Renderer3DData = {
   useCase?: Renderer3DUseCase;
   renderMode?: Renderer3DRenderMode;
   quality?: Renderer3DQuality;
+  gridMode?: "full" | "lines" | "axis";
   params?: Renderer3DParams;
 };
 
@@ -64,6 +66,8 @@ export type Renderer3DHandle = {
   setUseCase: (useCase: Renderer3DUseCase) => void;
   setRenderMode: (mode: Renderer3DRenderMode) => void;
   setQuality: (quality: Renderer3DQuality) => void;
+  setGridMode: (mode: "full" | "lines" | "axis") => void;
+  resetView: () => void;
 };
 
 export type Renderer3DMountOptions = {

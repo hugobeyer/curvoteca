@@ -1118,6 +1118,10 @@ const ogTitle = curveForSeo
                                         "data-renderer3d-params",
                                         JSON.stringify(preview.params || {}),
                                     );
+                                    wrap3d.setAttribute(
+                                        "data-renderer3d-grid-mode",
+                                        viewGridMode,
+                                    );
                                     var canvas3d =
                                         document.createElement("canvas");
                                     canvas3d.className = "curve-view-canvas";
@@ -2028,6 +2032,7 @@ const ogTitle = curveForSeo
                         renderFavs();
                     }
                 });
+
 
                 renderFavs();
                 renderFilterState();
@@ -2963,6 +2968,18 @@ const ogTitle = curveForSeo
                         if (renderer) renderer.setColumnCount(currentCols);
                     });
                 };
+                const updateRenderer3DGridSize = function () {
+                    var cols = Number(grid.getAttribute("data-cols")) || 8;
+                    // Read grid size from CSS token — tweakable in gallery.css
+                    var sty = getComputedStyle(document.documentElement);
+                    var gs = Number(sty.getPropertyValue("--r3d-cols-" + cols)) || 6;
+                    // Set data attribute so mount code picks it up
+                    document.querySelectorAll("[data-renderer3d-root]").forEach(function (el) {
+                        el.setAttribute("data-renderer3d-gridsize", String(gs));
+                        var h = el['__r3dh'];
+                        if (h && h.setData) h.setData({ params: { gridSize: gs } });
+                    });
+                };
                 const setWallHeadCols = function (_c: number) {
                     // no-op: the scale readout was removed.
                 };
@@ -3278,6 +3295,19 @@ const ogTitle = curveForSeo
                                     viewGridMode,
                                 );
                             } catch (err) {}
+                        });
+                    // Also update 3D renderers
+                    document
+                        .querySelectorAll("[data-renderer3d-root]")
+                        .forEach(function (el) {
+                            el.setAttribute(
+                                "data-renderer3d-grid-mode",
+                                viewGridMode,
+                            );
+                            var h = el['__r3dh'];
+                            if (h && h.setGridMode) {
+                                h.setGridMode(viewGridMode);
+                            }
                         });
                 };
                 try {
@@ -3667,6 +3697,10 @@ const ogTitle = curveForSeo
                 const savedCols = readCols();
                 applyCols(savedCols);
                 setWallHeadCols(savedCols);
+                updateRenderer3DGridSize();
+                if ((window as any).__curvotecaInitRenderer3DViewports) {
+                    (window as any).__curvotecaInitRenderer3DViewports(document);
+                }
                 // Defer initViews to idle so persisted zoom/pan state is
                 // applied after first paint, reducing CLS. The renderer
                 // already has a sensible default view from the renderer
@@ -3689,6 +3723,10 @@ const ogTitle = curveForSeo
                         if (e.key === "f" || e.key === "F") {
                             e.preventDefault();
                             resetAllViews({ flash: true });
+                            document.querySelectorAll("[data-renderer3d-root]").forEach(function (el) {
+                                var rh = el['__r3dh'];
+                                if (rh && rh.resetView) rh.resetView();
+                            });
                             if (mode === "focus") exitFocus();
                             modeLabel.textContent = "fit";
                             clearTimeout(fitT);
@@ -3703,12 +3741,14 @@ const ogTitle = curveForSeo
                         } else if (e.key === "=" || e.key === "+") {
                             e.preventDefault();
                             stepCols(1);
+                            updateRenderer3DGridSize();
                         } else if (e.key === "g" || e.key === "G") {
                             e.preventDefault();
                             cycleGlobalViewGrid();
                         } else if (e.key === "-" || e.key === "_") {
                             e.preventDefault();
                             stepCols(-1);
+                            updateRenderer3DGridSize();
                         }
                     },
                 );

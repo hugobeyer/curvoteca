@@ -8,12 +8,7 @@ export type Renderer3DBufferInfo = {
 
 export const VERTEX_FLOATS = 7;
 
-export const pushVertex = (
-  out: number[],
-  p: Vec3,
-  c: Vec3,
-  alpha = 1,
-) => {
+export const pushVertex = (out: number[], p: Vec3, c: Vec3, alpha = 1) => {
   out.push(p[0], p[1], p[2], c[0], c[1], c[2], alpha);
 };
 
@@ -62,19 +57,42 @@ export const bindBufferInfo = (
   gl.enableVertexAttribArray(0);
   gl.vertexAttribPointer(0, 3, gl.FLOAT, false, stride, 0);
   gl.enableVertexAttribArray(1);
-  gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 3 * Float32Array.BYTES_PER_ELEMENT);
+  gl.vertexAttribPointer(
+    1,
+    3,
+    gl.FLOAT,
+    false,
+    stride,
+    3 * Float32Array.BYTES_PER_ELEMENT,
+  );
   gl.enableVertexAttribArray(2);
-  gl.vertexAttribPointer(2, 1, gl.FLOAT, false, stride, 6 * Float32Array.BYTES_PER_ELEMENT);
+  gl.vertexAttribPointer(
+    2,
+    1,
+    gl.FLOAT,
+    false,
+    stride,
+    6 * Float32Array.BYTES_PER_ELEMENT,
+  );
 };
 
 export const addRenderer3DGrid = (
   out: number[],
   colors: Renderer3DColors,
   size: number,
+  mode: "full" | "lines" | "axis" = "full",
 ) => {
+  if (mode === "axis") {
+    // Only X and Z axis lines through origin
+    pushLine(out, [-size, 0, 0], [size, 0, 0], colors.zero, 0.18);
+    pushLine(out, [0, 0, -size], [0, 0, size], colors.zero, 0.18);
+    return;
+  }
   const steps = 24;
+  const isEdge = (i: number) => i === -steps || i === steps;
   for (let i = -steps; i <= steps; i += 1) {
     const t = (i / steps) * size;
+    if (mode === "lines" && !isEdge(i)) continue;
     const major = i % 4 === 0;
     const zero = i === 0;
     const color = zero ? colors.zero : major ? colors.grid : colors.subgrid;

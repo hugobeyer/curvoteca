@@ -1,9 +1,4 @@
-import {
-  addRenderer3DGrid,
-  pushLine,
-  pushTri,
-  pushVertex,
-} from "../geometry3d";
+import { addRenderer3DGrid, pushLine, pushVertex } from "../geometry3d";
 import {
   clamp01,
   cross3,
@@ -28,87 +23,90 @@ export const createNoise3DView = (): Renderer3DView => ({
   supportedRenderModes: ["shaded", "wireframe"],
   build({ data, time, colors, tokens }) {
     const useCase = resolveNoiseUseCase(data.useCase);
-    const gridSize = resolveGridSize(tokens, data.quality, data.params?.gridSize);
+    // Read current pager size for LOD scaling (live, so column/pager cycling takes effect)
+    let lod = data.params?.lod;
+    if (typeof localStorage !== "undefined") {
+      try {
+        const p = Number(localStorage.getItem("curvoteca:pager-size"));
+        if (p > 0) lod = p;
+      } catch {}
+    }
+    const gridSize = resolveGridSize(
+      tokens,
+      data.quality,
+      data.params?.gridSize,
+      lod,
+    );
     const size = tokens.surfaceExtent;
-    const mesh: number[] = [];
-    const ghost: number[] = [];
     const wire: number[] = [];
-    const points: number[] = [];
-    const grid: number[] = [];
+
+    // Grid (respect grid mode: full / lines / axis)
+    addRenderer3DGrid(wire, colors, tokens.gridExtent, data.gridMode ?? "full");
+
+    // Terrain vertices
     const verts: { p: Vec3; value: number }[] = [];
-
-    addRenderer3DGrid(grid, colors, tokens.gridExtent);
-
     for (let z = 0; z < gridSize; z += 1) {
       for (let x = 0; x < gridSize; x += 1) {
         const u = (x / (gridSize - 1)) * 2 - 1;
         const v = (z / (gridSize - 1)) * 2 - 1;
-        const value = sampleNoiseUseCase(useCase, u, v, time, data.params?.seed ?? 0);
-        const falloff = useCase === "fbm-terrain"
-          ? smoothstep01(1.25 - Math.hypot(u, v) * 0.76)
-          : 1;
-        const amp = useCase === "ridged-rock" ? 1.35 : useCase === "domain-warp" ? 1.05 : 1.14;
-        verts.push({ p: [u * size, 0.04 + value * amp * falloff, v * size], value });
+        const value = sampleNoiseUseCase(
+          useCase,
+          u,
+          v,
+          time,
+          data.params?.seed ?? 0,
+        );
+        const falloff =
+          useCase === "fbm-terrain"
+            ? smoothstep01(1.25 - Math.hypot(u, v) * 0.76)
+            : 1;
+        const amp =
+          useCase === "ridged-rock"
+            ? 1.35
+            : useCase === "domain-warp"
+              ? 1.05
+              : 1.14;
+        verts.push({
+          p: [u * size, 0.04 + value * amp * falloff, v * size],
+          value,
+        });
       }
     }
 
-    const normalAt = (x: number, z: number): Vec3 => {
-      const left = verts[z * gridSize + Math.max(0, x - 1)].p;
-      const right = verts[z * gridSize + Math.min(gridSize - 1, x + 1)].p;
-      const down = verts[Math.max(0, z - 1) * gridSize + x].p;
-      const up = verts[Math.min(gridSize - 1, z + 1) * gridSize + x].p;
-      return normalize3(cross3(sub3(up, down), sub3(right, left)));
-    };
-
-    const normals: Vec3[] = [];
-    for (let z = 0; z < gridSize; z += 1) {
-      for (let x = 0; x < gridSize; x += 1) normals.push(normalAt(x, z));
-    }
-
-    for (let z = 0; z < gridSize - 1; z += 1) {
-      for (let x = 0; x < gridSize - 1; x += 1) {
-        const i = z * gridSize + x;
-        const a = verts[i];
-        const b = verts[i + 1];
-        const c = verts[i + gridSize];
-        const d = verts[i + gridSize + 1];
-        const ca = shadeColor(a.value, normals[i], useCase, colors.curve, colors.curve2);
-        const cb = shadeColor(b.value, normals[i + 1], useCase, colors.curve, colors.curve2);
-        const cc = shadeColor(c.value, normals[i + gridSize], useCase, colors.curve, colors.curve2);
-        const cd = shadeColor(d.value, normals[i + gridSize + 1], useCase, colors.curve, colors.curve2);
-
-        pushVertex(mesh, a.p, ca, tokens.shadedAlpha);
-        pushVertex(mesh, b.p, cb, tokens.shadedAlpha);
-        pushVertex(mesh, c.p, cc, tokens.shadedAlpha);
-        pushVertex(mesh, b.p, cb, tokens.shadedAlpha);
-        pushVertex(mesh, d.p, cd, tokens.shadedAlpha);
-        pushVertex(mesh, c.p, cc, tokens.shadedAlpha);
-
-        pushTri(ghost, a.p, b.p, c.p, ca, tokens.ghostAlpha);
-        pushTri(ghost, b.p, d.p, c.p, cd, tokens.ghostAlpha);
-      }
-    }
-
+    // Wireframe — unlit curve color, alpha fades by height (low Y = faint)
+    const wf = colors.curve;
     const lift = 0.012;
+    const heightAlpha = (y: number) => clamp01((y - 0.04) / 1.0) * 0.7 + 0.15;
     for (let z = 0; z < gridSize; z += 1) {
       for (let x = 0; x < gridSize - 1; x += 1) {
         const a = verts[z * gridSize + x].p;
         const b = verts[z * gridSize + x + 1].p;
-        const alpha = x % 4 === 0 || z % 4 === 0 ? tokens.wireAlpha : tokens.wireAlpha * 0.42;
-        pushLine(wire, [a[0], a[1] + lift, a[2]], [b[0], b[1] + lift, b[2]], colors.curve, alpha);
+        const alpha = heightAlpha((a[1] + b[1]) / 2);
+        pushLine(
+          wire,
+          [a[0], a[1] + lift, a[2]],
+          [b[0], b[1] + lift, b[2]],
+          wf,
+          alpha,
+        );
       }
     }
-
     for (let x = 0; x < gridSize; x += 1) {
       for (let z = 0; z < gridSize - 1; z += 1) {
         const a = verts[z * gridSize + x].p;
         const b = verts[(z + 1) * gridSize + x].p;
-        const alpha = x % 4 === 0 || z % 4 === 0 ? tokens.wireAlpha : tokens.wireAlpha * 0.42;
-        pushLine(wire, [a[0], a[1] + lift, a[2]], [b[0], b[1] + lift, b[2]], colors.curve, alpha);
+        const alpha = heightAlpha((a[1] + b[1]) / 2);
+        pushLine(
+          wire,
+          [a[0], a[1] + lift, a[2]],
+          [b[0], b[1] + lift, b[2]],
+          wf,
+          alpha,
+        );
       }
     }
 
-    return { mesh, ghost, wire: [...grid, ...wire], points };
+    return { mesh: [], ghost: [], wire, points: [] };
   },
 });
 
@@ -134,20 +132,6 @@ const sampleNoiseUseCase = (
   return fbm3(u * 2.3 + 8, v * 2.3 + 3, z);
 };
 
-const shadeColor = (
-  value: number,
-  normal: Vec3,
-  useCase: "fbm-terrain" | "domain-warp" | "ridged-rock",
-  curve: Vec3,
-  curve2: Vec3,
-): Vec3 => {
-  const light = normalize3([-0.45, 0.9, 0.35]);
-  const ndl = clamp01(dot3(normal, light)) * 0.72 + 0.24;
-  const orangeBias = useCase === "ridged-rock" ? 0.82 : useCase === "domain-warp" ? 0.68 : 0.58;
-  const base = mix3(curve2, curve, clamp01(value * orangeBias + 0.18));
-  return [base[0] * ndl, base[1] * ndl, base[2] * ndl];
-};
-
 const hash3 = (x: number, y: number, z: number) => {
   const n = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453123;
   return n - Math.floor(n);
@@ -164,7 +148,8 @@ const valueNoise3 = (x: number, y: number, z: number) => {
   const v = smoothstep01(yf);
   const w = smoothstep01(zf);
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-  const h = (dx: number, dy: number, dz: number) => hash3(xi + dx, yi + dy, zi + dz);
+  const h = (dx: number, dy: number, dz: number) =>
+    hash3(xi + dx, yi + dy, zi + dz);
   const x00 = lerp(h(0, 0, 0), h(1, 0, 0), u);
   const x10 = lerp(h(0, 1, 0), h(1, 1, 0), u);
   const x01 = lerp(h(0, 0, 1), h(1, 0, 1), u);

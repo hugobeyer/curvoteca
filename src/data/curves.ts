@@ -239,6 +239,7 @@ import { simplexNoise1dMeta } from "../lib/curves/simplex-noise-1d.meta";
 import { fbm1dCurve } from "../lib/curves/fbm-1d";
 import { fbm1dMeta } from "../lib/curves/fbm-1d.meta";
 import { fbm3dNoiseCurve } from "../lib/curves/fbm-3d-noise";
+import { fbm3dNoiseMeta } from "../lib/curves/fbm-3d-noise.meta";
 import { turbulence1dCurve } from "../lib/curves/turbulence-1d";
 import { turbulence1dMeta } from "../lib/curves/turbulence-1d.meta";
 import { worleyNoise1dCurve } from "../lib/curves/worley-noise-1d";
@@ -560,7 +561,7 @@ export const curves: CurveDefinition[] = [
   { ...perlinNoise1dCurve(), ...perlinNoise1dMeta },
   { ...simplexNoise1dCurve(), ...simplexNoise1dMeta },
   { ...fbm1dCurve(), ...fbm1dMeta },
-  { ...fbm3dNoiseCurve() },
+  { ...fbm3dNoiseCurve(), ...fbm3dNoiseMeta },
   { ...turbulence1dCurve(), ...turbulence1dMeta },
   { ...worleyNoise1dCurve(), ...worleyNoise1dMeta },
   { ...whiteNoise1dCurve(), ...whiteNoise1dMeta },

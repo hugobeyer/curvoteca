@@ -33,20 +33,11 @@ export function fbm3dNoiseCurve(
     name: "FBM 3D Noise",
     family: "noise",
     summary: "3D fractal Brownian motion",
-    formula:
-      "fbm(p) = sum_i gain^i * noise(scale * p * lacunarity^i)",
+    formula: "fbm(p) = sum_i gain^i * noise(scale * p * lacunarity^i)",
     continuity: "C1",
     domain: [0, 1],
     range: [0, 1],
-    tags: [
-      "noise",
-      "3d",
-      "field",
-      "volume",
-      "terrain",
-      "shader",
-      "houdini",
-    ],
+    tags: ["noise", "3d", "field", "volume", "terrain", "shader", "houdini"],
     useCases: [
       "terrain-height",
       "procedural-texture",
@@ -62,8 +53,7 @@ export function fbm3dNoiseCurve(
       "terrain",
     ],
     snippets: {
-      equation:
-        "fbm(p) = sum_i gain^i * noise(scale * p * lacunarity^i)",
+      equation: "fbm(p) = sum_i gain^i * noise(scale * p * lacunarity^i)",
       glsl: "float fbm3d(vec3 p, int octaves, float lacunarity, float gain) { float value = 0.0, amplitude = 1.0, frequency = 1.0; for (int i = 0; i < octaves; i++) { value += amplitude * noise(p * frequency); p *= lacunarity; amplitude *= gain; } return value; }",
       vex: "float fbm3d(vector p; int octaves; float lacunarity; float gain) { float value = 0, amp = 1, freq = 1; for (int i = 0; i < octaves; i++) { value += amp * noise(p * freq); p *= lacunarity; amp *= gain; } return value; }",
       hlsl: "float fbm3d(float3 p, int octaves, float lacunarity, float gain) { float value = 0, amplitude = 1, frequency = 1; for (int i = 0; i < octaves; i++) { value += amplitude * noise(p * frequency); p *= lacunarity; amplitude *= gain; } return value; }",
@@ -82,7 +72,7 @@ export function fbm3dNoiseCurve(
         octaves: 5,
         lacunarity: 2,
         gain: 0.5,
-        gridSize: 64,
+        gridSize: 32,
       },
     },
     kernel,

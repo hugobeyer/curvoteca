@@ -21,9 +21,9 @@ export type Renderer3DTokens = {
 const DEFAULTS: Renderer3DTokens = {
   dprMin: 1,
   dprMax: 2,
-  gridSizeCard: 28,
-  gridSizeDetail: 64,
-  gridSizeHigh: 80,
+  gridSizeCard: 14,
+  gridSizeDetail: 32,
+  gridSizeHigh: 40,
   pointCountCard: 360,
   pointCountDetail: 1800,
   pointCountHigh: 3600,
@@ -41,13 +41,21 @@ export const readRenderer3DTokens = (root: HTMLElement): Renderer3DTokens => {
   return {
     dprMin: base.dprMin,
     dprMax: base.dprMax,
-    gridSizeCard: readNumber(style, "--renderer3d-grid-card", DEFAULTS.gridSizeCard),
+    gridSizeCard: readNumber(
+      style,
+      "--renderer3d-grid-card",
+      DEFAULTS.gridSizeCard,
+    ),
     gridSizeDetail: readNumber(
       style,
       "--renderer3d-grid-detail",
       DEFAULTS.gridSizeDetail,
     ),
-    gridSizeHigh: readNumber(style, "--renderer3d-grid-high", DEFAULTS.gridSizeHigh),
+    gridSizeHigh: readNumber(
+      style,
+      "--renderer3d-grid-high",
+      DEFAULTS.gridSizeHigh,
+    ),
     pointCountCard: readNumber(
       style,
       "--renderer3d-points-card",
@@ -68,13 +76,21 @@ export const readRenderer3DTokens = (root: HTMLElement): Renderer3DTokens => {
       "--renderer3d-animation-step-ms",
       DEFAULTS.animationStepMs,
     ),
-    gridExtent: readNumber(style, "--renderer3d-grid-extent", DEFAULTS.gridExtent),
+    gridExtent: readNumber(
+      style,
+      "--renderer3d-grid-extent",
+      DEFAULTS.gridExtent,
+    ),
     surfaceExtent: readNumber(
       style,
       "--renderer3d-surface-extent",
       DEFAULTS.surfaceExtent,
     ),
-    ghostAlpha: readNumber(style, "--renderer3d-ghost-alpha", DEFAULTS.ghostAlpha),
+    ghostAlpha: readNumber(
+      style,
+      "--renderer3d-ghost-alpha",
+      DEFAULTS.ghostAlpha,
+    ),
     shadedAlpha: readNumber(
       style,
       "--renderer3d-shaded-alpha",
@@ -88,11 +104,26 @@ export const resolveGridSize = (
   tokens: Renderer3DTokens,
   quality: Renderer3DQuality | undefined,
   override?: number,
+  lod?: number,
 ) => {
-  if (override && Number.isFinite(override)) return Math.max(8, Math.min(96, override));
-  if (quality === "card") return tokens.gridSizeCard;
-  if (quality === "high") return tokens.gridSizeHigh;
-  return tokens.gridSizeDetail;
+  let base: number;
+  if (override && Number.isFinite(override)) {
+    // User-set via +/- keys or preview params — use directly, no LOD scaling
+    return Math.max(3, Math.min(64, override));
+  } else if (quality === "card") {
+    base = tokens.gridSizeCard;
+  } else if (quality === "high") {
+    base = tokens.gridSizeHigh;
+  } else {
+    base = tokens.gridSizeDetail;
+  }
+  // Scale by pager size (lod = cards/page). More cards = smaller cards = less geo.
+  if (lod && lod > 0) {
+    // 48 is default pager size → factor 1.0; 96 → ×0.5; 24 → ×1.0 (capped)
+    const factor = Math.min(1, 48 / lod);
+    base = Math.max(8, Math.round(base * factor));
+  }
+  return base;
 };
 
 export const resolvePointCount = (
@@ -100,7 +131,8 @@ export const resolvePointCount = (
   quality: Renderer3DQuality | undefined,
   override?: number,
 ) => {
-  if (override && Number.isFinite(override)) return Math.max(16, Math.min(8000, override));
+  if (override && Number.isFinite(override))
+    return Math.max(16, Math.min(8000, override));
   if (quality === "card") return tokens.pointCountCard;
   if (quality === "high") return tokens.pointCountHigh;
   return tokens.pointCountDetail;
@@ -111,6 +143,8 @@ const readNumber = (
   name: string,
   fallback: number,
 ) => {
-  const value = Number(style.getPropertyValue(name).trim());
+  const raw = style.getPropertyValue(name).trim();
+  if (raw === "") return fallback;
+  const value = Number(raw);
   return Number.isFinite(value) ? value : fallback;
 };

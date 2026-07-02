@@ -41,12 +41,22 @@ const graphClass = variant === "mini" ? "mini-graph" : "graph";
     data-renderer3d-render-mode={renderMode}
     data-renderer3d-quality={quality}
     data-renderer3d-params={JSON.stringify(params)}
+    data-renderer3d-grid-mode="full"
 >
     <canvas class="curve-view-canvas" data-renderer3d-canvas aria-hidden="true"
     ></canvas>
 </div>
 
 <script>
-    import { initRenderer3DViewports } from "../lib/renderer3dViewportClient";
-    initRenderer3DViewports();
+    import {
+        bindGlobalListeners,
+        initRenderer3DViewports,
+    } from "../lib/renderer3dViewportClient";
+    if (document.querySelector("[data-curves]")) {
+        // Gallery page — just set up globals; init runs after column setup
+        bindGlobalListeners();
+    } else {
+        // Detail page — init immediately
+        initRenderer3DViewports();
+    }
 </script>
