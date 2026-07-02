@@ -1199,6 +1199,34 @@ const ogTitle = curveForSeo
                                 "detail-overlay-tabs",
                             );
                             var ov = window.__detailOverlay;
+
+                            // Helper: push language-filtered options to the snippet bar.
+                            // Computes: langAllowed(lang) ∩ entryOptions, then updates
+                            // data-snippet-options and clears any active chips that are
+                            // no longer allowed in the new language.
+                            var updateSnippetBar = function (lang, entryOpts, state) {
+                                var bar = document.querySelector("[data-snippet-bar]");
+                                if (!bar) return;
+                                var filtered = ov && ov.getLanguageSnippetOptions
+                                    ? ov.getLanguageSnippetOptions(lang, entryOpts)
+                                    : entryOpts;
+                                // If we have a live snippetState, strip active options
+                                // that are no longer allowed in this language.
+                                if (state) {
+                                    var next = {};
+                                    Object.keys(state.activeOptions || {}).forEach(function (k) {
+                                        if (filtered[k]) next[k] = state.activeOptions[k];
+                                    });
+                                    state.activeOptions = next;
+                                    state.availableOptions = filtered;
+                                }
+                                bar.setAttribute(
+                                    "data-snippet-options",
+                                    JSON.stringify(filtered),
+                                );
+                            };
+
+                            var entryOpts = entry.snippetOptions || {};
                             var snippetState =
                                 ov && codeEl && copyEl
                                     ? {
@@ -1206,8 +1234,9 @@ const ogTitle = curveForSeo
                                           lang: "equation",
                                           code: entry.equation,
                                           activeOptions: {},
-                                          availableOptions:
-                                              entry.snippetOptions || {},
+                                          availableOptions: ov.getLanguageSnippetOptions
+                                              ? ov.getLanguageSnippetOptions("equation", entryOpts)
+                                              : entryOpts,
                                           render: function () {
                                               var nextCode =
                                                   ov.transformSnippet
@@ -1240,6 +1269,9 @@ const ogTitle = curveForSeo
                                         if (snippetState) {
                                             snippetState.lang = key;
                                             snippetState.code = code;
+                                            // Recompute available options for new language
+                                            // and push to bar before rendering.
+                                            updateSnippetBar(key, entryOpts, snippetState);
                                             snippetState.render();
                                         } else {
                                             ov.showCode(codeEl, copyEl, code);
@@ -1253,15 +1285,12 @@ const ogTitle = curveForSeo
                             var snippetBar =
                                 document.querySelector("[data-snippet-bar]");
                             if (snippetBar) {
-                                var opts = entry.snippetOptions || {};
                                 snippetBar.setAttribute(
                                     "data-snippet-curve-id",
                                     entry.id,
                                 );
-                                snippetBar.setAttribute(
-                                    "data-snippet-options",
-                                    JSON.stringify(opts),
-                                );
+                                // Set initial options filtered by "equation" language
+                                updateSnippetBar("equation", entryOpts, snippetState);
                             }
 
                             // --- share row wiring ---
@@ -3900,19 +3929,21 @@ const ogTitle = curveForSeo
                 flashCopied,
             } from "../lib/detailCodeField";
             import { cycleViewMode } from "../lib/curveViewMode";
-            import { transformSnippet } from "../lib/snippetTransforms";
+            import { transformSnippet, getLanguageSnippetOptions } from "../lib/snippetTransforms";
             const detailOverlay: {
                 buildSnippetTabs: typeof buildSnippetTabs;
                 showCode: typeof showCode;
                 copyDetailCode: typeof copyDetailCode;
                 flashCopied: typeof flashCopied;
                 transformSnippet: typeof transformSnippet;
+                getLanguageSnippetOptions: typeof getLanguageSnippetOptions;
             } = {
                 buildSnippetTabs,
                 showCode,
                 copyDetailCode,
                 flashCopied,
                 transformSnippet,
+                getLanguageSnippetOptions,
             };
             window.__detailOverlay = detailOverlay;
             // Expose the pure view-cycle helper to the page-level

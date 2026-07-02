@@ -57,6 +57,61 @@ const OPTION_KEYS: SnippetOptionKey[] = [
   "uniforms",
 ];
 
+// ---------------------------------------------------------------------------
+// Language option allow-list.
+// Only options present here (value === true) can be shown/applied for a lang.
+// Used both to filter chip availability in the UI and to guard the transform.
+// ---------------------------------------------------------------------------
+const LANG_OPTION_ALLOW: Record<string, SnippetOptionState> = {
+  vex:       { params: true, clamp: true, fit: true, function: true, comments: true },
+  opencl:    { bindings: true, clamp: true, fit: true, function: true, comments: true },
+  glsl:      { constants: true, uniforms: true, clamp: true, fit: true, function: true, comments: true },
+  hlsl:      { constants: true, uniforms: true, clamp: true, fit: true, function: true, comments: true },
+  metal:     { constants: true, uniforms: true, clamp: true, fit: true, function: true, comments: true },
+  shadertoy: { constants: true, clamp: true, fit: true, comments: true },
+  wgsl:      { constants: true, clamp: true, fit: true, function: true, comments: true },
+  cuda:      { constants: true, clamp: true, fit: true, function: true, comments: true },
+  js:        { constants: true, clamp: true, fit: true, function: true, comments: true },
+  ts:        { constants: true, clamp: true, fit: true, function: true, comments: true },
+  python:    { constants: true, clamp: true, fit: true, function: true, comments: true },
+  rust:      { constants: true, clamp: true, fit: true, function: true, comments: true },
+  c:         { constants: true, clamp: true, fit: true, function: true, comments: true },
+  cpp:       { constants: true, clamp: true, fit: true, function: true, comments: true },
+  csharp:    { constants: true, clamp: true, fit: true, function: true, comments: true },
+  lua:       { constants: true, clamp: true, fit: true, function: true, comments: true },
+  gdscript:  { constants: true, clamp: true, fit: true, function: true, comments: true },
+  unity:     { constants: true, comments: true },
+  svelte:    { constants: true, comments: true },
+  matlab:    { constants: true, comments: true },
+  // Conservative: no code-injection options for data/markup langs
+  equation:  { comments: true },
+  json:      {},
+  svg:       {},
+  css:       {},
+  excel:     {},
+  desmos:    {},
+};
+
+/**
+ * Returns the available SnippetOptionState for a given language and curve.
+ * Computes: languageAllowed(lang) ∩ entryOptions.
+ * An option is available only if BOTH the language allows it AND the curve
+ * opts it in via snippetOptions (or DEFAULT_SNIPPET_OPTIONS applies).
+ *
+ * Exported so the shell can use it both on detail open and on tab switch.
+ */
+export function getLanguageSnippetOptions(
+  lang: string,
+  entryOptions: SnippetOptionState,
+): SnippetOptionState {
+  const langAllow = LANG_OPTION_ALLOW[lang] ?? {};
+  const result: SnippetOptionState = {};
+  OPTION_KEYS.forEach((key) => {
+    result[key] = !!(langAllow[key] && entryOptions[key]);
+  });
+  return result;
+}
+
 const SHADER_LANGS = new Set([
   "glsl",
   "hlsl",
@@ -186,9 +241,9 @@ const constantsBlock = (entry: SnippetCurveEntry, lang: string): string => {
 };
 
 const uniformsBlock = (entry: SnippetCurveEntry, lang: string): string => {
-  // VEX and OpenCL use their own binding/param styles, not GLSL uniforms
-  if (HOUDINI_VEX_LANGS.has(lang) || HOUDINI_OPENCL_LANGS.has(lang)) return "";
-  if (!SHADER_LANGS.has(lang)) return "";
+  // Only GLSL / HLSL / Metal use uniform float declarations.
+  // VEX, OpenCL, CUDA, Shadertoy, and WGSL all have different binding styles.
+  if (lang !== "glsl" && lang !== "hlsl" && lang !== "metal") return "";
   const params = entry.params || {};
   const rows = [
     "uniform float u_domainMin;",
@@ -203,19 +258,112 @@ const uniformsBlock = (entry: SnippetCurveEntry, lang: string): string => {
 };
 
 // VEX parameter block: reads Houdini wrangle parameters via chf()/chi()/chv()/chs()
+// Uses param_ prefix to avoid shadowing function arguments.
 const vexParamsBlock = (entry: SnippetCurveEntry): string => {
   const params = entry.params || {};
   const rows: string[] = [];
 
-  rows.push(`float domain_min = chf("domain_min");`);
-  rows.push(`float domain_max = chf("domain_max");`);
-  rows.push(`float range_min = chf("range_min");`);
-  rows.push(`float range_max = chf("range_max");`);
+  rows.push(`float param_domain_min = chf("domain_min");`);
+  rows.push(`float param_domain_max = chf("domain_max");`);
+  rows.push(`float param_range_min = chf("range_min");`);
+  rows.push(`float param_range_max = chf("range_max");`);
   Object.keys(params).forEach((key) => {
     const paramName = safeName(key).toLowerCase();
-    rows.push(`float ${paramName} = chf("${paramName}");`);
+    rows.push(`float param_${paramName} = chf("${paramName}");`);
   });
   return rows.join("\n");
+};
+
+type VexFunctionSignature = {
+  returnType: string;
+  name: string;
+  args: { type: string; name: string }[];
+};
+
+const parseVexFunctionSignature = (
+  code: string,
+): VexFunctionSignature | null => {
+  const match = code.match(
+    /\b(float|int|vector|void)\s+([A-Za-z_$][\w$]*)\s*\(([\s\S]*?)\)\s*(?:\{|$)/,
+  );
+  if (!match) return null;
+
+  const args = match[3]
+    .split(";")
+    .map((part) => part.trim().replace(/\s+/g, " "))
+    .filter(Boolean)
+    .map((part) => {
+      const argMatch = part.match(
+        /\b(float|int|vector|string)\s+([A-Za-z_$][\w$]*)$/,
+      );
+      return argMatch ? { type: argMatch[1], name: argMatch[2] } : null;
+    })
+    .filter((arg): arg is { type: string; name: string } => !!arg);
+
+  return {
+    returnType: match[1],
+    name: match[2],
+    args,
+  };
+};
+
+const vexSourceExampleLine = (arg: { type: string; name: string }): string => {
+  if (arg.type === "vector") return `// vector ${arg.name} = @P;`;
+  if (arg.type === "int") return `// int ${arg.name} = @ptnum;`;
+  return `// float ${arg.name} = @P.x;`;
+};
+
+// Generate commented usage examples for VEX.
+// The first function argument is treated as the source input.
+// Remaining function arguments map to generated param_* locals when possible.
+const vexExampleLines = (entry: SnippetCurveEntry, code: string): string[] => {
+  const signature = parseVexFunctionSignature(code);
+  if (!signature || signature.args.length === 0) return [];
+
+  const paramNames = new Set(
+    Object.keys(entry.params || {}).map((key) => safeName(key).toLowerCase()),
+  );
+
+  const sourceArg = signature.args[0];
+  const callArgs = [sourceArg.name];
+
+  signature.args.slice(1).forEach((arg) => {
+    const argName = safeName(arg.name).toLowerCase();
+    callArgs.push(paramNames.has(argName) ? `param_${argName}` : arg.name);
+  });
+
+  const call = `${signature.name}(${callArgs.join(", ")})`;
+
+  if (signature.returnType === "void") {
+    return ["// Example:", vexSourceExampleLine(sourceArg), `// ${call};`];
+  }
+
+  return [
+    "// Example:",
+    vexSourceExampleLine(sourceArg),
+    `// ${signature.returnType} y = ${call};`,
+  ];
+};
+
+// Parse the first OpenCL-style function signature from helperCode.
+// Returns { name, args: [{name}] } or null on failure.
+const parseOpenclFunctionSignature = (
+  code: string,
+): { name: string; args: { name: string }[] } | null => {
+  const match = code.match(
+    /\b(?:float|int|void)\s+([A-Za-z_$][\w$]*)\s*\(([^)]*)\)/,
+  );
+  if (!match) return null;
+  const name = match[1];
+  const args = match[2]
+    .split(",")
+    .map((a) => a.trim())
+    .filter(Boolean)
+    .map((a) => {
+      const parts = a.split(/\s+/);
+      return { name: parts[parts.length - 1] };
+    });
+  return args.length > 0 ? { name, args } : null;
 };
 
 // Houdini OpenCL binding block: uses #bind parm + @KERNEL + @name style
@@ -237,6 +385,10 @@ const openclBindingsBlock = (
   kernelRows.push(`    float range_min = @range_min;`);
   kernelRows.push(`    float range_max = @range_max;`);
 
+  const paramNames = new Set(
+    Object.keys(params).map((k) => safeName(k).toLowerCase()),
+  );
+
   Object.keys(params).forEach((key) => {
     const paramName = safeName(key).toLowerCase();
     bindRows.push(`#bind parm ${paramName} float`);
@@ -244,10 +396,27 @@ const openclBindingsBlock = (
   });
 
   kernelRows.push("");
-  kernelRows.push(
-    "    // Bind geometry or sample input above, then call the curve helper.",
-  );
-  kernelRows.push("    // Example: float y = curve(x);");
+
+  // Build a specific example call from the helper signature if possible.
+  const sig = parseOpenclFunctionSignature(helperCode);
+  if (sig && sig.args.length > 0) {
+    const sourceArg = sig.args[0]; // first arg is the input (x)
+    const callArgs = sig.args.map((arg, i) => {
+      if (i === 0) return sourceArg.name; // keep as bare name (needs binding)
+      const n = safeName(arg.name).toLowerCase();
+      return paramNames.has(n) ? n : arg.name;
+    });
+    kernelRows.push(
+      "    // Example:",
+      "    // Bind/read x from geometry or an input buffer.",
+      `    // float y = ${sig.name}(${callArgs.join(", ")});`,
+    );
+  } else {
+    kernelRows.push(
+      "    // Bind geometry or sample input above, then call the curve helper.",
+      "    // Example: float y = curve(x);",
+    );
+  }
 
   const helpers = helperCode.trim();
 
@@ -259,6 +428,7 @@ const openclBindingsBlock = (
     .filter(Boolean)
     .join("\n\n");
 };
+
 
 const clampBlock = (lang: string): string => {
   if (lang === "python")
@@ -406,13 +576,16 @@ export function transformSnippet(input: SnippetTransformInput): string {
 
   if (options.comments) blocks.push(commentBlock(input.entry, lang));
 
+  // params: only VEX uses chf()-style param reads
   if (HOUDINI_VEX_LANGS.has(lang) && options.params) {
     blocks.push(vexParamsBlock(input.entry));
-  } else if (options.constants) {
+  } else if (options.constants && !HOUDINI_VEX_LANGS.has(lang) && !HOUDINI_OPENCL_LANGS.has(lang)) {
+    // constants block is skipped for VEX (uses params) and OpenCL (uses bindings)
     blocks.push(constantsBlock(input.entry, lang));
   }
 
-  if (options.uniforms) {
+  // uniforms: only GLSL/HLSL/Metal
+  if (options.uniforms && (lang === "glsl" || lang === "hlsl" || lang === "metal")) {
     const uniforms = uniformsBlock(input.entry, lang);
     if (uniforms) blocks.push(uniforms);
   }
@@ -426,7 +599,19 @@ export function transformSnippet(input: SnippetTransformInput): string {
   const body = options.function
     ? wrapExpressionAsFunction(input.code, input.entry, lang)
     : input.code.trim();
-  blocks.push(formatCompactCode(body, lang));
+  const formattedBody = formatCompactCode(body, lang);
+  blocks.push(formattedBody);
+
+  if (
+    HOUDINI_VEX_LANGS.has(lang) &&
+    options.params &&
+    hasFunctionShape(lang, body)
+  ) {
+    const exampleLines = vexExampleLines(input.entry, body);
+    if (exampleLines.length > 0) {
+      blocks.push(exampleLines.join("\n"));
+    }
+  }
 
   return blocks.filter(Boolean).join("\n\n");
 }
