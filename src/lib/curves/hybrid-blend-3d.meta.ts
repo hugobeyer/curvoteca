@@ -6,7 +6,7 @@ import type {
   CurveViewMode,
 } from "../../data/curves";
 
-export const fbm3dNoiseMeta = {
+export const hybridBlend3dMeta = {
   views: ["graph", "motion", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {} satisfies CurveViewHints,
@@ -26,20 +26,10 @@ export const fbm3dNoiseMeta = {
     default: 5,
     step: 1
   },
-  lacunarity: {
-    label: "Lacunarity",
-    default: 2,
-    step: 1
-  },
-  gain: {
-    label: "Gain",
+  blend: {
+    label: "Blend",
     default: 0.5,
     step: 0.01
-  },
-  gridSize: {
-    label: "Grid Size",
-    default: 64,
-    step: 1
   }
 } satisfies CurveParamSchema,
   roleTags: ["noise"] as readonly CurveRoleTag[],

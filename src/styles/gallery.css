@@ -798,6 +798,19 @@
     --r3d-cols-7: 22;
     --r3d-cols-8: 17;
     --r3d-cols-9: 14;
+
+    --renderer3d-grid-card: 14;
+    --renderer3d-grid-detail: 32;
+    --renderer3d-grid-high: 40;
+    --renderer3d-points-card: 360;
+    --renderer3d-points-detail: 1800;
+    --renderer3d-points-high: 3600;
+    --renderer3d-animation-step-ms: 80;
+    --renderer3d-grid-extent: 3.04;
+    --renderer3d-surface-extent: 2.56;
+    --renderer3d-ghost-alpha: 0.16;
+    --renderer3d-shaded-alpha: 0.68;
+    --renderer3d-wire-alpha: 0.42;
 }
 .renderer3d-view canvas {
     touch-action: none;

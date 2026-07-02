@@ -246,6 +246,14 @@ import { worleyNoise1dCurve } from "../lib/curves/worley-noise-1d";
 import { worleyNoise1dMeta } from "../lib/curves/worley-noise-1d.meta";
 import { whiteNoise1dCurve } from "../lib/curves/white-noise-1d";
 import { whiteNoise1dMeta } from "../lib/curves/white-noise-1d.meta";
+import { domainWarp3dCurve } from "../lib/curves/domain-warp-3d";
+import { domainWarp3dMeta } from "../lib/curves/domain-warp-3d.meta";
+import { hybridBlend3dCurve } from "../lib/curves/hybrid-blend-3d";
+import { hybridBlend3dMeta } from "../lib/curves/hybrid-blend-3d.meta";
+import { ridgedMulti3dCurve } from "../lib/curves/ridged-multi-3d";
+import { ridgedMulti3dMeta } from "../lib/curves/ridged-multi-3d.meta";
+import { voronoiTerrain3dCurve } from "../lib/curves/voronoi-terrain-3d";
+import { voronoiTerrain3dMeta } from "../lib/curves/voronoi-terrain-3d.meta";
 import type { CurveKernel, SamplingHint } from "../lib/curveMath";
 import type {
   Renderer3DParams,
@@ -565,4 +573,8 @@ export const curves: CurveDefinition[] = [
   { ...turbulence1dCurve(), ...turbulence1dMeta },
   { ...worleyNoise1dCurve(), ...worleyNoise1dMeta },
   { ...whiteNoise1dCurve(), ...whiteNoise1dMeta },
+  { ...domainWarp3dCurve(), ...domainWarp3dMeta },
+  { ...hybridBlend3dCurve(), ...hybridBlend3dMeta },
+  { ...ridgedMulti3dCurve(), ...ridgedMulti3dMeta },
+  { ...voronoiTerrain3dCurve(), ...voronoiTerrain3dMeta },
 ];

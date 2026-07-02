@@ -17,6 +17,9 @@ export type Renderer3DUseCase =
   | "fbm-terrain"
   | "domain-warp"
   | "ridged-rock"
+  | "ridged-multi"
+  | "voronoi-terrain"
+  | "hybrid-blend"
   | "scatter-volume"
   | "density-shell";
 

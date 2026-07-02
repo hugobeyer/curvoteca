@@ -1,4 +1,4 @@
-import { readColors as readCanvasColors } from "../renderer/colors";
+import { readColors } from "../renderer/colors";
 import type { Vec3 } from "./math3d";
 
 export type Renderer3DColors = {
@@ -11,54 +11,49 @@ export type Renderer3DColors = {
   curve2: Vec3;
 };
 
-const FALLBACKS = {
-  bg: "5 7 11",
-  grid: "22 36 51",
-  subgrid: "13 23 33",
-  axis: "38 58 76",
-  zero: "58 86 107",
-  curve: "255 138 31",
-  curve2: "85 199 216",
-} as const;
-
-export const readRenderer3DColors = (root: HTMLElement): Renderer3DColors => {
-  const colors = readCanvasColors(root);
-  return {
-    bg: parseCssRgb(colors.bg, FALLBACKS.bg),
-    grid: parseCssRgb(colors.grid, FALLBACKS.grid),
-    subgrid: parseCssRgb(colors.subgrid, FALLBACKS.subgrid),
-    axis: parseCssRgb(colors.axis, FALLBACKS.axis),
-    zero: parseCssRgb(colors.zero, FALLBACKS.zero),
-    curve: parseCssRgb(colors.curve, FALLBACKS.curve),
-    curve2: parseCssRgb(colors.curve2, FALLBACKS.curve2),
-  };
+const hexToVec3 = (hex: string): Vec3 | null => {
+  const m = hex.trim().match(/^#([0-9a-fA-F]{3,6})$/);
+  if (!m) return null;
+  let h = m[1];
+  if (h.length === 3) h = h.replace(/./g, (c) => c + c);
+  if (h.length !== 6) return null;
+  return [
+    parseInt(h.slice(0, 2), 16) / 255,
+    parseInt(h.slice(2, 4), 16) / 255,
+    parseInt(h.slice(4, 6), 16) / 255,
+  ];
 };
 
-export const parseCssRgb = (value: string, fallback: string): Vec3 => {
-  const v = value.trim() || fallback;
-  if (/^#[0-9a-fA-F]{3,6}$/.test(v)) {
-    let hex = v.slice(1);
-    if (hex.length === 3) hex = hex.replace(/./g, (c) => c + c);
-    if (hex.length === 6) {
-      return [
-        parseInt(hex.slice(0, 2), 16) / 255,
-        parseInt(hex.slice(2, 4), 16) / 255,
-        parseInt(hex.slice(4, 6), 16) / 255,
-      ];
-    }
-  }
+const channelsToVec3 = (raw: string): Vec3 | null => {
+  const parts = raw.trim().split(/[\s,/]+/).filter(Boolean).map(Number);
+  if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return null;
+  return [
+    Math.max(0, Math.min(255, parts[0])) / 255,
+    Math.max(0, Math.min(255, parts[1])) / 255,
+    Math.max(0, Math.min(255, parts[2])) / 255,
+  ];
+};
 
-  const fnMatch = v.match(/^rgba?\(\s*([^)]+?)\s*\)$/i);
-  const raw = fnMatch ? fnMatch[1] : v;
-  const parts = raw.split(/[\s,/]+/).filter(Boolean).slice(0, 3).map(Number);
-  if (parts.length === 3 && parts.every(Number.isFinite)) {
-    return [
-      Math.max(0, Math.min(255, parts[0])) / 255,
-      Math.max(0, Math.min(255, parts[1])) / 255,
-      Math.max(0, Math.min(255, parts[2])) / 255,
-    ];
-  }
+const parseAnyToVec3 = (value: string): Vec3 | null =>
+  hexToVec3(value) ?? channelsToVec3(value);
 
-  if (v !== fallback) return parseCssRgb(fallback, "255 255 255");
-  return [1, 1, 1];
+const brighten = (v: Vec3, factor: number): Vec3 =>
+  v.map((c) => Math.min(1, c * factor)) as Vec3;
+
+export const readRenderer3DColors = (root: HTMLElement): Renderer3DColors => {
+  const raw = readColors(root);
+  const curve = parseAnyToVec3(raw.curve);
+  const curve2 = parseAnyToVec3(raw.curve2);
+  const gridBase = parseAnyToVec3(raw.grid);
+  const bg = parseAnyToVec3(raw.bg);
+
+  return {
+    bg: bg ?? [0.02, 0.03, 0.04],
+    grid: gridBase ?? [0.08, 0.14, 0.20],
+    subgrid: gridBase ? brighten(gridBase, 0.45) : [0.04, 0.07, 0.10],
+    axis: gridBase ? brighten(gridBase, 1.6) : [0.16, 0.24, 0.34],
+    zero: gridBase ? brighten(gridBase, 2.0) : [0.20, 0.30, 0.42],
+    curve: curve ?? [1, 0.6, 0.12],
+    curve2: curve2 ?? [0.33, 0.77, 0.82],
+  };
 };

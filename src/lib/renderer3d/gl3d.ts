@@ -37,11 +37,13 @@ out vec4 outColor;
 
 void main() {
   vec4 base = vec4(vColor, vAlpha);
-  // Scanline glow — moving up Y with alpha, orange-curve colored
+  // Scanline glow — only on terrain (Y > 0.02), pseudo-bloom with tight+wide layers
   float scanY = (fract(uTime * 0.0004) * 2.0) - 1.0;
   float dist = abs(vWorldY - scanY);
-  float glow = exp(-dist * 35.0);
-  base.a += glow * 0.55 * uShowScanline;
+  float tight = exp(-dist * 28.0);
+  float bloom = exp(-dist * 6.0) * 0.42;
+  float glow = (tight * 0.92 + bloom) * step(0.02, vWorldY);
+  base.a += glow * uShowScanline;
   outColor = base;
 }
 `;

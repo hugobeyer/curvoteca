@@ -6,7 +6,7 @@ import type {
   CurveViewMode,
 } from "../../data/curves";
 
-export const fbm3dNoiseMeta = {
+export const domainWarp3dMeta = {
   views: ["graph", "motion", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {} satisfies CurveViewHints,
@@ -35,11 +35,6 @@ export const fbm3dNoiseMeta = {
     label: "Gain",
     default: 0.5,
     step: 0.01
-  },
-  gridSize: {
-    label: "Grid Size",
-    default: 64,
-    step: 1
   }
 } satisfies CurveParamSchema,
   roleTags: ["noise"] as readonly CurveRoleTag[],

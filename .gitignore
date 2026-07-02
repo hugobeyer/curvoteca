@@ -40,3 +40,4 @@ scripts/print-lan-ip.bat
 scripts/preview-open-lan.bat
 scripts/dev-open-lan.bat
 scripts/dev-open.bat
+scripts/lh.bat

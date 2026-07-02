@@ -6,7 +6,7 @@ import type {
   CurveViewMode,
 } from "../../data/curves";
 
-export const fbm3dNoiseMeta = {
+export const voronoiTerrain3dMeta = {
   views: ["graph", "motion", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {} satisfies CurveViewHints,
@@ -16,29 +16,9 @@ export const fbm3dNoiseMeta = {
     default: 1337,
     step: 1
   },
-  scale: {
-    label: "Scale",
-    default: 4,
-    step: 1
-  },
-  octaves: {
-    label: "Octaves",
-    default: 5,
-    step: 1
-  },
-  lacunarity: {
-    label: "Lacunarity",
-    default: 2,
-    step: 1
-  },
-  gain: {
-    label: "Gain",
-    default: 0.5,
-    step: 0.01
-  },
-  gridSize: {
-    label: "Grid Size",
-    default: 64,
+  cells: {
+    label: "Cells",
+    default: 6,
     step: 1
   }
 } satisfies CurveParamSchema,

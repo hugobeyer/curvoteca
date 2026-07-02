@@ -172,6 +172,9 @@ const readUseCase = (
     value === "fbm-terrain" ||
     value === "domain-warp" ||
     value === "ridged-rock" ||
+    value === "ridged-multi" ||
+    value === "voronoi-terrain" ||
+    value === "hybrid-blend" ||
     value === "scatter-volume" ||
     value === "density-shell"
   ) {

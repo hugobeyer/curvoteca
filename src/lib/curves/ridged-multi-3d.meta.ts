@@ -6,7 +6,7 @@ import type {
   CurveViewMode,
 } from "../../data/curves";
 
-export const fbm3dNoiseMeta = {
+export const ridgedMulti3dMeta = {
   views: ["graph", "motion", "field", "heightStrip", "ramp"] as readonly CurveViewMode[],
   defaultView: "graph" as CurveViewMode,
   viewHints: {} satisfies CurveViewHints,
@@ -16,11 +16,6 @@ export const fbm3dNoiseMeta = {
     default: 1337,
     step: 1
   },
-  scale: {
-    label: "Scale",
-    default: 4,
-    step: 1
-  },
   octaves: {
     label: "Octaves",
     default: 5,
@@ -28,17 +23,17 @@ export const fbm3dNoiseMeta = {
   },
   lacunarity: {
     label: "Lacunarity",
-    default: 2,
-    step: 1
+    default: 2.1,
+    step: 0.01
   },
   gain: {
     label: "Gain",
-    default: 0.5,
+    default: 0.55,
     step: 0.01
   },
-  gridSize: {
-    label: "Grid Size",
-    default: 64,
+  sharpness: {
+    label: "Sharpness",
+    default: 2,
     step: 1
   }
 } satisfies CurveParamSchema,
