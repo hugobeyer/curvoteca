@@ -1,12 +1,7 @@
 // ---------------------------------------------------------------------------
 // curveMath.ts
-// Core math + sampling layer for every curve in the app.
-// Defines `CurveSamplePoint`, `AnalyticKernel`, `CurveKernel`,
-// `SamplingHint`, and the build-time `SAMPLE_RESOLUTION`. Provides
-// `sampleKernel`, `sampleCurve`, and `normalizeSamples` so a kernel can
-// be turned into a dense, viewport-ready polyline for the renderer.
-// Pure functions, no DOM, no Astro imports — safe to use from both
-// build-time and runtime contexts.
+// Curve kernel functions and sampler. Adding a curve = adding a kernel in
+// `lib/curves/` and a new entry in the switch below.
 // ---------------------------------------------------------------------------
 
 import type { CurvePoint, CurveRect } from "./curveViewportMath";

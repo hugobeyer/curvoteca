@@ -1,11 +1,10 @@
 // ---------------------------------------------------------------------------
 // curveCanvasRenderer.ts
-// The runtime canvas renderer for a single curve card. Composes the
-// focused `renderer/*` modules (grid, bounds, quad, curve stroke,
-// probe tooltip, colors, tokens, effects) into one `renderCurveToCanvas`
-// entry point that the wall, compare tray, and detail viewport all call.
-// Owns the canvas-tiling math (wrap modes) and the per-curve viewport
-// state that the rest of the app stores in localStorage.
+// Runtime canvas renderer for a single curve card. Composes renderer/*
+// modules (grid, bounds, curve, probe, colors, tokens, effects) into
+// one `renderCurveToCanvas` entry point used by wall, compare tray, and
+// detail viewport. Handles wrap modes and viewport state stored in
+// localStorage.
 // ---------------------------------------------------------------------------
 
 import {
@@ -104,9 +103,7 @@ export const createCurveCanvasRenderer = (
   let root = initialRoot;
   let canvas = root.querySelector<HTMLCanvasElement>("[data-curve-canvas]");
   if (!canvas) {
-    // Authoring bug: the card's template is missing the canvas slot. We
-    // still create one and prepend it so the page keeps working, but warn
-    // so a human notices.
+    // Authoring bug: missing canvas slot. Create one so the page keeps working.
     console.warn(
       "[curveCanvasRenderer] missing [data-curve-canvas] on root; creating one",
       root,

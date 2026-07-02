@@ -1,9 +1,7 @@
 // ---------------------------------------------------------------------------
 // storageKeys.ts
-// Canonical localStorage / URL key names. Centralized so a typo in one
-// place does not silently break the feature. Used by both the bundled
-// lib modules (e.g. compareStore.ts) and the inline client scripts in
-// src/pages/index.astro (passed in via Astro's define:vars).
+// Canonical localStorage / URL key names. Centralized to prevent typos.
+// Used by lib modules and inline scripts.
 // ---------------------------------------------------------------------------
 
 export const KEY_FAVORITES = "curvoteca:favorites";

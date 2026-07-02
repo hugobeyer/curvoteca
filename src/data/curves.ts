@@ -1,12 +1,9 @@
 // ---------------------------------------------------------------------------
 // curves.ts
-// Curvoteca's main content registry: the single source of truth for every
-// curve exposed in the app. Imports each per-curve kernel from
-// `lib/curves/*`, defines the `CurveDefinition` / `CurveFactory` /
-// `SnippetTarget` types, and exports the `curves` array consumed by the
-// home wall, the compare tray, and the dynamic [id] detail pages.
-// Adding a new curve = adding a kernel in `lib/curves/` and a new entry
-// in the `curves` array below.
+// Curvoteca's curve registry: the single source of truth for every curve.
+// Imports kernels from `lib/curves/*`, exports the `curves` array consumed
+// by the home wall, compare tray, and dynamic [id] detail pages.
+// To add a curve: add a kernel in `lib/curves/` and a new entry below.
 // ---------------------------------------------------------------------------
 
 import { linearCurve } from "../lib/curves/linear";

@@ -1,11 +1,8 @@
 // ---------------------------------------------------------------------------
 // curveViewportMath.ts
-// Shared types and pure math for the per-curve viewport (zoom, pan,
-// wrap). Defines `CurveWrapMode`, `CurveViewportState`, `CurvePoint`,
-// `CurveRect`, `CurveTileMetrics`, and exports `worldToScreen`,
-// `screenToWorld`, `parseViewBox`, `getVisibleWorldRect`, and the
-// `computeTileMetrics` / `tileVisibleRects` helpers used by both the
-// canvas renderer and the inline preview SVGs. No DOM, no I/O.
+// Shared types and math for per-curve viewport (zoom, pan, wrap).
+// Defines `CurveWrapMode`, `CurvePoint`, `CurveRect`, `CurveTileMetrics`.
+// Exports world/screen coordinate transforms and tile helpers. No DOM.
 // ---------------------------------------------------------------------------
 
 export type CurveWrapMode = "clamp" | "repeat" | "mirror" | "loop";

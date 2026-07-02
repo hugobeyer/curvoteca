@@ -1,11 +1,11 @@
 // ---------------------------------------------------------------------------
 // compareStore.ts
-// Persistence + URL sync for the compare-tray selection. Reads and
-// writes the `curvoteca:compare` localStorage key (capped at `MAX`
-// entries) and mirrors the selection into the `?c=` query string so
-// compare views are shareable. All access is SSR-safe (no-op when
-// `window` is undefined) and validates each id against the
-// `^[a-z0-9][a-z0-9-]*$` shape.
+// Persistence + URL sync for compare-tray selection. Reads/writes the
+// `curvoteca:compare` localStorage key (capped at 8 entries) and syncs
+// to the `?c=` query string for shareable compare views.
+//
+// SSR-safe (no-op when window is undefined). Validates ids against
+// `^[a-z0-9][a-z0-9-]*$`.
 // ---------------------------------------------------------------------------
 
 import { KEY_COMPARE } from "./storageKeys";

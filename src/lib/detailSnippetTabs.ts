@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // detailSnippetTabs.ts
-// Reusable snippet tab-bar builder for the detail overlay.
-// Consumed via window.__detailOverlay from inline index.astro scripts.
+// Snippet tab-bar builder for the detail overlay. Consumed via
+// window.__detailOverlay from inline scripts.
 // ---------------------------------------------------------------------------
 
 export interface CurveRegistryEntry {

@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // detailCodeField.ts
-// Reusable code display + copy button for the detail overlay.
-// Consumed via window.__detailOverlay from inline index.astro scripts.
+// Code display + copy button for the detail overlay. Consumed via
+// window.__detailOverlay from inline scripts.
 // ---------------------------------------------------------------------------
 
 const textNode = (value: string): Text => document.createTextNode(value);
