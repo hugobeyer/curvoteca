@@ -177,7 +177,10 @@ const readUseCase = (
     value === "hybrid-blend" ||
     value === "gerstner-waves" ||
     value === "scatter-volume" ||
-    value === "density-shell"
+    value === "density-shell" ||
+    value === "billow" ||
+    value === "curl-noise" ||
+    value === "sine-dunes"
   ) {
     return value;
   }

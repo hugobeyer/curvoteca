@@ -256,6 +256,12 @@ import { voronoiTerrain3dCurve } from "../lib/curves/voronoi-terrain-3d";
 import { voronoiTerrain3dMeta } from "../lib/curves/voronoi-terrain-3d.meta";
 import { gerstnerWaves3dCurve } from "../lib/curves/gerstner-waves-3d";
 import { gerstnerWaves3dMeta } from "../lib/curves/gerstner-waves-3d.meta";
+import { billow3dCurve } from "../lib/curves/billow-3d";
+import { billow3dMeta } from "../lib/curves/billow-3d.meta";
+import { curl3dCurve } from "../lib/curves/curl-3d";
+import { curl3dMeta } from "../lib/curves/curl-3d.meta";
+import { sineDunes3dCurve } from "../lib/curves/sine-dunes-3d";
+import { sineDunes3dMeta } from "../lib/curves/sine-dunes-3d.meta";
 import type { CurveKernel, SamplingHint } from "../lib/curveMath";
 import type {
   Renderer3DParams,
@@ -580,4 +586,7 @@ export const curves: CurveDefinition[] = [
   { ...ridgedMulti3dCurve(), ...ridgedMulti3dMeta },
   { ...voronoiTerrain3dCurve(), ...voronoiTerrain3dMeta },
   { ...gerstnerWaves3dCurve(), ...gerstnerWaves3dMeta },
+  { ...billow3dCurve(), ...billow3dMeta },
+  { ...curl3dCurve(), ...curl3dMeta },
+  { ...sineDunes3dCurve(), ...sineDunes3dMeta },
 ];

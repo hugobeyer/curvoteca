@@ -59,10 +59,14 @@ export const createNoise3DView = (): Renderer3DView => ({
         const u = ((x / (gridSize - 1)) * 2 - 1) * uvRange * globalFreq;
         const v = ((z / (gridSize - 1)) * 2 - 1) * uvRange * globalFreq;
         let dispX = 0, dispZ = 0;
+        const freqMul =
+          useCase === "curl-noise" ? 0.235 : 1;
+        const fu = u * freqMul;
+        const fv = v * freqMul;
         const value = sampleNoiseUseCase(
           useCase,
-          u,
-          v,
+          fu,
+          fv,
           time,
           data.params?.seed ?? 0,
           tokens.noiseSpeed || 0.00013,
@@ -75,7 +79,9 @@ export const createNoise3DView = (): Renderer3DView => ({
             ? 1.35
             : useCase === "domain-warp"
               ? 1.05
-              : 1.14;
+              : useCase === "curl-noise"
+                ? 0.2
+                : 1.14;
         verts.push({
           p: [u * size + dispX * 0.5, 0.04 + value * amp * falloff, v * size + dispZ * 0.5],
           value,
@@ -257,12 +263,12 @@ const addStructuralWires = (
 
 const resolveNoiseUseCase = (value: Renderer3DUseCase | undefined) => {
   const noise = value as string;
-  if (noise === "domain-warp" || noise === "ridged-rock" || noise === "fbm-terrain" || noise === "ridged-multi" || noise === "voronoi-terrain" || noise === "hybrid-blend" || noise === "gerstner-waves") return value as "fbm-terrain" | "domain-warp" | "ridged-rock" | "ridged-multi" | "voronoi-terrain" | "hybrid-blend" | "gerstner-waves";
+  if (noise === "domain-warp" || noise === "ridged-rock" || noise === "fbm-terrain" || noise === "ridged-multi" || noise === "voronoi-terrain" || noise === "hybrid-blend" || noise === "gerstner-waves" || noise === "billow" || noise === "curl-noise" || noise === "sine-dunes") return value as "fbm-terrain" | "domain-warp" | "ridged-rock" | "ridged-multi" | "voronoi-terrain" | "hybrid-blend" | "gerstner-waves" | "billow" | "curl-noise" | "sine-dunes";
   return "fbm-terrain" as const;
 };
 
 const sampleNoiseUseCase = (
-  useCase: "fbm-terrain" | "domain-warp" | "ridged-rock" | "ridged-multi" | "voronoi-terrain" | "hybrid-blend" | "gerstner-waves",
+  useCase: "fbm-terrain" | "domain-warp" | "ridged-rock" | "ridged-multi" | "voronoi-terrain" | "hybrid-blend" | "gerstner-waves" | "billow" | "curl-noise" | "sine-dunes",
   u: number,
   v: number,
   time: number,
@@ -291,6 +297,15 @@ const sampleNoiseUseCase = (
     const r = gerstner3(u * 3.0, v * 3.0, time, seed);
     if (onDisp) onDisp([r.dx, r.dz]);
     return r.h;
+  }
+  if (useCase === "billow") {
+    return billow3(u * 2.8 + 4, v * 2.8 + 2, z, seed, octaves);
+  }
+  if (useCase === "curl-noise") {
+    return curl3(u * 3.0 + 6, v * 3.0 + 4, z, seed, octaves);
+  }
+  if (useCase === "sine-dunes") {
+    return sineDunes3(u * 4.0 + 12, z, seed);
   }
   return fbm3(u * 2.3 + 8, v * 2.3 + 3, z, octaves);
 };
@@ -393,6 +408,27 @@ const hybridBlend3 = (x: number, y: number, z: number, seed: number, octaves: nu
   const r = 1 - Math.abs(fbm3(x * 1.7 + seed * 0.1, y * 1.7, z * 1.7, octaves) * 2 - 1);
   const t = smoothstep01((y + 1.2) / 2.4);
   return f * (1 - t) + r * r * t * 1.3;
+};
+
+const billow3 = (x: number, y: number, z: number, seed: number, octaves: number) => {
+  return Math.abs(fbm3(x, y, z, octaves));
+};
+
+const curl3 = (x: number, y: number, z: number, seed: number, octaves: number) => {
+  const eps = 0.01;
+  const f1 = fbm3(x, y, z, octaves);
+  const f2 = fbm3(x + 13.7 + seed * 0.1, y + 7.3, z + 5.1, octaves);
+  const f1x = (fbm3(x + eps, y, z, octaves) - f1) / eps;
+  const f1z = (fbm3(x, y, z + eps, octaves) - f1) / eps;
+  const f2x = (fbm3(x + eps + 13.7 + seed * 0.1, y + 7.3, z + 5.1, octaves) - f2) / eps;
+  const f2z = (fbm3(x, y + 7.3, z + eps + 5.1, octaves) - f2) / eps;
+  return (f1x * f2z - f1z * f2x) * 0.2;
+};
+
+const sineDunes3 = (x: number, z: number, seed: number) => {
+  const duneFreq = x * 2.5 + seed * 0.1;
+  const perturb = fbm3(x * 0.3 + 5, z * 0.3 + 3, seed * 0.01, 3) * 0.4;
+  return (Math.sin(duneFreq + perturb * 3.0) * 0.5 + 0.5) * 0.8;
 };
 
 const gerstner3 = (x: number, z: number, t: number, seed: number): { h: number; dx: number; dz: number } => {

@@ -22,7 +22,10 @@ export type Renderer3DUseCase =
   | "hybrid-blend"
   | "gerstner-waves"
   | "scatter-volume"
-  | "density-shell";
+  | "density-shell"
+  | "billow"
+  | "curl-noise"
+  | "sine-dunes";
 
 export type Renderer3DQuality = "card" | "detail" | "high";
 
