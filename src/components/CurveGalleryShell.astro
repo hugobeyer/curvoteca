@@ -2976,7 +2976,8 @@ const ogTitle = curveForSeo
                     // Set data attribute so mount code picks it up
                     document.querySelectorAll("[data-renderer3d-root]").forEach(function (el) {
                         el.setAttribute("data-renderer3d-gridsize", String(gs));
-                        var h = el['__r3dh'];
+                        // @ts-expect-error - __r3dh set by viewport client
+                        var h = el.__r3dh;
                         if (h && h.setData) h.setData({ params: { gridSize: gs } });
                     });
                 };
@@ -3304,7 +3305,8 @@ const ogTitle = curveForSeo
                                 "data-renderer3d-grid-mode",
                                 viewGridMode,
                             );
-                            var h = el['__r3dh'];
+                            // @ts-expect-error - __r3dh set by viewport client
+                            var h = el.__r3dh;
                             if (h && h.setGridMode) {
                                 h.setGridMode(viewGridMode);
                             }
@@ -3724,7 +3726,8 @@ const ogTitle = curveForSeo
                             e.preventDefault();
                             resetAllViews({ flash: true });
                             document.querySelectorAll("[data-renderer3d-root]").forEach(function (el) {
-                                var rh = el['__r3dh'];
+                                // @ts-expect-error - __r3dh set by viewport client
+                                var rh = el.__r3dh;
                                 if (rh && rh.resetView) rh.resetView();
                             });
                             if (mode === "focus") exitFocus();

@@ -31,6 +31,7 @@ export const createRenderer3DControls = (
 
   let dragging = false;
   let dragButton = -1;
+  let hasMoved = false;
   let lastX = 0;
   let lastY = 0;
 
@@ -40,6 +41,7 @@ export const createRenderer3DControls = (
     event.stopPropagation();
     dragging = true;
     dragButton = event.button;
+    hasMoved = false;
     lastX = event.clientX;
     lastY = event.clientY;
     canvas.setPointerCapture(event.pointerId);
@@ -51,6 +53,7 @@ export const createRenderer3DControls = (
     event.stopPropagation();
     const dx = event.clientX - lastX;
     const dy = event.clientY - lastY;
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) hasMoved = true;
     lastX = event.clientX;
     lastY = event.clientY;
     if (dragButton === 0) {
@@ -94,6 +97,16 @@ export const createRenderer3DControls = (
     event.stopPropagation();
     dragging = false;
     dragButton = -1;
+    // If no drag happened, forward click to parent card's detail link
+    if (!hasMoved) {
+      const card = canvas.closest(".card");
+      if (card) {
+        const link = card.querySelector(
+          "[data-open-detail]",
+        ) as HTMLElement | null;
+        if (link) link.click();
+      }
+    }
   };
 
   canvas.addEventListener("pointerdown", onPointerDown, { passive: false });
