@@ -345,7 +345,7 @@ const ridgedFbm3 = (x: number, y: number, z: number, octaves: number) => {
 const ridgedMulti3 = (x: number, y: number, z: number, seed: number, octaves: number) => {
   let result = 0;
   let amp = 0.6;
-  let freq = 1.0;
+  let freq = .5;
   let weight = 0;
   for (let i = 0; i < Math.min(octaves, 3); i += 1) {
     const offset = (seed + i * 7.3) * 0.17;
@@ -354,7 +354,7 @@ const ridgedMulti3 = (x: number, y: number, z: number, seed: number, octaves: nu
     result += ridge * ridge * amp;
     weight += amp;
     amp *= 0.55;
-    freq *= 1.8;
+    freq *= .5;
   }
   return result / weight;
 };
@@ -385,7 +385,7 @@ const voronoi3d = (x: number, y: number, z: number, seed: number) => {
 };
 
 const hybridBlend3 = (x: number, y: number, z: number, seed: number, octaves: number) => {
-  const f = fbm3(x, y, z, octaves);
+  const f = fbm3(x, y, z, octaves/2) * .5;
   const r = 1 - Math.abs(fbm3(x * 1.7 + seed * 0.1, y * 1.7, z * 1.7, octaves) * 2 - 1);
   const t = smoothstep01((y + 1.2) / 2.4);
   return f * (1 - t) + r * r * t * 1.3;
