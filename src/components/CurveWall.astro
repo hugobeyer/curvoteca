@@ -37,7 +37,12 @@ const VIEWBOX = { x: 0, y: 0, w: 252, h: 128 };
 // Family chip config. Display label + filter value (matches `data-family`
 // attribute on each card). Curated order matches the existing UX; new
 // families appended in the order they were added to the registry.
-const familyChips: { label: string; value: string }[] = [
+const familyChips: {
+    label: string;
+    value: string;
+    alwaysShow?: boolean;
+    matches?: (curve: CurveDefinition) => boolean;
+}[] = [
     { label: "smooth", value: "smoothstep" },
     { label: "power", value: "power" },
     { label: "remap", value: "remap" },
@@ -63,6 +68,53 @@ const familyChips: { label: string; value: string }[] = [
     { label: "dynamics", value: "dynamics" },
     { label: "adjustment", value: "adjustment" },
     { label: "sdf", value: "sdf" },
+    {
+        label: "3d",
+        value: "procedural-3d",
+        matches: (c) =>
+            c.preview?.kind === "renderer3d" ||
+            (c.roleTags?.includes("renderer3d") ?? false),
+    },
+    {
+        label: "noise3d",
+        value: "noise3d",
+        matches: (c) =>
+            c.preview?.kind === "renderer3d" && c.preview.viewId === "noise3d",
+    },
+    {
+        label: "terrain",
+        value: "terrain",
+        matches: (c) =>
+            (c.roleTags?.includes("terrain") ?? false) ||
+            (c.tags?.includes("terrain") ?? false),
+    },
+    {
+        label: "field",
+        value: "field",
+        matches: (c) =>
+            (c.roleTags?.includes("field") ?? false) ||
+            (c.tags?.includes("field") ?? false),
+    },
+    {
+        label: "point cloud",
+        value: "pointcloud",
+        matches: (c) =>
+            (c.preview?.kind === "renderer3d" &&
+                c.preview.viewId === "pointcloud") ||
+            (c.roleTags?.includes("pointcloud") ?? false),
+    },
+    {
+        label: "volume",
+        value: "volume",
+        matches: (c) =>
+            (c.roleTags?.includes("volume") ?? false) ||
+            (c.tags?.includes("volume") ?? false),
+    },
+    {
+        label: "l-system",
+        value: "lsystem",
+        matches: (c) => c.roleTags?.includes("lsystem") ?? false,
+    },
     { label: "polynomial", value: "polynomial" },
     { label: "chaos", value: "chaos" },
 ];
@@ -90,6 +142,7 @@ const curveIndex = curves.map((c) => {
         related: c.related,
         snippetOptions: c.snippetOptions ?? DEFAULT_SNIPPET_OPTIONS,
         params: c.params ?? {},
+        preview: c.preview,
     };
 });
 
@@ -149,9 +202,11 @@ const sponsorCardProps = {
                 >
                 {
                     familyChips
-                        .filter((chip) =>
-                            curves.some((c) => c.family === chip.value),
-                        )
+                        .filter((chip) => {
+                            if (chip.alwaysShow) return true;
+                            if (chip.matches) return curves.some(chip.matches);
+                            return curves.some((c) => c.family === chip.value);
+                        })
                         .map((chip) => (
                             <button
                                 class="chip"

@@ -238,6 +238,7 @@ import { simplexNoise1dCurve } from "../lib/curves/simplex-noise-1d";
 import { simplexNoise1dMeta } from "../lib/curves/simplex-noise-1d.meta";
 import { fbm1dCurve } from "../lib/curves/fbm-1d";
 import { fbm1dMeta } from "../lib/curves/fbm-1d.meta";
+import { fbm3dNoiseCurve } from "../lib/curves/fbm-3d-noise";
 import { turbulence1dCurve } from "../lib/curves/turbulence-1d";
 import { turbulence1dMeta } from "../lib/curves/turbulence-1d.meta";
 import { worleyNoise1dCurve } from "../lib/curves/worley-noise-1d";
@@ -245,6 +246,13 @@ import { worleyNoise1dMeta } from "../lib/curves/worley-noise-1d.meta";
 import { whiteNoise1dCurve } from "../lib/curves/white-noise-1d";
 import { whiteNoise1dMeta } from "../lib/curves/white-noise-1d.meta";
 import type { CurveKernel, SamplingHint } from "../lib/curveMath";
+import type {
+  Renderer3DParams,
+  Renderer3DQuality,
+  Renderer3DRenderMode,
+  Renderer3DUseCase,
+  Renderer3DViewId,
+} from "../lib/renderer3d";
 
 export type SnippetTarget =
   | "equation"
@@ -309,7 +317,19 @@ export type CurveDefinition = {
   params?: CurveParamSchema;
   snippetOptions?: CurveSnippetOptions;
   roleTags?: readonly CurveRoleTag[];
+  preview?: CurvePreview;
 };
+
+export type CurvePreview =
+  | { kind: "canvas2d" }
+  | {
+      kind: "renderer3d";
+      viewId: Renderer3DViewId;
+      useCase?: Renderer3DUseCase;
+      renderMode?: Renderer3DRenderMode;
+      quality?: Renderer3DQuality;
+      params?: Renderer3DParams;
+    };
 
 // --- view modes ---------------------------------------------------------
 // Closed set of preview modes. Today only "graph" is rendered; the rest
@@ -390,6 +410,13 @@ export type CurveRoleTag =
   | "wave"
   | "noise"
   | "sdf"
+  | "procedural"
+  | "renderer3d"
+  | "pointcloud"
+  | "terrain"
+  | "field"
+  | "volume"
+  | "lsystem"
   | "dsp"
   | "dynamics"
   | "remap"
@@ -533,6 +560,7 @@ export const curves: CurveDefinition[] = [
   { ...perlinNoise1dCurve(), ...perlinNoise1dMeta },
   { ...simplexNoise1dCurve(), ...simplexNoise1dMeta },
   { ...fbm1dCurve(), ...fbm1dMeta },
+  { ...fbm3dNoiseCurve() },
   { ...turbulence1dCurve(), ...turbulence1dMeta },
   { ...worleyNoise1dCurve(), ...worleyNoise1dMeta },
   { ...whiteNoise1dCurve(), ...whiteNoise1dMeta },

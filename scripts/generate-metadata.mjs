@@ -70,6 +70,41 @@ const FAMILY_MAPS = {
     roleTags: ["noise"],
     viewHints: {},
   },
+  "procedural-3d": {
+    views: ["graph"],
+    roleTags: ["procedural", "renderer3d"],
+    viewHints: {},
+  },
+  noise3d: {
+    views: ["graph"],
+    roleTags: ["noise", "procedural", "renderer3d"],
+    viewHints: {},
+  },
+  terrain: {
+    views: ["graph"],
+    roleTags: ["procedural", "renderer3d", "terrain"],
+    viewHints: {},
+  },
+  field: {
+    views: ["graph"],
+    roleTags: ["procedural", "renderer3d", "field"],
+    viewHints: {},
+  },
+  pointcloud: {
+    views: ["graph"],
+    roleTags: ["procedural", "renderer3d", "pointcloud"],
+    viewHints: {},
+  },
+  volume: {
+    views: ["graph"],
+    roleTags: ["procedural", "renderer3d", "volume"],
+    viewHints: {},
+  },
+  lsystem: {
+    views: ["graph"],
+    roleTags: ["procedural", "renderer3d", "lsystem"],
+    viewHints: {},
+  },
   oscillator: {
     views: ["graph", "motion", "field", "heightStrip", "ramp"],
     roleTags: ["wave"],
@@ -151,6 +186,9 @@ const DEFAULT_META = {
 const CURVE_HINT_OVERRIDES = {
   // Per-curve escape hatch for semantic display hints. Keep this small:
   // family hints + literal range detection should handle the normal cases.
+  // Renderer3D previews are intentionally not generated here yet. Add
+  // `preview: { kind: "renderer3d", ... }` manually when a procedural entry
+  // is approved, then update this generator once that entry shape is stable.
 };
 
 function asConstArray(values) {

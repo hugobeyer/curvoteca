@@ -2,38 +2,51 @@
 import type {
     Renderer3DQuality,
     Renderer3DRenderMode,
+    Renderer3DParams,
     Renderer3DUseCase,
     Renderer3DViewId,
 } from "../lib/renderer3d";
 
 interface Props {
     id: string;
+    variant?: "card" | "mini" | "detail";
     viewId?: Renderer3DViewId;
     useCase?: Renderer3DUseCase;
     renderMode?: Renderer3DRenderMode;
     quality?: Renderer3DQuality;
+    params?: Renderer3DParams;
     class?: string;
 }
 
 const {
     id,
+    variant = "card",
     viewId = "noise3d",
     useCase = "fbm-terrain",
     renderMode = "shaded",
     quality = "detail",
+    params = {},
     class: className = "",
 } = Astro.props as Props;
+
+const graphClass = variant === "mini" ? "mini-graph" : "graph";
 ---
 
 <div
-    class:list={["graph", "curve-view", "renderer3d-view", className]}
+    class:list={[graphClass, "curve-view", "renderer3d-view", className]}
     data-renderer3d-root
     data-renderer3d-id={id}
     data-renderer3d-view={viewId}
     data-renderer3d-use-case={useCase}
     data-renderer3d-render-mode={renderMode}
     data-renderer3d-quality={quality}
+    data-renderer3d-params={JSON.stringify(params)}
 >
     <canvas class="curve-view-canvas" data-renderer3d-canvas aria-hidden="true"
     ></canvas>
 </div>
+
+<script>
+    import { initRenderer3DViewports } from "../lib/renderer3dViewportClient";
+    initRenderer3DViewports();
+</script>

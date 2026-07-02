@@ -1,5 +1,6 @@
 ---
 import CurveViewport from "./CurveViewport.astro";
+import Renderer3DViewport from "./Renderer3DViewport.astro";
 import TargetIcon from "./TargetIcon.astro";
 import StarIcon from "./StarIcon.astro";
 import CopyIcon from "./CopyIcon.astro";
@@ -20,6 +21,9 @@ const useCases = curve.useCases.join(" ");
 const targets = Object.keys(curve.snippets ?? {}).join(" ");
 const equation = curve.snippets?.equation ?? curve.formula;
 const curveLabel = [curve.family, curve.continuity].filter(Boolean).join(" / ");
+const renderer3dPreview =
+    curve.preview?.kind === "renderer3d" ? curve.preview : null;
+const roleTagsAttr = (curve.roleTags ?? []).join(" ");
 
 const snippetsJson = JSON.stringify(curve.snippets ?? {});
 ---
@@ -30,6 +34,11 @@ const snippetsJson = JSON.stringify(curve.snippets ?? {});
     data-search={haystack}
     data-family={family}
     data-tags={tags}
+    data-roletags={roleTagsAttr}
+    data-preview-kind={curve.preview?.kind ?? ""}
+    data-preview-viewid={curve.preview?.kind === "renderer3d"
+        ? (curve.preview.viewId ?? "")
+        : ""}
     data-usecases={useCases}
     data-targets={targets}
     title="RMB opens context actions: copy, paste, compare, pin"
@@ -103,7 +112,21 @@ const snippetsJson = JSON.stringify(curve.snippets ?? {});
             </span>
         </div>
     </header>
-    <CurveViewport curve={curve} showReadout={true} />
+    {
+        renderer3dPreview ? (
+            <Renderer3DViewport
+                id={curve.id}
+                variant="card"
+                viewId={renderer3dPreview.viewId}
+                useCase={renderer3dPreview.useCase}
+                renderMode={renderer3dPreview.renderMode}
+                quality={renderer3dPreview.quality ?? "card"}
+                params={renderer3dPreview.params}
+            />
+        ) : (
+            <CurveViewport curve={curve} showReadout={true} />
+        )
+    }
     <div class="meta" aria-hidden="true">
         <span class="meta-summary">{curveLabel}</span>
     </div>

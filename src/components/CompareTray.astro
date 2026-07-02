@@ -1,5 +1,6 @@
 ---
 import CurveViewport from "./CurveViewport.astro";
+import Renderer3DViewport from "./Renderer3DViewport.astro";
 import type { CurveDefinition } from "../data/curves";
 
 interface Props {
@@ -26,7 +27,19 @@ const { curves } = Astro.props as Props;
                         title={curve.summary}
                     >
                         <span class="tray-item-name">{curve.name}</span>
-                        <CurveViewport curve={curve} variant="mini" />
+                        {curve.preview?.kind === "renderer3d" ? (
+                            <Renderer3DViewport
+                                id={curve.id}
+                                variant="mini"
+                                viewId={curve.preview.viewId}
+                                useCase={curve.preview.useCase}
+                                renderMode={curve.preview.renderMode}
+                                quality={curve.preview.quality ?? "card"}
+                                params={curve.preview.params}
+                            />
+                        ) : (
+                            <CurveViewport curve={curve} variant="mini" />
+                        )}
                     </button>
                 ))
             }

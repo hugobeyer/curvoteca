@@ -194,11 +194,15 @@ const normalizeData = (
   views: ReadonlyMap<Renderer3DViewId, Renderer3DView>,
 ): Renderer3DData => {
   const view = views.get(data.viewId) ?? [...views.values()][0];
+  const requestedRenderMode = data.renderMode ?? view.defaultRenderMode;
+  const renderMode = view.supportedRenderModes.includes(requestedRenderMode)
+    ? requestedRenderMode
+    : view.defaultRenderMode;
   return {
     ...data,
     viewId: view.id,
     useCase: data.useCase ?? view.defaultUseCase,
-    renderMode: data.renderMode ?? view.defaultRenderMode,
+    renderMode,
     quality: data.quality ?? "detail",
     params: data.params ?? {},
   };

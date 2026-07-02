@@ -14,6 +14,7 @@ export type CurveSeo = {
   range: [number, number];
   tags: string[];
   useCases: string[];
+  previewKind: NonNullable<CurveDefinition["preview"]>["kind"];
 };
 
 export function toCurveSeo(curve: CurveDefinition): CurveSeo {
@@ -29,6 +30,7 @@ export function toCurveSeo(curve: CurveDefinition): CurveSeo {
     range: curve.range,
     tags: curve.tags,
     useCases: curve.useCases,
+    previewKind: curve.preview?.kind ?? "canvas2d",
   };
 }
 
@@ -37,11 +39,17 @@ export function curveUrl(id: string): string {
 }
 
 export function curveTitle(curve: CurveSeo): string {
+  if (curve.previewKind === "renderer3d") {
+    return `${curve.name} 3D Procedural Reference | Curvoteca`;
+  }
   return `${curve.name} Curve Visualization | Curvoteca`;
 }
 
 export function curveDescription(curve: CurveSeo): string {
   const useCase = curve.useCases[0] ? ` for ${curve.useCases[0]}` : "";
+  if (curve.previewKind === "renderer3d") {
+    return `Interactive 3D ${curve.name} procedural reference${useCase}. Includes formula, tags and technical renderer metadata.`;
+  }
   return `Interactive ${curve.name} curve visualization${useCase}. Includes formula, tags and technical curve metadata.`;
 }
 

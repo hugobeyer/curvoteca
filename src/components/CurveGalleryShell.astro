@@ -710,6 +710,19 @@ const ogTitle = curveForSeo
                 };
 
                 const closeOverlay = function () {
+                    try {
+                        var detailViewport = document.getElementById(
+                            "detail-overlay-viewport",
+                        );
+                        if (
+                            detailViewport &&
+                            window.__curvotecaDestroyRenderer3DViewports
+                        ) {
+                            window.__curvotecaDestroyRenderer3DViewports(
+                                detailViewport,
+                            );
+                        }
+                    } catch (err) {}
                     overlay.setAttribute("aria-hidden", "true");
                     railBtns.forEach(function (b) {
                         b.classList.remove("active");
@@ -1060,7 +1073,76 @@ const ogTitle = curveForSeo
                                 "detail-overlay-viewport",
                             );
                             if (vpEl) {
+                                try {
+                                    if (window.__curvotecaDestroyRenderer3DViewports) {
+                                        window.__curvotecaDestroyRenderer3DViewports(vpEl);
+                                    }
+                                } catch (err) {}
                                 vpEl.innerHTML = "";
+                                var preview = entry.preview || {
+                                    kind: "canvas2d",
+                                };
+                                if (preview.kind === "renderer3d") {
+                                    var wrap3d = document.createElement("div");
+                                    wrap3d.className =
+                                        "graph curve-view renderer3d-view detail-curve-view";
+                                    wrap3d.setAttribute(
+                                        "data-renderer3d-root",
+                                        "",
+                                    );
+                                    wrap3d.setAttribute(
+                                        "data-renderer3d-id",
+                                        entry.id,
+                                    );
+                                    wrap3d.setAttribute(
+                                        "data-renderer3d-view",
+                                        preview.viewId || "noise3d",
+                                    );
+                                    if (preview.useCase) {
+                                        wrap3d.setAttribute(
+                                            "data-renderer3d-use-case",
+                                            preview.useCase,
+                                        );
+                                    }
+                                    if (preview.renderMode) {
+                                        wrap3d.setAttribute(
+                                            "data-renderer3d-render-mode",
+                                            preview.renderMode,
+                                        );
+                                    }
+                                    wrap3d.setAttribute(
+                                        "data-renderer3d-quality",
+                                        preview.quality || "detail",
+                                    );
+                                    wrap3d.setAttribute(
+                                        "data-renderer3d-params",
+                                        JSON.stringify(preview.params || {}),
+                                    );
+                                    var canvas3d =
+                                        document.createElement("canvas");
+                                    canvas3d.className = "curve-view-canvas";
+                                    canvas3d.setAttribute(
+                                        "data-renderer3d-canvas",
+                                        "",
+                                    );
+                                    canvas3d.setAttribute(
+                                        "aria-hidden",
+                                        "true",
+                                    );
+                                    wrap3d.appendChild(canvas3d);
+                                    vpEl.appendChild(wrap3d);
+                                    try {
+                                        if (window.__curvotecaInitRenderer3DViewports) {
+                                            window.__curvotecaInitRenderer3DViewports(vpEl);
+                                        }
+                                        document.dispatchEvent(
+                                            new CustomEvent(
+                                                "curvoteca:renderer3d-views-changed",
+                                                { detail: { scope: vpEl } },
+                                            ),
+                                        );
+                                    } catch (err) {}
+                                } else {
                                 var wrap = document.createElement("div");
                                 wrap.className =
                                     "graph curve-view detail-curve-view";
@@ -1186,6 +1268,7 @@ const ogTitle = curveForSeo
                                 ly.textContent = "y 0.00";
                                 wrap.appendChild(ly);
                                 vpEl.appendChild(wrap);
+                                }
                             }
 
                             // Use modules for tabs + code
@@ -1367,10 +1450,15 @@ const ogTitle = curveForSeo
                                           ".detail-view-modes",
                                       )
                                     : null;
-                                var viewsList = Array.isArray(entry.views)
+                                var isRenderer3dDetail =
+                                    entry.preview &&
+                                    entry.preview.kind === "renderer3d";
+                                var viewsList = !isRenderer3dDetail && Array.isArray(entry.views)
                                     ? entry.views
                                     : [];
-                                var currentView = entry.defaultView || "graph";
+                                var currentView = isRenderer3dDetail
+                                    ? "3d"
+                                    : entry.defaultView || "graph";
                                 var applyViewUI = function (mode) {
                                     if (viewLabel) viewLabel.textContent = mode;
                                     if (viewModesWrap) {
@@ -1716,11 +1804,62 @@ const ogTitle = curveForSeo
                     }
                     const value = norm(state.value);
                     if (!value) return true;
-                    const attr =
-                        state.filter === "family"
-                            ? card.getAttribute("data-family")
-                            : "";
-                    return norm(attr) === value;
+                    if (state.filter === "family") {
+                        const family = norm(
+                            card.getAttribute("data-family"),
+                        );
+                        if (family === value) return true;
+
+                        const tags = norm(
+                            card.getAttribute("data-tags"),
+                        );
+                        const roleTags = norm(
+                            card.getAttribute("data-roletags"),
+                        );
+                        const previewKind = norm(
+                            card.getAttribute("data-preview-kind"),
+                        );
+                        const previewViewId = norm(
+                            card.getAttribute("data-preview-viewid"),
+                        );
+
+                        if (value === "noise3d")
+                            return (
+                                previewKind === "renderer3d" &&
+                                previewViewId === "noise3d"
+                            );
+                        if (value === "procedural-3d")
+                            return (
+                                previewKind === "renderer3d" ||
+                                roleTags.indexOf("renderer3d") !== -1
+                            );
+                        if (value === "field")
+                            return (
+                                roleTags.indexOf("field") !== -1 ||
+                                tags.indexOf("field") !== -1
+                            );
+                        if (value === "terrain")
+                            return (
+                                roleTags.indexOf("terrain") !== -1 ||
+                                tags.indexOf("terrain") !== -1
+                            );
+                        if (value === "volume")
+                            return (
+                                roleTags.indexOf("volume") !== -1 ||
+                                tags.indexOf("volume") !== -1
+                            );
+                        if (value === "pointcloud")
+                            return (
+                                previewViewId === "pointcloud" ||
+                                roleTags.indexOf("pointcloud") !== -1
+                            );
+                        if (value === "lsystem")
+                            return (
+                                roleTags.indexOf("lsystem") !== -1
+                            );
+                        return false;
+                    }
+                    return false;
                 };
 
                 const labelForFilter = function (filter, value) {
@@ -1758,9 +1897,17 @@ const ogTitle = curveForSeo
                 const apply = function () {
                     applyCardOrder();
                     let shown = 0;
+                    const filteringSpecific =
+                        state.filter &&
+                        state.filter !== "all" &&
+                        state.filter !== DEFAULT_FILTER;
                     cards.forEach(function (card) {
                         if (card.classList.contains("is-sponsor")) {
-                            shown += 1;
+                            card.classList.toggle(
+                                "is-hidden",
+                                !!filteringSpecific,
+                            );
+                            if (!filteringSpecific) shown += 1;
                             return;
                         }
                         const ok = matches(card);

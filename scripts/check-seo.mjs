@@ -1,14 +1,14 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const siteUrl = "https://curvoteca.com";
-const curvesDir = join(root, "src", "lib", "curves");
 const distDir = join(root, "dist");
 const sitemapPath = join(distDir, "sitemap.xml");
 const robotsPath = join(distDir, "robots.txt");
 const indexPath = join(distDir, "index.html");
+const distCurvesDir = join(distDir, "curve");
 
 const failures = [];
 
@@ -24,31 +24,22 @@ function assertFile(path) {
   return true;
 }
 
-function collectCurveIds() {
-  if (!existsSync(curvesDir)) {
-    fail(`Missing ${relative(root, curvesDir)}.`);
+function collectBuiltCurveIds() {
+  if (!existsSync(distCurvesDir)) {
+    fail(`Missing ${relative(root, distCurvesDir)}. Run npm.cmd run build first.`);
     return [];
   }
 
-  const ids = new Set();
-  const files = readdirSync(curvesDir)
-    .filter((file) => file.endsWith(".ts"))
-    .filter((file) => !file.endsWith(".meta.ts"))
-    .filter((file) => file !== "index.ts");
-
-  for (const file of files) {
-    const source = readFileSync(join(curvesDir, file), "utf8");
-    const match = source.match(/\bid:\s*"([^"]+)"/);
-    if (match) ids.add(match[1]);
-  }
-
-  return [...ids].sort();
+  return readdirSync(distCurvesDir)
+    .filter((id) => statSync(join(distCurvesDir, id)).isDirectory())
+    .filter((id) => existsSync(join(distCurvesDir, id, "index.html")))
+    .sort();
 }
 
 const hasIndex = assertFile(indexPath);
 const hasSitemap = assertFile(sitemapPath);
 const hasRobots = assertFile(robotsPath);
-const curveIds = collectCurveIds();
+const curveIds = collectBuiltCurveIds();
 
 if (curveIds.length === 0) {
   fail("No curve ids found in src/lib/curves/*.ts.");
