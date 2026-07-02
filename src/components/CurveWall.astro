@@ -75,12 +75,7 @@ const familyChips: {
             c.preview?.kind === "renderer3d" ||
             (c.roleTags?.includes("renderer3d") ?? false),
     },
-    {
-        label: "noise3d",
-        value: "noise3d",
-        matches: (c) =>
-            c.preview?.kind === "renderer3d" && c.preview.viewId === "noise3d",
-    },
+
     {
         label: "terrain",
         value: "terrain",
