@@ -92,7 +92,7 @@ const railAds = railAdIds
         showRailAds && railAds.length > 0 && (
             <div class="rail-ad-row">
                 {railAds.map((ad) => (
-                    <RailAd ad={ad} key={ad.id} />
+                    <RailAd ad={ad} />
                 ))}
             </div>
         )
