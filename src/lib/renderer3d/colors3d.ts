@@ -37,11 +37,15 @@ const channelsToVec3 = (raw: string): Vec3 | null => {
 const parseAnyToVec3 = (value: string): Vec3 | null =>
   hexToVec3(value) ?? channelsToVec3(value);
 
-const brighten = (v: Vec3, factor: number): Vec3 =>
-  v.map((c) => Math.min(1, c * factor)) as Vec3;
+const brighten = (v: Vec3, factor: number): Vec3 => {
+  const m = v.map((c) => Math.min(1, c * factor));
+  return [m[0], m[1], m[2]];
+};
 
-const darkenSaturate = (v: Vec3, powVal: number): Vec3 =>
-  v.map((c) => Math.pow(c * 0.5, powVal)) as Vec3;
+const darkenSaturate = (v: Vec3, powVal: number): Vec3 => {
+  const m = v.map((c) => Math.pow(c * 0.5, powVal));
+  return [m[0], m[1], m[2]];
+};
 
 export const readRenderer3DColors = (root: HTMLElement): Renderer3DColors => {
   const raw = readColors(root);
