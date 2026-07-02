@@ -40,12 +40,17 @@ const parseAnyToVec3 = (value: string): Vec3 | null =>
 const brighten = (v: Vec3, factor: number): Vec3 =>
   v.map((c) => Math.min(1, c * factor)) as Vec3;
 
+const darkenSaturate = (v: Vec3, powVal: number): Vec3 =>
+  v.map((c) => Math.pow(c * 0.5, powVal)) as Vec3;
+
 export const readRenderer3DColors = (root: HTMLElement): Renderer3DColors => {
   const raw = readColors(root);
+  const style = getComputedStyle(root);
   const curve = parseAnyToVec3(raw.curve);
   const curve2 = parseAnyToVec3(raw.curve2);
   const gridBase = parseAnyToVec3(raw.grid);
   const bg = parseAnyToVec3(raw.bg);
+  const c2pow = readFloat(style, "--renderer3d-curve2-pow") || 2.0;
 
   return {
     bg: bg ?? [0.02, 0.03, 0.04],
@@ -54,6 +59,13 @@ export const readRenderer3DColors = (root: HTMLElement): Renderer3DColors => {
     axis: gridBase ? brighten(gridBase, 1.6) : [0.16, 0.24, 0.34],
     zero: gridBase ? brighten(gridBase, 2.0) : [0.20, 0.30, 0.42],
     curve: curve ?? [1, 0.6, 0.12],
-    curve2: curve2 ?? [0.33, 0.77, 0.82],
+    curve2: curve2 ? darkenSaturate(curve2, c2pow) : [0.18, 0.55, 0.60],
   };
+};
+
+const readFloat = (style: CSSStyleDeclaration, name: string): number => {
+  const raw = style.getPropertyValue(name).trim();
+  if (!raw) return 0;
+  const value = parseFloat(raw);
+  return Number.isFinite(value) ? value : 0;
 };

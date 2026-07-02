@@ -202,6 +202,7 @@ export const mountRenderer3D = (
 
     const renderMode = data.renderMode ?? view.defaultRenderMode;
     gl.uniform1f(program.uShowScanline, renderMode === "motion" ? 1 : 0);
+    gl.uniform1f(program.uScanlinePeriod, tokens.scanlinePeriodMs);
     if (renderMode === "wireframe") {
       drawBufferInfo(gl, geometryBuffers.ghost, gl.TRIANGLES);
       gl.disable(gl.DEPTH_TEST);
@@ -212,7 +213,7 @@ export const mountRenderer3D = (
     } else if (renderMode === "graph") {
       drawBufferInfo(gl, geometryBuffers.wire, gl.LINES);
     } else if (renderMode === "field") {
-      drawBufferInfo(gl, geometryBuffers.wire, gl.LINES);
+      drawBufferInfo(gl, geometryBuffers.mesh, gl.TRIANGLES);
     } else if (renderMode === "ramp") {
       drawBufferInfo(gl, geometryBuffers.mesh, gl.TRIANGLES);
     } else if (renderMode === "heightstrip") {

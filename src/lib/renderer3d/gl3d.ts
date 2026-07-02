@@ -32,17 +32,18 @@ in float vWorldY;
 
 uniform float uTime;
 uniform float uShowScanline;
+uniform float uScanlinePeriod;
 
 out vec4 outColor;
 
 void main() {
   vec4 base = vec4(vColor, vAlpha);
   // Scanline glow — only on terrain (Y > 0.02), pseudo-bloom with tight+wide layers
-  float scanY = (fract(uTime * 0.0004) * 2.0) - 1.0;
+  float scanY = (fract(uTime / max(uScanlinePeriod, 1.0)) * 2.0) - 1.0;
   float dist = abs(vWorldY - scanY);
-  float tight = exp(-dist * 28.0);
-  float bloom = exp(-dist * 6.0) * 0.42;
-  float glow = (tight * 0.92 + bloom) * step(0.02, vWorldY);
+  float tight = exp(-dist * 50.0);
+  float bloom = exp(-dist * 12.0) * 0.15;
+  float glow = (tight * 1.0 + bloom) * step(0.02, vWorldY);
   base.a += glow * uShowScanline;
   outColor = base;
 }
@@ -54,6 +55,7 @@ export type Renderer3DProgram = {
   uPointSize: WebGLUniformLocation | null;
   uTime: WebGLUniformLocation | null;
   uShowScanline: WebGLUniformLocation | null;
+  uScanlinePeriod: WebGLUniformLocation | null;
 };
 
 export const createRenderer3DProgram = (
@@ -86,6 +88,7 @@ export const createRenderer3DProgram = (
     uPointSize: gl.getUniformLocation(program, "uPointSize"),
     uTime: gl.getUniformLocation(program, "uTime"),
     uShowScanline: gl.getUniformLocation(program, "uShowScanline"),
+    uScanlinePeriod: gl.getUniformLocation(program, "uScanlinePeriod"),
   };
 };
 

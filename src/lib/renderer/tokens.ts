@@ -146,7 +146,7 @@ const DEFAULTS = {
   fitPadding: 18,
 
   // Motion view: ms per sweep of the probe across the polyline.
-  motionPeriodMs: 1200,
+  motionPeriodMs: 1600,
   // Motion view: glow range, scaled by the probe's Y. Below
   // the curve's range bottom = min; above the top = max.
   motionGlowMin: 0.01,

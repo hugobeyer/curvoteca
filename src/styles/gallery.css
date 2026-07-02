@@ -791,13 +791,13 @@
 
 /* Renderer3D grid size per column count — tweakable CSS tokens */
 :root {
-    --r3d-cols-3: 32;
-    --r3d-cols-4: 30;
-    --r3d-cols-5: 28;
-    --r3d-cols-6: 25;
-    --r3d-cols-7: 22;
-    --r3d-cols-8: 17;
-    --r3d-cols-9: 14;
+    --r3d-cols-3: 64;
+    --r3d-cols-4: 60;
+    --r3d-cols-5: 56;
+    --r3d-cols-6: 50;
+    --r3d-cols-7: 44;
+    --r3d-cols-8: 34;
+    --r3d-cols-9: 28;
 
     --renderer3d-grid-card: 14;
     --renderer3d-grid-detail: 32;
@@ -805,12 +805,18 @@
     --renderer3d-points-card: 360;
     --renderer3d-points-detail: 1800;
     --renderer3d-points-high: 3600;
-    --renderer3d-animation-step-ms: 80;
+    --renderer3d-animation-step-ms: 50;
+    --renderer3d-scanline-period-ms: 1600;
+    --renderer3d-noise-speed: 0.000065;
+    --renderer3d-noise-global-freq: 1.0;
+    --renderer3d-noise-global-octaves: 5;
     --renderer3d-grid-extent: 3.04;
     --renderer3d-surface-extent: 2.56;
+    --renderer3d-noise-uv-range: 1.0;
     --renderer3d-ghost-alpha: 0.16;
     --renderer3d-shaded-alpha: 0.68;
     --renderer3d-wire-alpha: 0.42;
+    --renderer3d-curve2-pow: 2.2;
 }
 .renderer3d-view canvas {
     touch-action: none;

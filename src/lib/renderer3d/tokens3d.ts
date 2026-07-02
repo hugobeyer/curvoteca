@@ -11,8 +11,13 @@ export type Renderer3DTokens = {
   pointCountDetail: number;
   pointCountHigh: number;
   animationStepMs: number;
+  scanlinePeriodMs: number;
+  noiseSpeed: number;
+  globalFreq: number;
+  globalOctaves: number;
   gridExtent: number;
   surfaceExtent: number;
+  noiseUvRange: number;
   ghostAlpha: number;
   shadedAlpha: number;
   wireAlpha: number;
@@ -31,8 +36,13 @@ export const readRenderer3DTokens = (root: HTMLElement): Renderer3DTokens => {
     pointCountDetail: readInt(style, "--renderer3d-points-detail"),
     pointCountHigh: readInt(style, "--renderer3d-points-high"),
     animationStepMs: readFloat(style, "--renderer3d-animation-step-ms"),
+    scanlinePeriodMs: readFloat(style, "--renderer3d-scanline-period-ms"),
+    noiseSpeed: readFloat(style, "--renderer3d-noise-speed"),
+    globalFreq: readFloat(style, "--renderer3d-noise-global-freq"),
+    globalOctaves: readInt(style, "--renderer3d-noise-global-octaves"),
     gridExtent: readFloat(style, "--renderer3d-grid-extent"),
     surfaceExtent: readFloat(style, "--renderer3d-surface-extent"),
+    noiseUvRange: readFloat(style, "--renderer3d-noise-uv-range"),
     ghostAlpha: readFloat(style, "--renderer3d-ghost-alpha"),
     shadedAlpha: readFloat(style, "--renderer3d-shaded-alpha"),
     wireAlpha: readFloat(style, "--renderer3d-wire-alpha"),

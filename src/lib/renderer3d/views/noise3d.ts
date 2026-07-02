@@ -52,21 +52,22 @@ export const createNoise3DView = (): Renderer3DView => ({
     addRenderer3DGrid(wire, colors, tokens.gridExtent, data.gridMode ?? "full");
 
     const verts: { p: Vec3; value: number }[] = [];
+    const uvRange = tokens.noiseUvRange || 0.5;
+    const globalFreq = tokens.globalFreq || 1;
     for (let z = 0; z < gridSize; z += 1) {
       for (let x = 0; x < gridSize; x += 1) {
-        const u = (x / (gridSize - 1)) * 2 - 1;
-        const v = (z / (gridSize - 1)) * 2 - 1;
+        const u = ((x / (gridSize - 1)) * 2 - 1) * uvRange * globalFreq;
+        const v = ((z / (gridSize - 1)) * 2 - 1) * uvRange * globalFreq;
         const value = sampleNoiseUseCase(
           useCase,
           u,
           v,
           time,
           data.params?.seed ?? 0,
+          tokens.noiseSpeed || 0.00013,
+          tokens.globalOctaves || 5,
         );
-        const falloff =
-          useCase === "fbm-terrain"
-            ? smoothstep01(1.25 - Math.hypot(u, v) * 0.76)
-            : 1;
+        const falloff = smoothstep01(1.25 - Math.hypot(u, v) * 0.76);
         const amp =
           useCase === "ridged-rock"
             ? 1.35
@@ -143,6 +144,30 @@ export const createNoise3DView = (): Renderer3DView => ({
         }
       }
       addStructuralWires(wire, verts, gridSize, 6, wf, lift, heightAlpha);
+    } else if (renderMode === "field") {
+      const bg = colors.bg;
+      for (let z = 0; z < gridSize - 1; z += 1) {
+        for (let x = 0; x < gridSize - 1; x += 1) {
+          const a = verts[z * gridSize + x];
+          const b = verts[z * gridSize + x + 1];
+          const c = verts[(z + 1) * gridSize + x];
+          const d = verts[(z + 1) * gridSize + x + 1];
+          const colorFor = (v: typeof a) => {
+            const t = clamp01(v.p[1] / 1.2);
+            return [
+              bg[0] * (1 - t) + wf[0] * t,
+              bg[1] * (1 - t) + wf[1] * t,
+              bg[2] * (1 - t) + wf[2] * t,
+            ] as Vec3;
+          };
+          pushVertex(mesh, a.p, colorFor(a), 1);
+          pushVertex(mesh, b.p, colorFor(b), 1);
+          pushVertex(mesh, c.p, colorFor(c), 1);
+          pushVertex(mesh, b.p, colorFor(b), 1);
+          pushVertex(mesh, d.p, colorFor(d), 1);
+          pushVertex(mesh, c.p, colorFor(c), 1);
+        }
+      }
     } else if (renderMode === "motion") {
       // Invisible mesh — only scanline shader makes it visible
       for (let z = 0; z < gridSize - 1; z += 1) {
@@ -244,24 +269,26 @@ const sampleNoiseUseCase = (
   v: number,
   time: number,
   seed: number,
+  noiseSpeed: number,
+  octaves: number,
 ) => {
-  const z = time * 0.00013 + seed * 0.013;
+  const z = time * noiseSpeed + seed * 0.013;
   if (useCase === "domain-warp") {
-    return warpedFbm3(u * 2.15 + 4, v * 2.15, z, z * 0.9);
+    return warpedFbm3(u * 2.15 + 4, v * 2.15, z, z * 0.9, octaves);
   }
   if (useCase === "ridged-rock") {
-    return ridgedFbm3(u * 2.85 + 2, v * 2.85 + 9, z);
+    return ridgedFbm3(u * 2.85 + 2, v * 2.85 + 9, z, octaves);
   }
   if (useCase === "ridged-multi") {
-    return ridgedMulti3(u * 2.85 + 2, v * 2.85 + 9, z, seed);
+    return ridgedMulti3(u * 2.85 + 2, v * 2.85 + 9, z, seed, octaves);
   }
   if (useCase === "voronoi-terrain") {
     return voronoi3d(u * 3.2 + 6, v * 3.2 + 4, z, seed);
   }
   if (useCase === "hybrid-blend") {
-    return hybridBlend3(u * 2.6 + 5, v * 2.6 + 8, z, seed);
+    return hybridBlend3(u * 2.6 + 5, v * 2.6 + 8, z, seed, octaves);
   }
-  return fbm3(u * 2.3 + 8, v * 2.3 + 3, z);
+  return fbm3(u * 2.3 + 8, v * 2.3 + 3, z, octaves);
 };
 
 const hash3 = (x: number, y: number, z: number) => {
@@ -289,12 +316,12 @@ const valueNoise3 = (x: number, y: number, z: number) => {
   return lerp(lerp(x00, x10, v), lerp(x01, x11, v), w);
 };
 
-const fbm3 = (x: number, y: number, z: number) => {
+const fbm3 = (x: number, y: number, z: number, octaves: number) => {
   let amplitude = 0.5;
   let frequency = 1;
   let sum = 0;
   let weight = 0;
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < octaves; i += 1) {
     sum += valueNoise3(x * frequency, y * frequency, z * frequency) * amplitude;
     weight += amplitude;
     amplitude *= 0.5;
@@ -303,31 +330,31 @@ const fbm3 = (x: number, y: number, z: number) => {
   return sum / weight;
 };
 
-const warpedFbm3 = (x: number, y: number, z: number, t: number) => {
-  const qx = fbm3(x + 11.3, y, z + t);
-  const qz = fbm3(x, y + 5.7, z + t * 0.73);
-  return fbm3(x + qx * 2.55, y, z + qz * 2.55);
+const warpedFbm3 = (x: number, y: number, z: number, t: number, octaves: number) => {
+  const qx = fbm3(x + 11.3, y, z + t, octaves);
+  const qz = fbm3(x, y + 5.7, z + t * 0.73, octaves);
+  return fbm3(x + qx * 2.55, y, z + qz * 2.55, octaves);
 };
 
-const ridgedFbm3 = (x: number, y: number, z: number) => {
-  const v = fbm3(x, y, z);
+const ridgedFbm3 = (x: number, y: number, z: number, octaves: number) => {
+  const v = fbm3(x, y, z, octaves);
   const r = 1 - Math.abs(v * 2 - 1);
   return r * r;
 };
 
-const ridgedMulti3 = (x: number, y: number, z: number, seed: number) => {
+const ridgedMulti3 = (x: number, y: number, z: number, seed: number, octaves: number) => {
   let result = 0;
   let amp = 0.6;
   let freq = 1.0;
   let weight = 0;
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < Math.min(octaves, 3); i += 1) {
     const offset = (seed + i * 7.3) * 0.17;
-    const v = fbm3(x * freq + offset, y * freq, z * freq + offset);
+    const v = fbm3(x * freq + offset, y * freq, z * freq + offset, octaves);
     const ridge = 1 - Math.abs(v * 2 - 1);
     result += ridge * ridge * amp;
     weight += amp;
     amp *= 0.55;
-    freq *= 2.1;
+    freq *= 1.8;
   }
   return result / weight;
 };
@@ -357,9 +384,9 @@ const voronoi3d = (x: number, y: number, z: number, seed: number) => {
   return second - best;
 };
 
-const hybridBlend3 = (x: number, y: number, z: number, seed: number) => {
-  const f = fbm3(x, y, z);
-  const r = 1 - Math.abs(fbm3(x * 1.7 + seed * 0.1, y * 1.7, z * 1.7) * 2 - 1);
+const hybridBlend3 = (x: number, y: number, z: number, seed: number, octaves: number) => {
+  const f = fbm3(x, y, z, octaves);
+  const r = 1 - Math.abs(fbm3(x * 1.7 + seed * 0.1, y * 1.7, z * 1.7, octaves) * 2 - 1);
   const t = smoothstep01((y + 1.2) / 2.4);
   return f * (1 - t) + r * r * t * 1.3;
 };
